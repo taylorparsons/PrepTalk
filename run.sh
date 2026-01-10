@@ -6,11 +6,31 @@ VENV_DIR="${VENV_DIR:-$ROOT_DIR/.venv}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 MODE="${1:-ui}"
 
+load_dotenv() {
+  local dotenv_file="$1"
+  while IFS='=' read -r key value || [[ -n "$key" ]]; do
+    key="${key#${key%%[![:space:]]*}}"
+    key="${key%%[[:space:]]*}"
+    if [[ -z "$key" || "$key" == \#* ]]; then
+      continue
+    fi
+    key="${key#export }"
+    if [[ -n "${!key-}" ]]; then
+      continue
+    fi
+    value="${value#${value%%[![:space:]]*}}"
+    value="${value%${value##*[![:space:]]}}"
+    if [[ "$value" == \"*\" && "$value" == *\" ]]; then
+      value="${value:1:-1}"
+    elif [[ "$value" == \'*\' && "$value" == *\' ]]; then
+      value="${value:1:-1}"
+    fi
+    export "$key=$value"
+  done < "$dotenv_file"
+}
+
 if [[ -f "$ROOT_DIR/.env" ]]; then
-  set -a
-  # shellcheck disable=SC1090
-  source "$ROOT_DIR/.env"
-  set +a
+  load_dotenv "$ROOT_DIR/.env"
 fi
 
 usage() {
