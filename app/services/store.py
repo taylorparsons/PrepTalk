@@ -45,6 +45,11 @@ class InterviewStore:
         if record:
             record.transcript = list(transcript)
 
+    def append_transcript_entry(self, interview_id: str, entry: dict) -> None:
+        record = self._records.get(interview_id)
+        if record:
+            record.transcript.append(dict(entry))
+
     def set_score(self, interview_id: str, score: dict) -> None:
         record = self._records.get(interview_id)
         if record:

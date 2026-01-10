@@ -1,13 +1,14 @@
 from pathlib import Path
 import json
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from .api import router as api_router
 from .settings import load_settings
+from .ws import live_audio_websocket
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -32,6 +33,11 @@ def read_root(request: Request):
         "index.html",
         {"app_config": json.dumps(config)}
     )
+
+
+@app.websocket("/ws/live")
+async def websocket_live(websocket: WebSocket):
+    await live_audio_websocket(websocket)
 
 
 @app.get("/health")
