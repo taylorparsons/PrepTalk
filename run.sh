@@ -6,6 +6,8 @@ VENV_DIR="${VENV_DIR:-$ROOT_DIR/.venv}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 MODE="${1:-ui}"
 
+E2E_LIVE_PRESET="${E2E_LIVE-}"
+
 load_dotenv() {
   local dotenv_file="$1"
   while IFS='=' read -r key value || [[ -n "$key" ]]; do
@@ -31,6 +33,10 @@ load_dotenv() {
 
 if [[ -f "$ROOT_DIR/.env" ]]; then
   load_dotenv "$ROOT_DIR/.env"
+fi
+
+if [[ "$MODE" == "e2e" && -z "$E2E_LIVE_PRESET" ]]; then
+  unset E2E_LIVE
 fi
 
 usage() {

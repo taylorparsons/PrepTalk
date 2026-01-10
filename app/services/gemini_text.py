@@ -9,15 +9,40 @@ except ImportError:
     genai = None
 
 
-def _call_gemini(api_key: str, model: str, prompt: str) -> str:
+FALLBACK_TEXT_MODEL = "gemini-2.5-flash"
+
+
+def _is_model_unsupported(exc: Exception) -> bool:
+    message = str(exc).lower()
+    return "not found" in message or "not supported" in message
+
+
+def _friendly_text_error(model: str, exc: Exception) -> str:
+    message = str(exc)
+    lowered = message.lower()
+    if "not found" in lowered or "not supported" in lowered:
+        return (
+            f"Text model '{model}' is not supported for generateContent. "
+            "Set GEMINI_TEXT_MODEL to a supported text model like gemini-2.5-flash."
+        )
+    return message
+
+
+def _call_gemini(api_key: str, model: str, prompt: str, fallback_model: str | None = None) -> str:
     if genai is None:
         raise RuntimeError("google-genai is required for Gemini text.")
     client = genai.Client(api_key=api_key)
     try:
         response = client.models.generate_content(model=model, contents=prompt)
+        return getattr(response, "text", "") or ""
     except Exception as exc:
+        if fallback_model and fallback_model != model and _is_model_unsupported(exc):
+            try:
+                response = client.models.generate_content(model=fallback_model, contents=prompt)
+                return getattr(response, "text", "") or ""
+            except Exception as fallback_exc:
+                raise RuntimeError(_friendly_text_error(fallback_model, fallback_exc)) from fallback_exc
         raise RuntimeError(_friendly_text_error(model, exc)) from exc
-    return getattr(response, "text", "") or ""
 
 
 def _extract_json(text: str) -> dict | None:
@@ -37,20 +62,6 @@ def _extract_json(text: str) -> dict | None:
         return json.loads(candidate)
     except json.JSONDecodeError:
         return None
-
-
-
-
-
-def _friendly_text_error(model: str, exc: Exception) -> str:
-    message = str(exc)
-    lowered = message.lower()
-    if "not found" in lowered or "not supported" in lowered:
-        return (
-            f"Text model '{model}' is not supported for generateContent. "
-            "Set GEMINI_TEXT_MODEL to a supported text model like gemini-2.5-flash."
-        )
-    return message
 
 
 def _coerce_list(value: Any) -> list[str]:
@@ -82,7 +93,7 @@ Job description:
 
 Return JSON with keys questions (array) and focus_areas (array)."""
 
-    text = _call_gemini(api_key, model, prompt)
+    text = _call_gemini(api_key, model, prompt, fallback_model=FALLBACK_TEXT_MODEL)
     payload = _extract_json(text) or {}
     questions = _coerce_list(payload.get("questions"))
     focus_areas = _coerce_list(payload.get("focus_areas"))
@@ -130,7 +141,7 @@ Transcript:
 
 Return JSON with keys overall_score (0-100), summary (string), strengths (array), improvements (array)."""
 
-    text = _call_gemini(api_key, model, prompt)
+    text = _call_gemini(api_key, model, prompt, fallback_model=FALLBACK_TEXT_MODEL)
     payload = _extract_json(text) or {}
 
     overall_score = payload.get("overall_score")
