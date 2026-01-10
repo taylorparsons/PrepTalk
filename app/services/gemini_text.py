@@ -13,7 +13,10 @@ def _call_gemini(api_key: str, model: str, prompt: str) -> str:
     if genai is None:
         raise RuntimeError("google-genai is required for Gemini text.")
     client = genai.Client(api_key=api_key)
-    response = client.models.generate_content(model=model, contents=prompt)
+    try:
+        response = client.models.generate_content(model=model, contents=prompt)
+    except Exception as exc:
+        raise RuntimeError(_friendly_text_error(model, exc)) from exc
     return getattr(response, "text", "") or ""
 
 
@@ -34,6 +37,20 @@ def _extract_json(text: str) -> dict | None:
         return json.loads(candidate)
     except json.JSONDecodeError:
         return None
+
+
+
+
+
+def _friendly_text_error(model: str, exc: Exception) -> str:
+    message = str(exc)
+    lowered = message.lower()
+    if "not found" in lowered or "not supported" in lowered:
+        return (
+            f"Text model '{model}' is not supported for generateContent. "
+            "Set GEMINI_TEXT_MODEL to a supported text model like gemini-2.5-flash."
+        )
+    return message
 
 
 def _coerce_list(value: Any) -> list[str]:
