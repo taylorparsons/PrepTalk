@@ -31,6 +31,6 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
   await expect(page.getByTestId('transcript-list')).toContainText('Welcome');
 
   await page.getByTestId('stop-interview').click();
-  await expect(page.getByTestId('score-summary')).toContainText('Summary');
   await expect(page.getByTestId('score-value')).toHaveText('84');
+  await expect(page.getByTestId('score-summary')).toContainText('Clear structure');
 });
