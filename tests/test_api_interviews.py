@@ -75,3 +75,31 @@ def test_score_returns_summary_and_transcript():
     assert payload["overall_score"]
     assert payload["summary"]
     assert payload["transcript"] == transcript
+
+
+
+def test_summary_and_pdf_exports():
+    client = TestClient(app)
+    interview_id = _create_interview(client)
+
+    transcript = [
+        {"role": "coach", "text": "Welcome", "timestamp": "00:00"},
+        {"role": "candidate", "text": "Hello", "timestamp": "00:04"}
+    ]
+
+    score_response = client.post(
+        f"/api/interviews/{interview_id}/score",
+        json={"transcript": transcript}
+    )
+    assert score_response.status_code == 200
+
+    summary_response = client.get(f"/api/interviews/{interview_id}")
+    assert summary_response.status_code == 200
+    summary = summary_response.json()
+    assert summary["interview_id"] == interview_id
+    assert summary["transcript"] == transcript
+
+    pdf_response = client.get(f"/api/interviews/{interview_id}/study-guide")
+    assert pdf_response.status_code == 200
+    assert pdf_response.headers["content-type"].startswith("application/pdf")
+    assert pdf_response.content.startswith(b"%PDF")

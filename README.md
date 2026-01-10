@@ -16,6 +16,8 @@ Voice-first interview practice app for the Gemini hackathon.
 - `GEMINI_LIVE_MODEL`: override live audio model (default `gemini-2.5-flash-native-audio-preview-12-2025`)
 - `GEMINI_TEXT_MODEL`: override text model for questions/scoring (default `gemini-3`)
 - `APP_API_BASE`: API base path for the UI (default `/api`)
+- `SESSION_STORE_DIR`: session storage directory (default `app/session_store`)
+- `APP_USER_ID`: default user id for session storage (default `local`)
 - `PORT`: backend server port (default `8000`)
 - `UI_PORT`: static UI port when no backend is present (default `5173`)
 - `RELOAD`: set to `0` to disable uvicorn reload in `./run.sh ui`

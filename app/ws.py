@@ -44,6 +44,7 @@ class LiveWebSocketSession:
         self._stream_task: asyncio.Task | None = None
         self._gemini_bridge: GeminiLiveBridge | None = None
         self._active = True
+        self._user_id = self.settings.user_id
 
     async def run(self) -> None:
         await self.websocket.accept()
@@ -97,16 +98,18 @@ class LiveWebSocketSession:
 
     async def _handle_start(self, payload: dict[str, Any]) -> None:
         interview_id = payload.get("interview_id")
+        user_id = payload.get("user_id") or self.settings.user_id
+        self._user_id = user_id
         if not interview_id:
             await self._send({"type": "error", "message": "interview_id is required."})
             return
 
-        if not store.get(interview_id):
+        if not store.get(interview_id, self._user_id):
             await self._send({"type": "error", "message": "Interview not found."})
             return
 
         try:
-            live_payload = interview_service.start_live_session(interview_id)
+            live_payload = interview_service.start_live_session(interview_id, self._user_id)
         except RuntimeError as exc:
             await self._send({"type": "error", "message": str(exc)})
             return
@@ -130,7 +133,7 @@ class LiveWebSocketSession:
             if self._stream_task and not self._stream_task.done():
                 self._stream_task.cancel()
             self._stream_task = asyncio.create_task(
-                self._stream_mock_transcript(interview_id, mock_transcript)
+                self._stream_mock_transcript(interview_id, self._user_id, mock_transcript)
             )
 
     async def _start_gemini_session(self, interview_id: str) -> None:
@@ -146,6 +149,7 @@ class LiveWebSocketSession:
             api_key=api_key,
             model=self.settings.live_model,
             interview_id=interview_id,
+            user_id=self._user_id,
             send_json=self._send
         )
         try:
@@ -160,13 +164,13 @@ class LiveWebSocketSession:
         await self._gemini_bridge.stop()
         self._gemini_bridge = None
 
-    async def _stream_mock_transcript(self, interview_id: str, transcript: list[dict]) -> None:
+    async def _stream_mock_transcript(self, interview_id: str, user_id: str, transcript: list[dict]) -> None:
         try:
             for entry in transcript:
                 if not self._active:
                     break
                 await asyncio.sleep(0.12)
-                store.append_transcript_entry(interview_id, entry)
+                store.append_transcript_entry(interview_id, entry, user_id)
                 await self._send(
                     {
                         "type": "transcript",

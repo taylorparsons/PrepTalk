@@ -2,10 +2,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
+from typing import TYPE_CHECKING
 import uuid
 
+from .gemini_text import generate_interview_questions, score_interview_transcript
 from .mock_data import MOCK_FOCUS_AREAS, MOCK_QUESTIONS, MOCK_SCORE, MOCK_TRANSCRIPT
+from .pdf_text import extract_pdf_text
 from ..settings import load_settings
+
+if TYPE_CHECKING:
+    from .store import InterviewRecord
 
 
 @dataclass(frozen=True)
@@ -30,7 +36,7 @@ class InterviewAdapter:
     def start_live_session(self, interview_id: str) -> LiveSession:
         raise NotImplementedError
 
-    def score_interview(self, transcript: list[dict]) -> dict:
+    def score_interview(self, transcript: list[dict], record: "InterviewRecord" | None = None) -> dict:
         raise NotImplementedError
 
 
@@ -53,7 +59,7 @@ class MockInterviewAdapter(InterviewAdapter):
             mock_transcript=list(MOCK_TRANSCRIPT)
         )
 
-    def score_interview(self, transcript: list[dict]) -> dict:
+    def score_interview(self, transcript: list[dict], record: "InterviewRecord" | None = None) -> dict:
         score = dict(MOCK_SCORE)
         score["transcript"] = list(transcript)
         return score
@@ -77,7 +83,15 @@ class GeminiInterviewAdapter(InterviewAdapter):
         role_title: str | None
     ) -> tuple[list[str], list[str]]:
         self._ensure_configured()
-        raise RuntimeError("Gemini question generation not wired yet.")
+        resume_text = extract_pdf_text(resume_bytes)
+        job_text = extract_pdf_text(job_bytes)
+        return generate_interview_questions(
+            api_key=self.api_key,
+            model=self.settings.text_model,
+            resume_text=resume_text,
+            job_text=job_text,
+            role_title=role_title
+        )
 
     def start_live_session(self, interview_id: str) -> LiveSession:
         self._ensure_configured()
@@ -87,9 +101,15 @@ class GeminiInterviewAdapter(InterviewAdapter):
             message="Gemini Live session active."
         )
 
-    def score_interview(self, transcript: list[dict]) -> dict:
+    def score_interview(self, transcript: list[dict], record: "InterviewRecord" | None = None) -> dict:
         self._ensure_configured()
-        raise RuntimeError("Gemini scoring not wired yet.")
+        return score_interview_transcript(
+            api_key=self.api_key,
+            model=self.settings.text_model,
+            transcript=transcript,
+            role_title=getattr(record, "role_title", None),
+            focus_areas=getattr(record, "focus_areas", None)
+        )
 
 
 def get_adapter() -> InterviewAdapter:

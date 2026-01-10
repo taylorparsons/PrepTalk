@@ -1,6 +1,6 @@
 export function getAppConfig() {
   if (typeof window === 'undefined') {
-    return { apiBase: '/api', adapter: 'mock', liveModel: '', textModel: '' };
+    return { apiBase: '/api', adapter: 'mock', liveModel: '', textModel: '', userId: 'local' };
   }
 
   const config = window.__APP_CONFIG__ || {};
@@ -8,6 +8,7 @@ export function getAppConfig() {
     apiBase: config.apiBase || '/api',
     adapter: config.adapter || 'mock',
     liveModel: config.liveModel || '',
-    textModel: config.textModel || ''
+    textModel: config.textModel || '',
+    userId: config.userId || 'local'
   };
 }

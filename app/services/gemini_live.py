@@ -33,6 +33,17 @@ def _timestamp() -> str:
     return datetime.utcnow().strftime("%H:%M:%S")
 
 
+
+
+
+def _friendly_error(exc: Exception) -> str:
+    message = str(exc)
+    lowered = message.lower()
+    if "resource_exhausted" in lowered or "quota" in lowered or "429" in lowered:
+        return "Gemini quota exceeded. Try again later."
+    return message
+
+
 def _parse_sample_rate(mime_type: str | None, fallback: int) -> int:
     if not mime_type:
         return fallback
@@ -51,6 +62,7 @@ class GeminiLiveBridge:
         api_key: str,
         model: str,
         interview_id: str,
+        user_id: str,
         send_json: Callable[[dict[str, Any]], Awaitable[None]],
         input_sample_rate: int = 24000,
         output_sample_rate: int = 24000,
@@ -62,6 +74,7 @@ class GeminiLiveBridge:
         self._model = model
         self._interview_id = interview_id
         self._send_json = send_json
+        self._user_id = user_id
         self._input_sample_rate = input_sample_rate
         self._output_sample_rate = output_sample_rate
         self._system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
@@ -133,7 +146,7 @@ class GeminiLiveBridge:
         except asyncio.CancelledError:
             return
         except Exception as exc:
-            await self._send_json({"type": "error", "message": str(exc)})
+            await self._send_json({"type": "error", "message": _friendly_error(exc)})
 
     async def _receive_loop(self) -> None:
         assert self._session is not None
@@ -143,7 +156,7 @@ class GeminiLiveBridge:
         except asyncio.CancelledError:
             return
         except Exception as exc:
-            await self._send_json({"type": "error", "message": str(exc)})
+            await self._send_json({"type": "error", "message": _friendly_error(exc)})
 
     async def _handle_response(self, response: Any) -> None:
         server_content = getattr(response, "server_content", None)
@@ -184,7 +197,7 @@ class GeminiLiveBridge:
             "text": text,
             "timestamp": _timestamp()
         }
-        store.append_transcript_entry(self._interview_id, entry)
+        store.append_transcript_entry(self._interview_id, entry, self._user_id)
         await self._send_json({"type": "transcript", **entry, "is_final": True})
 
     async def _emit_audio(self, audio_bytes: bytes, mime_type: str | None) -> None:

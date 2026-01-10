@@ -5,6 +5,11 @@ function getApiBase() {
   return config.apiBase || '/api';
 }
 
+function getUserId() {
+  const config = getAppConfig();
+  return config.userId || 'local';
+}
+
 async function handleResponse(response) {
   if (response.ok) {
     return response.json();
@@ -33,6 +38,7 @@ export async function createInterview({ resumeFile, jobFile, roleTitle }) {
 
   const response = await fetch(`${getApiBase()}/interviews`, {
     method: 'POST',
+    headers: { 'X-User-Id': getUserId() },
     body: formData
   });
 
@@ -42,7 +48,7 @@ export async function createInterview({ resumeFile, jobFile, roleTitle }) {
 export async function startLiveSession({ interviewId }) {
   const response = await fetch(`${getApiBase()}/live/session`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
     body: JSON.stringify({ interview_id: interviewId })
   });
 
@@ -52,7 +58,7 @@ export async function startLiveSession({ interviewId }) {
 export async function scoreInterview({ interviewId, transcript }) {
   const response = await fetch(`${getApiBase()}/interviews/${interviewId}/score`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
     body: JSON.stringify({ transcript })
   });
 

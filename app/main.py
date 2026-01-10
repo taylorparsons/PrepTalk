@@ -26,7 +26,8 @@ def read_root(request: Request):
         "apiBase": settings.api_base,
         "adapter": settings.adapter,
         "liveModel": settings.live_model,
-        "textModel": settings.text_model
+        "textModel": settings.text_model,
+        "userId": settings.user_id
     }
     return templates.TemplateResponse(
         request,

@@ -307,8 +307,10 @@ function buildControlsPanel(state, ui, config) {
         onClose: () => {
           updateStatusPill(statusPill, { label: 'Disconnected', tone: 'warning' });
         },
-        onError: () => {
-          updateStatusPill(statusPill, { label: 'Connection error', tone: 'danger' });
+        onError: (payload) => {
+          const message = typeof payload === 'string' ? payload : payload?.message;
+          const label = message && message.length < 24 ? message : 'Connection error';
+          updateStatusPill(statusPill, { label, tone: 'danger' });
         },
         onSession: (payload) => {
           state.sessionId = payload.session_id;
@@ -319,6 +321,21 @@ function buildControlsPanel(state, ui, config) {
           });
         },
         onStatus: (payload) => {
+          if (payload.state === 'connected') {
+            updateStatusPill(statusPill, { label: 'Connected', tone: 'info' });
+          }
+          if (payload.state === 'reconnecting') {
+            updateStatusPill(statusPill, { label: 'Reconnecting', tone: 'warning' });
+          }
+          if (payload.state === 'reconnected') {
+            updateStatusPill(statusPill, { label: 'Reconnected', tone: 'info' });
+          }
+          if (payload.state === 'disconnected') {
+            updateStatusPill(statusPill, { label: 'Disconnected', tone: 'warning' });
+          }
+          if (payload.state === 'gemini-connected') {
+            updateStatusPill(statusPill, { label: 'Gemini live', tone: 'success' });
+          }
           if (payload.state === 'stream-complete') {
             updateStatusPill(statusPill, { label: 'Stream complete', tone: 'success' });
           }
@@ -358,15 +375,20 @@ function buildControlsPanel(state, ui, config) {
       return;
     }
 
-    state.audioCapture = await startMicrophoneCapture({
-      targetSampleRate: 24000,
-      onAudioFrame: (frame) => {
-        state.transport?.sendAudio(frame);
-      },
-      onStatus: () => {
-        updateStatusPill(statusPill, { label: 'Mic ready', tone: 'info' });
-      }
-    });
+    try {
+      state.audioCapture = await startMicrophoneCapture({
+        targetSampleRate: 24000,
+        onAudioFrame: (frame) => {
+          state.transport?.sendAudio(frame);
+        },
+        onStatus: () => {
+          updateStatusPill(statusPill, { label: 'Mic ready', tone: 'info' });
+        }
+      });
+    } catch (error) {
+      updateStatusPill(statusPill, { label: 'Mic blocked', tone: 'danger' });
+      throw error;
+    }
   }
 
   startButton.addEventListener('click', async () => {
@@ -388,8 +410,14 @@ function buildControlsPanel(state, ui, config) {
       }
       await state.audioPlayback.resume();
       await startMicrophoneIfNeeded();
-      state.transport.start(state.interviewId);
+      state.transport.start(state.interviewId, state.userId);
     } catch (error) {
+      if (config.adapter !== 'mock') {
+        updateStatusPill(statusPill, { label: 'Live error', tone: 'danger' });
+        startButton.disabled = false;
+        stopButton.disabled = true;
+        return;
+      }
       updateStatusPill(statusPill, { label: 'Fallback', tone: 'warning' });
       try {
         await startMockFallback();
@@ -548,6 +576,7 @@ export function buildVoiceLayout() {
     transcript: [],
     score: null,
     adapter: config.adapter,
+    userId: config.userId,
     liveMode: null,
     transport: null,
     audioCapture: null,

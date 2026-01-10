@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class TranscriptEntry(BaseModel):
@@ -26,6 +26,18 @@ class LiveSessionResponse(BaseModel):
     mode: str
     message: str
     mock_transcript: list[TranscriptEntry] | None = None
+
+
+class InterviewSummaryResponse(BaseModel):
+    interview_id: str
+    role_title: str | None = None
+    questions: list[str] = Field(default_factory=list)
+    focus_areas: list[str] = Field(default_factory=list)
+    overall_score: int | None = None
+    summary: str | None = None
+    strengths: list[str] = Field(default_factory=list)
+    improvements: list[str] = Field(default_factory=list)
+    transcript: list[TranscriptEntry] = Field(default_factory=list)
 
 
 class ScoreRequest(BaseModel):

@@ -1,5 +1,16 @@
 export class LiveTransport {
-  constructor({ url, onStatus, onTranscript, onSession, onAudio, onError, onOpen, onClose } = {}) {
+  constructor({
+    url,
+    onStatus,
+    onTranscript,
+    onSession,
+    onAudio,
+    onError,
+    onOpen,
+    onClose,
+    maxReconnectAttempts = 3,
+    reconnectDelayMs = 600
+  } = {}) {
     this.url = url || LiveTransport.defaultUrl();
     this.onStatus = onStatus;
     this.onTranscript = onTranscript;
@@ -10,6 +21,11 @@ export class LiveTransport {
     this.onClose = onClose;
     this.ws = null;
     this.openPromise = null;
+    this.shouldReconnect = true;
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = maxReconnectAttempts;
+    this.reconnectDelayMs = reconnectDelayMs;
+    this.reconnectTimer = null;
   }
 
   static defaultUrl() {
@@ -31,12 +47,17 @@ export class LiveTransport {
       return Promise.reject(new Error('WebSocket not supported.'));
     }
 
+    this.shouldReconnect = true;
+    this._clearReconnectTimer();
+
     this.ws = new WebSocket(this.url);
     this.ws.binaryType = 'arraybuffer';
 
     this.openPromise = new Promise((resolve, reject) => {
       this.ws.addEventListener('open', () => {
+        this.reconnectAttempts = 0;
         this.onOpen?.();
+        this.onStatus?.({ type: 'status', state: 'connected' });
         resolve();
       });
       this.ws.addEventListener('error', (event) => {
@@ -64,17 +85,23 @@ export class LiveTransport {
     });
 
     this.ws.addEventListener('close', () => {
+      if (this.shouldReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
+        this._scheduleReconnect();
+        return;
+      }
       this.onClose?.();
+      this.onStatus?.({ type: 'status', state: 'disconnected' });
     });
 
     return this.openPromise;
   }
 
-  start(interviewId) {
-    this.send({ type: 'start', interview_id: interviewId });
+  start(interviewId, userId) {
+    this.send({ type: 'start', interview_id: interviewId, user_id: userId });
   }
 
   stop() {
+    this.shouldReconnect = false;
     this.send({ type: 'stop' });
     this.close();
   }
@@ -105,11 +132,34 @@ export class LiveTransport {
   }
 
   close() {
+    this.shouldReconnect = false;
+    this._clearReconnectTimer();
     if (!this.ws) return;
     if (this.ws.readyState === WebSocket.CLOSING || this.ws.readyState === WebSocket.CLOSED) {
       return;
     }
     this.ws.close();
+  }
+
+  _scheduleReconnect() {
+    this.reconnectAttempts += 1;
+    this.onStatus?.({ type: 'status', state: 'reconnecting', attempt: this.reconnectAttempts });
+    const delay = this.reconnectDelayMs * this.reconnectAttempts;
+    this._clearReconnectTimer();
+    this.reconnectTimer = setTimeout(() => {
+      this.connect().then(() => {
+        this.onStatus?.({ type: 'status', state: 'reconnected' });
+      }).catch(() => {
+        // Let the next close attempt schedule another retry.
+      });
+    }, delay);
+  }
+
+  _clearReconnectTimer() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
   }
 
   _handleMessage(message) {

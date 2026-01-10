@@ -82,15 +82,15 @@ The backend runs a FastAPI service that handles uploads, session state, and Gemi
 - [x] Interview API endpoints (mock): create, live session, scoring.
 - [x] WebSocket endpoint for full-duplex audio streaming.
 - [x] Gemini Live adapter: session creation + audio frame forwarding.
-- [ ] Gemini text adapter: question generation + scoring.
-- [ ] Session store persistence on disk (`app/session_store/<user_id>`).
-- [ ] PDF study guide rendering + export endpoint (rubric + transcript + summary).
-- [ ] Error handling for mic denial, WS disconnects, and quota limits.
+- [x] Gemini text adapter: question generation + scoring.
+- [x] Session store persistence on disk (`app/session_store/<user_id>`).
+- [x] PDF study guide rendering + export endpoint (rubric + transcript + summary).
+- [x] Error handling for mic denial, WS disconnects, and quota limits.
 
 ### Frontend
 - [x] Voice-first UI shell (setup, controls, transcript, score).
 - [x] Microphone capture + audio playback pipeline (PCM16 @ 24 kHz).
-- [ ] WebSocket transport layer with reconnect + status.
+- [x] WebSocket transport layer with reconnect + status.
 - [x] Live transcript streaming + incremental updates.
 - [x] Responsive layout (split on desktop, stack on mobile).
 
