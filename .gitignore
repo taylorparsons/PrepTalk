@@ -1,1 +1,10 @@
 .DS_Store
+node_modules/
+coverage/
+dist/
+.vite/
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
