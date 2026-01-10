@@ -5,6 +5,7 @@ import json
 from typing import Any
 
 from fastapi import WebSocket
+from starlette.websockets import WebSocketDisconnect
 
 from .services import interview_service
 from .services.adapters import get_adapter
@@ -27,7 +28,11 @@ class LiveWebSocketSession:
 
         try:
             while self._active:
-                message = await self.websocket.receive()
+                try:
+                    message = await self.websocket.receive()
+                except WebSocketDisconnect:
+                    break
+
                 if message.get("type") == "websocket.disconnect":
                     break
 
@@ -126,7 +131,7 @@ class LiveWebSocketSession:
         async with self._send_lock:
             try:
                 await self.websocket.send_json(payload)
-            except RuntimeError:
+            except (RuntimeError, WebSocketDisconnect):
                 self._active = False
 
     async def _shutdown(self) -> None:

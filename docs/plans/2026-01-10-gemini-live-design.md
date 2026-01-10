@@ -91,13 +91,13 @@ The backend runs a FastAPI service that handles uploads, session state, and Gemi
 - [x] Voice-first UI shell (setup, controls, transcript, score).
 - [ ] Microphone capture + audio playback pipeline (PCM16 @ 24 kHz).
 - [ ] WebSocket transport layer with reconnect + status.
-- [ ] Live transcript streaming + incremental updates.
+- [x] Live transcript streaming + incremental updates.
 - [x] Responsive layout (split on desktop, stack on mobile).
 
 ### Testing
 - [x] API tests for session lifecycle (mock adapter).
 - [x] Playwright E2E flow (mock adapter).
-- [ ] Mocked Gemini Live streaming tests for event flow.
+- [x] Mocked Gemini Live streaming tests for event flow.
 - [ ] Manual voice smoke tests (mic permissions + latency).
 - [ ] Optional live-mode E2E with AI Studio persona.
 

@@ -6,6 +6,8 @@ import {
 } from './components/index.js';
 import { createInterview, scoreInterview, startLiveSession } from './api/client.js';
 import { getAppConfig } from './config.js';
+import { LiveTransport } from './transport.js';
+import { startMicrophoneCapture } from './voice.js';
 
 const STATUS_TONES = ['neutral', 'success', 'warning', 'danger', 'info'];
 
@@ -250,7 +252,97 @@ function buildControlsPanel(state, ui, config) {
 
   const meta = document.createElement('p');
   meta.className = 'ui-meta';
-  meta.textContent = `Adapter: ${state.adapter}`;
+  meta.textContent = `Adapter: ${state.adapter} | Live: ${config.liveModel}`;
+
+  function resetSessionState() {
+    state.transcript = [];
+    state.score = null;
+    state.sessionId = null;
+    state.liveMode = null;
+    renderTranscript(ui.transcriptList, state.transcript);
+    renderScore(ui, null);
+  }
+
+  async function startMockFallback() {
+    const live = await startLiveSession({ interviewId: state.interviewId });
+    state.sessionId = live.session_id;
+    state.liveMode = live.mode;
+    updateStatusPill(statusPill, {
+      label: live.mode === 'mock' ? 'Mock Live' : 'Live',
+      tone: 'success'
+    });
+
+    if (live.mock_transcript?.length) {
+      state.transcript = [];
+      renderTranscript(ui.transcriptList, state.transcript);
+      const delay = config.adapter === 'mock' ? 120 : 220;
+      live.mock_transcript.forEach((entry, index) => {
+        window.setTimeout(() => {
+          state.transcript.push(entry);
+          renderTranscript(ui.transcriptList, state.transcript);
+        }, delay * index);
+      });
+    }
+  }
+
+  async function ensureTransport() {
+    if (!state.transport) {
+      state.transport = new LiveTransport({
+        onOpen: () => {
+          updateStatusPill(statusPill, { label: 'Connected', tone: 'info' });
+        },
+        onClose: () => {
+          updateStatusPill(statusPill, { label: 'Disconnected', tone: 'warning' });
+        },
+        onError: () => {
+          updateStatusPill(statusPill, { label: 'Connection error', tone: 'danger' });
+        },
+        onSession: (payload) => {
+          state.sessionId = payload.session_id;
+          state.liveMode = payload.mode;
+          updateStatusPill(statusPill, {
+            label: payload.mode === 'mock' ? 'Mock Live' : 'Live',
+            tone: 'success'
+          });
+        },
+        onStatus: (payload) => {
+          if (payload.state === 'stream-complete') {
+            updateStatusPill(statusPill, { label: 'Stream complete', tone: 'success' });
+          }
+          if (payload.state === 'stopped') {
+            updateStatusPill(statusPill, { label: 'Stopped', tone: 'warning' });
+          }
+        },
+        onTranscript: (payload) => {
+          const entry = {
+            role: payload.role,
+            text: payload.text,
+            timestamp: payload.timestamp
+          };
+          state.transcript.push(entry);
+          renderTranscript(ui.transcriptList, state.transcript);
+        }
+      });
+    }
+
+    await state.transport.connect();
+  }
+
+  async function startMicrophoneIfNeeded() {
+    if (config.adapter === 'mock') {
+      return;
+    }
+
+    state.audioCapture = await startMicrophoneCapture({
+      targetSampleRate: 24000,
+      onAudioFrame: (frame) => {
+        state.transport?.sendAudio(frame);
+      },
+      onStatus: () => {
+        updateStatusPill(statusPill, { label: 'Mic ready', tone: 'info' });
+      }
+    });
+  }
 
   startButton.addEventListener('click', async () => {
     if (!state.interviewId) {
@@ -261,37 +353,37 @@ function buildControlsPanel(state, ui, config) {
     startButton.disabled = true;
     stopButton.disabled = false;
     updateStatusPill(statusPill, { label: 'Connecting', tone: 'info' });
+    resetSessionState();
 
     try {
-      const live = await startLiveSession({ interviewId: state.interviewId });
-      state.sessionId = live.session_id;
-      state.liveMode = live.mode;
-      updateStatusPill(statusPill, {
-        label: live.mode === 'mock' ? 'Mock Live' : 'Live',
-        tone: 'success'
-      });
-
-      if (live.mock_transcript?.length) {
-        state.transcript = [];
-        renderTranscript(ui.transcriptList, state.transcript);
-        const delay = config.adapter === 'mock' ? 120 : 220;
-        live.mock_transcript.forEach((entry, index) => {
-          window.setTimeout(() => {
-            state.transcript.push(entry);
-            renderTranscript(ui.transcriptList, state.transcript);
-          }, delay * index);
-        });
-      }
+      await ensureTransport();
+      await startMicrophoneIfNeeded();
+      state.transport.start(state.interviewId);
     } catch (error) {
-      updateStatusPill(statusPill, { label: 'Error', tone: 'danger' });
-      stopButton.disabled = true;
-      startButton.disabled = false;
+      updateStatusPill(statusPill, { label: 'Fallback', tone: 'warning' });
+      try {
+        await startMockFallback();
+      } catch (fallbackError) {
+        updateStatusPill(statusPill, { label: 'Error', tone: 'danger' });
+        startButton.disabled = false;
+        stopButton.disabled = true;
+      }
     }
   });
 
   stopButton.addEventListener('click', async () => {
     stopButton.disabled = true;
     updateStatusPill(statusPill, { label: 'Scoring', tone: 'info' });
+
+    if (state.transport) {
+      state.transport.stop();
+      state.transport = null;
+    }
+
+    if (state.audioCapture) {
+      await state.audioCapture.stop();
+      state.audioCapture = null;
+    }
 
     try {
       const score = await scoreInterview({
@@ -420,7 +512,9 @@ export function buildVoiceLayout() {
     transcript: [],
     score: null,
     adapter: config.adapter,
-    liveMode: null
+    liveMode: null,
+    transport: null,
+    audioCapture: null
   };
 
   const ui = {};
