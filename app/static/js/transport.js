@@ -1,9 +1,10 @@
 export class LiveTransport {
-  constructor({ url, onStatus, onTranscript, onSession, onError, onOpen, onClose } = {}) {
+  constructor({ url, onStatus, onTranscript, onSession, onAudio, onError, onOpen, onClose } = {}) {
     this.url = url || LiveTransport.defaultUrl();
     this.onStatus = onStatus;
     this.onTranscript = onTranscript;
     this.onSession = onSession;
+    this.onAudio = onAudio;
     this.onError = onError;
     this.onOpen = onOpen;
     this.onClose = onClose;
@@ -47,6 +48,18 @@ export class LiveTransport {
     this.ws.addEventListener('message', (event) => {
       if (typeof event.data === 'string') {
         this._handleMessage(event.data);
+        return;
+      }
+
+      if (event.data instanceof ArrayBuffer) {
+        this.onAudio?.(event.data);
+        return;
+      }
+
+      if (event.data instanceof Blob) {
+        event.data.arrayBuffer().then((buffer) => {
+          this.onAudio?.(buffer);
+        });
       }
     });
 
@@ -107,6 +120,8 @@ export class LiveTransport {
       this.onTranscript?.(payload);
     } else if (payload.type === 'session') {
       this.onSession?.(payload);
+    } else if (payload.type === 'audio') {
+      this.onAudio?.(payload);
     } else if (payload.type === 'error') {
       this.onError?.(payload);
     }

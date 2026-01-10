@@ -89,7 +89,7 @@ The backend runs a FastAPI service that handles uploads, session state, and Gemi
 
 ### Frontend
 - [x] Voice-first UI shell (setup, controls, transcript, score).
-- [ ] Microphone capture + audio playback pipeline (PCM16 @ 24 kHz).
+- [x] Microphone capture + audio playback pipeline (PCM16 @ 24 kHz).
 - [ ] WebSocket transport layer with reconnect + status.
 - [x] Live transcript streaming + incremental updates.
 - [x] Responsive layout (split on desktop, stack on mobile).

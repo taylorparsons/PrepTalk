@@ -7,7 +7,7 @@ import {
 import { createInterview, scoreInterview, startLiveSession } from './api/client.js';
 import { getAppConfig } from './config.js';
 import { LiveTransport } from './transport.js';
-import { startMicrophoneCapture } from './voice.js';
+import { createAudioPlayback, decodePcm16Base64, startMicrophoneCapture } from './voice.js';
 
 const STATUS_TONES = ['neutral', 'success', 'warning', 'danger', 'info'];
 
@@ -132,6 +132,19 @@ function renderScore(ui, score) {
     li.textContent = item;
     ui.scoreImprovements.appendChild(li);
   });
+}
+
+function coercePcm16(payload) {
+  if (!payload) return null;
+  if (payload instanceof Int16Array) return payload;
+  if (payload instanceof ArrayBuffer) return new Int16Array(payload);
+  if (payload.data && typeof payload.data === 'string') {
+    return decodePcm16Base64(payload.data);
+  }
+  if (payload.pcm16 && payload.pcm16 instanceof ArrayBuffer) {
+    return new Int16Array(payload.pcm16);
+  }
+  return null;
 }
 
 function buildSetupPanel(state, ui) {
@@ -321,6 +334,12 @@ function buildControlsPanel(state, ui, config) {
           };
           state.transcript.push(entry);
           renderTranscript(ui.transcriptList, state.transcript);
+        },
+        onAudio: (payload) => {
+          const pcm16 = coercePcm16(payload);
+          if (pcm16 && state.audioPlayback) {
+            state.audioPlayback.play(pcm16);
+          }
         }
       });
     }
@@ -357,6 +376,10 @@ function buildControlsPanel(state, ui, config) {
 
     try {
       await ensureTransport();
+      if (!state.audioPlayback) {
+        state.audioPlayback = createAudioPlayback({ sampleRate: 24000 });
+      }
+      await state.audioPlayback.resume();
       await startMicrophoneIfNeeded();
       state.transport.start(state.interviewId);
     } catch (error) {
@@ -383,6 +406,11 @@ function buildControlsPanel(state, ui, config) {
     if (state.audioCapture) {
       await state.audioCapture.stop();
       state.audioCapture = null;
+    }
+
+    if (state.audioPlayback) {
+      await state.audioPlayback.stop();
+      state.audioPlayback = null;
     }
 
     try {
@@ -514,7 +542,8 @@ export function buildVoiceLayout() {
     adapter: config.adapter,
     liveMode: null,
     transport: null,
-    audioCapture: null
+    audioCapture: null,
+    audioPlayback: null
   };
 
   const ui = {};

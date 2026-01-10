@@ -38,6 +38,26 @@ function floatTo16BitPCM(buffer) {
   return output;
 }
 
+function pcm16ToFloat32(pcm16) {
+  const output = new Float32Array(pcm16.length);
+  for (let i = 0; i < pcm16.length; i += 1) {
+    output[i] = pcm16[i] / 0x8000;
+  }
+  return output;
+}
+
+export function decodePcm16Base64(base64) {
+  if (!base64) return null;
+  if (typeof atob === 'undefined') return null;
+  const binary = atob(base64);
+  const buffer = new ArrayBuffer(binary.length);
+  const view = new Uint8Array(buffer);
+  for (let i = 0; i < binary.length; i += 1) {
+    view[i] = binary.charCodeAt(i);
+  }
+  return new Int16Array(buffer);
+}
+
 export async function startMicrophoneCapture({
   onAudioFrame,
   onStatus,
@@ -91,5 +111,50 @@ export async function startMicrophoneCapture({
   return {
     stop,
     sampleRate: targetSampleRate
+  };
+}
+
+export function createAudioPlayback({ sampleRate = DEFAULT_SAMPLE_RATE } = {}) {
+  let context;
+  try {
+    context = new AudioContext({ sampleRate });
+  } catch (error) {
+    context = new AudioContext();
+  }
+  let nextTime = 0;
+
+  function schedule(pcm16) {
+    if (!pcm16 || pcm16.length === 0) return;
+    const buffer = context.createBuffer(1, pcm16.length, sampleRate);
+    const channel = buffer.getChannelData(0);
+    channel.set(pcm16ToFloat32(pcm16));
+
+    const source = context.createBufferSource();
+    source.buffer = buffer;
+    source.connect(context.destination);
+
+    if (nextTime < context.currentTime) {
+      nextTime = context.currentTime;
+    }
+    source.start(nextTime);
+    nextTime += buffer.duration;
+  }
+
+  async function resume() {
+    if (context.state === 'suspended') {
+      await context.resume();
+    }
+  }
+
+  async function stop() {
+    if (context.state !== 'closed') {
+      await context.close();
+    }
+  }
+
+  return {
+    play: schedule,
+    resume,
+    stop
   };
 }
