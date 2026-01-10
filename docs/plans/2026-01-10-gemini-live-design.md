@@ -99,7 +99,7 @@ The backend runs a FastAPI service that handles uploads, session state, and Gemi
 - [x] Playwright E2E flow (mock adapter).
 - [x] Mocked Gemini Live streaming tests for event flow.
 - [ ] Manual voice smoke tests (mic permissions + latency).
-- [ ] Optional live-mode E2E with AI Studio persona.
+- [x] Optional live-mode E2E with AI Studio persona (gated by `E2E_LIVE=1`).
 
 ### Hackathon Deliverables
 - [ ] AI Studio demo link.

@@ -22,6 +22,7 @@ Voice-first interview practice app for the Gemini hackathon.
 - `UI_PORT`: static UI port when no backend is present (default `5173`)
 - `RELOAD`: set to `0` to disable uvicorn reload in `./run.sh ui`
 - `E2E_BASE_URL`: override Playwright base URL (default `http://localhost:8000`)
+- `E2E_LIVE`: set to `1` to run the optional live Gemini Playwright test
 
 ## Tests
 
@@ -38,6 +39,11 @@ API tests (pytest):
 E2E tests (Playwright, starts the app automatically):
 ```bash
 npm run test:e2e
+```
+
+Optional live Gemini E2E (requires `GEMINI_API_KEY`):
+```bash
+E2E_LIVE=1 GEMINI_API_KEY=your-key npm run test:e2e
 ```
 
 E2E via helper script (same harness as above):
