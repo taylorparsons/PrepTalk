@@ -67,3 +67,35 @@ The backend runs a FastAPI service that handles uploads, session state, and Gemi
 - Gemini 3 is central to questions, live coaching, and summaries.
 - English UI and submission materials.
 - Provide AI Studio demo link, public repo, 3-minute video, and Gemini integration write-up.
+
+
+## Implementation Checklist
+
+### Backend
+- [x] FastAPI scaffold and base routes (`/`, `/health`).
+- [x] Interview API endpoints (mock): create, live session, scoring.
+- [ ] WebSocket endpoint for full-duplex audio streaming.
+- [ ] Gemini Live adapter: session creation + audio frame forwarding.
+- [ ] Gemini text adapter: question generation + scoring.
+- [ ] Session store persistence on disk (`app/session_store`).
+- [ ] PDF study guide rendering + export endpoint.
+- [ ] Error handling for mic denial, WS disconnects, and quota limits.
+
+### Frontend
+- [x] Voice-first UI shell (setup, controls, transcript, score).
+- [ ] Microphone capture + audio playback pipeline.
+- [ ] WebSocket transport layer with reconnect + status.
+- [ ] Live transcript streaming + incremental updates.
+- [x] Responsive layout (split on desktop, stack on mobile).
+
+### Testing
+- [x] API tests for session lifecycle (mock adapter).
+- [x] Playwright E2E flow (mock adapter).
+- [ ] Mocked Gemini Live streaming tests for event flow.
+- [ ] Manual voice smoke tests (mic permissions + latency).
+- [ ] Optional live-mode E2E with AI Studio persona.
+
+### Hackathon Deliverables
+- [ ] AI Studio demo link.
+- [ ] Gemini integration write-up.
+- [ ] 3-minute demo video.
