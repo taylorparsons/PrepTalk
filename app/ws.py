@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
+import math
 from typing import Any
 
 from fastapi import WebSocket
@@ -12,6 +14,25 @@ from .services.adapters import get_adapter
 from .services.store import store
 from .settings import load_settings
 
+
+
+
+MOCK_AUDIO_SAMPLE_RATE = 24000
+MOCK_AUDIO_BASE64 = None
+
+
+def _mock_audio_base64(duration_ms: int = 180, frequency: float = 440.0) -> str:
+    global MOCK_AUDIO_BASE64
+    if MOCK_AUDIO_BASE64 is not None:
+        return MOCK_AUDIO_BASE64
+    sample_count = int(MOCK_AUDIO_SAMPLE_RATE * duration_ms / 1000)
+    amplitude = 0.2
+    pcm = bytearray()
+    for i in range(sample_count):
+        value = int(amplitude * 32767 * math.sin(2 * math.pi * frequency * i / MOCK_AUDIO_SAMPLE_RATE))
+        pcm.extend(int(value).to_bytes(2, byteorder='little', signed=True))
+    MOCK_AUDIO_BASE64 = base64.b64encode(pcm).decode('ascii')
+    return MOCK_AUDIO_BASE64
 
 class LiveWebSocketSession:
     def __init__(self, websocket: WebSocket) -> None:
@@ -114,6 +135,15 @@ class LiveWebSocketSession:
                         "text": entry.get("text", ""),
                         "timestamp": entry.get("timestamp", ""),
                         "is_final": True
+                    }
+                )
+
+                await self._send(
+                    {
+                        "type": "audio",
+                        "encoding": "pcm16",
+                        "sample_rate": MOCK_AUDIO_SAMPLE_RATE,
+                        "data": _mock_audio_base64()
                     }
                 )
 

@@ -58,7 +58,15 @@ def test_websocket_streams_mock_transcript(monkeypatch):
         assert session["interview_id"] == interview_id
         assert session["mode"] == "mock"
 
-        transcript = _receive_until(websocket, "transcript")
+        messages = []
+        for _ in range(4):
+            messages.append(websocket.receive_json())
+
+        types = {msg.get("type") for msg in messages}
+        assert "transcript" in types
+        assert "audio" in types
+
+        transcript = next(msg for msg in messages if msg.get("type") == "transcript")
         assert transcript["role"] in {"coach", "candidate"}
         assert transcript["text"]
 
