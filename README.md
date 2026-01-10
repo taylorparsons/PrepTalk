@@ -9,6 +9,18 @@ Voice-first interview practice app for the Gemini hackathon.
 ./run.sh ui
 ```
 
+## Run Modes
+
+Script modes (`./run.sh`):
+- `./run.sh install`: create venv + install Python deps + npm install
+- `./run.sh ui`: start the app
+- `./run.sh test`: run Vitest UI tests
+- `./run.sh e2e`: run Playwright E2E tests
+
+Adapter modes (set in `.env`):
+- `INTERVIEW_ADAPTER=mock`: mock questions, transcript, scoring
+- `INTERVIEW_ADAPTER=gemini`: Gemini Live + Gemini text scoring (requires `GEMINI_API_KEY`)
+
 ## Environment
 
 - `INTERVIEW_ADAPTER`: `mock` (default) or `gemini`
