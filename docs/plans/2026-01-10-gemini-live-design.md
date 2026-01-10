@@ -17,17 +17,23 @@
 - Third-party voice services.
 - Production-scale auth, billing, or team management.
 
+## Decisions
+- Audio streaming format: PCM16 mono at 24 kHz in ~20 ms frames for natural conversation.
+- Study guide includes rubric, transcript, and summary.
+- Session persistence is per user, stored under app/session_store/<user_id>.
+
 ## Architecture Overview
-The backend runs a FastAPI service that handles uploads, session state, and Gemini 3 calls. A WebSocket endpoint bridges the browser microphone stream to Gemini Live and streams audio responses back to the client. A separate Gemini text client handles agenda generation and post-session summaries. Session data is stored as JSON on disk and used to generate a PDF study guide at the end of each session.
+The backend runs a FastAPI service that handles uploads, session state, and Gemini 3 calls. A WebSocket endpoint bridges the browser microphone stream to Gemini Live and streams audio responses back to the client. A separate Gemini text client handles agenda generation and post-session summaries. Session data is stored as per-user JSON on disk (app/session_store/<user_id>) and used to generate a PDF study guide with rubric, transcript, and summary.
 
 ## Components
 ### Backend
 - FastAPI routes for session creation, upload, summary retrieval, and PDF export.
 - WebSocket route for Gemini Live audio streaming.
+- Audio format for live streaming: PCM16 mono @ 24 kHz (~20 ms frames).
 - Gemini Live client to create sessions, forward audio frames, and receive audio or transcript events.
 - Gemini text client for question agenda and summary generation.
-- Session store for JSON persistence under app/session_store.
-- PDF renderer using WeasyPrint or a similar library.
+- Session store for per-user JSON persistence under app/session_store/<user_id>.
+- PDF renderer using WeasyPrint or a similar library (includes rubric + transcript + summary).
 - Test-only Gemini Live adapter to simulate streaming events for E2E tests.
 
 ### Frontend
@@ -43,7 +49,7 @@ The backend runs a FastAPI service that handles uploads, session state, and Gemi
 3. User starts the live interview; browser streams mic audio to the backend.
 4. Backend forwards audio to Gemini Live; receives audio and transcript events.
 5. Client plays coach audio and renders rolling transcripts.
-6. On stop, backend runs Gemini summary model and generates a PDF study guide.
+6. On stop, backend runs Gemini summary model and generates a PDF study guide with rubric and transcript.
 
 ## Error Handling and Resilience
 - Mic permission denied: block the session and display clear re-enable steps.
@@ -77,13 +83,13 @@ The backend runs a FastAPI service that handles uploads, session state, and Gemi
 - [ ] WebSocket endpoint for full-duplex audio streaming.
 - [ ] Gemini Live adapter: session creation + audio frame forwarding.
 - [ ] Gemini text adapter: question generation + scoring.
-- [ ] Session store persistence on disk (`app/session_store`).
-- [ ] PDF study guide rendering + export endpoint.
+- [ ] Session store persistence on disk (`app/session_store/<user_id>`).
+- [ ] PDF study guide rendering + export endpoint (rubric + transcript + summary).
 - [ ] Error handling for mic denial, WS disconnects, and quota limits.
 
 ### Frontend
 - [x] Voice-first UI shell (setup, controls, transcript, score).
-- [ ] Microphone capture + audio playback pipeline.
+- [ ] Microphone capture + audio playback pipeline (PCM16 @ 24 kHz).
 - [ ] WebSocket transport layer with reconnect + status.
 - [ ] Live transcript streaming + incremental updates.
 - [x] Responsive layout (split on desktop, stack on mobile).
