@@ -8,17 +8,20 @@ MODE="${1:-ui}"
 
 usage() {
   cat <<'USAGE'
-Usage: ./run.sh [install|ui|test]
+Usage: ./run.sh [install|ui|test|e2e]
 
 install  Create venv (if missing), install Python deps (if requirements.txt), and npm install.
 ui       Install deps and serve UI (static server if no backend entrypoint).
 test     Run UI component tests (Vitest).
+e2e      Run Playwright E2E tests.
 
 Env vars:
-  VENV_DIR    Path to virtualenv directory (default: ./.venv)
-  PYTHON_BIN  Python interpreter to use (default: python3)
-  UI_PORT     Port for static UI server (default: 5173)
-  PORT        Port for backend server if app/main.py exists (default: 8000)
+  VENV_DIR           Path to virtualenv directory (default: ./.venv)
+  PYTHON_BIN         Python interpreter to use (default: python3)
+  UI_PORT            Port for static UI server (default: 5173)
+  PORT               Port for backend server if app/main.py exists (default: 8000)
+  RELOAD             Set to 0 to disable uvicorn reload (default: 1)
+  PLAYWRIGHT_INSTALL Set to 1 to install Playwright browsers during e2e
 USAGE
 }
 
@@ -49,12 +52,18 @@ ensure_node() {
 
 install_ui() {
   if [[ -f "$ROOT_DIR/package.json" ]]; then
-    if [[ -f "$ROOT_DIR/package-lock.json" ]]; then
-      npm install
-    else
-      npm install
-    fi
+    npm install
   fi
+}
+
+start_backend() {
+  local reload_flag="--reload"
+  if [[ "${RELOAD:-1}" != "1" ]]; then
+    reload_flag=""
+  fi
+
+  echo "Starting backend server on ${PORT:-8000}"
+  exec "$VENV_DIR/bin/uvicorn" app.main:app --host 0.0.0.0 --port "${PORT:-8000}" $reload_flag
 }
 
 case "$MODE" in
@@ -69,8 +78,7 @@ case "$MODE" in
     install_ui
 
     if [[ -f "$ROOT_DIR/app/main.py" ]]; then
-      echo "Starting backend server on ${PORT:-8000}"
-      exec "$VENV_DIR/bin/uvicorn" app.main:app --host 0.0.0.0 --port "${PORT:-8000}" --reload
+      start_backend
     else
       STATIC_DIR="$ROOT_DIR/app/static"
       if [[ ! -d "$STATIC_DIR" ]]; then
@@ -84,6 +92,14 @@ case "$MODE" in
   test)
     ensure_node
     npm test
+    ;;
+  e2e)
+    ensure_node
+    install_ui
+    if [[ "${PLAYWRIGHT_INSTALL:-0}" == "1" ]]; then
+      npx playwright install
+    fi
+    npm run test:e2e
     ;;
   *)
     usage

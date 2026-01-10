@@ -7,8 +7,17 @@ describe('voice layout', () => {
     document.body.appendChild(layout);
 
     expect(layout.classList.contains('layout-split')).toBe(true);
-    expect(layout.querySelector('.ui-panel__title')?.textContent).toContain('Session Controls');
-    expect(layout.querySelectorAll('.ui-panel__title')[1]?.textContent).toContain('Live Transcript');
+    const titles = Array.from(layout.querySelectorAll('.ui-panel__title')).map((node) => node.textContent);
+
+    expect(titles).toEqual(
+      expect.arrayContaining([
+        'Candidate Setup',
+        'Session Controls',
+        'Interview Questions',
+        'Live Transcript',
+        'Score Summary'
+      ])
+    );
   });
 
   it('mounts the layout into a root container', () => {
@@ -16,6 +25,6 @@ describe('voice layout', () => {
     mountVoiceApp(root);
 
     expect(root.children.length).toBeGreaterThan(0);
-    expect(root.querySelector('.ui-transcript__row')).toBeTruthy();
+    expect(root.querySelector('[data-testid="transcript-list"]')).toBeTruthy();
   });
 });

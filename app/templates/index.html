@@ -8,6 +8,9 @@
   </head>
   <body>
     <div id="app" class="app-shell"></div>
+    <script>
+      window.__APP_CONFIG__ = {{ app_config | safe }};
+    </script>
     <script type="module" src="/static/js/app.js"></script>
   </body>
 </html>
