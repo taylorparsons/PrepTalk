@@ -86,8 +86,16 @@ export class LiveTransport {
       this.ws.send(pcm16);
       return;
     }
+    if (ArrayBuffer.isView(pcm16)) {
+      this.ws.send(pcm16);
+      return;
+    }
     if (pcm16.buffer) {
-      this.ws.send(pcm16.buffer);
+      const slice = pcm16.buffer.slice(
+        pcm16.byteOffset || 0,
+        (pcm16.byteOffset || 0) + (pcm16.byteLength || pcm16.buffer.byteLength)
+      );
+      this.ws.send(slice);
     }
   }
 

@@ -11,6 +11,7 @@ from starlette.websockets import WebSocketDisconnect
 
 from .services import interview_service
 from .services.adapters import get_adapter
+from .services.gemini_live import GeminiLiveBridge
 from .services.store import store
 from .settings import load_settings
 
@@ -41,6 +42,7 @@ class LiveWebSocketSession:
         self.settings = load_settings()
         self._send_lock = asyncio.Lock()
         self._stream_task: asyncio.Task | None = None
+        self._gemini_bridge: GeminiLiveBridge | None = None
         self._active = True
 
     async def run(self) -> None:
@@ -58,7 +60,8 @@ class LiveWebSocketSession:
                     break
 
                 if message.get("bytes") is not None:
-                    # Binary audio frames can be handled here in the future.
+                    if self._gemini_bridge:
+                        await self._gemini_bridge.send_audio(message["bytes"])
                     continue
 
                 if not message.get("text"):
@@ -81,7 +84,13 @@ class LiveWebSocketSession:
         elif message_type == "stop":
             await self._handle_stop()
         elif message_type == "audio":
-            # Audio frames are accepted for future Gemini Live handling.
+            if self._gemini_bridge and payload.get("data"):
+                try:
+                    audio_bytes = base64.b64decode(payload["data"])
+                except (ValueError, TypeError):
+                    await self._send({"type": "error", "message": "Invalid audio payload."})
+                    return
+                await self._gemini_bridge.send_audio(audio_bytes)
             return
         else:
             await self._send({"type": "error", "message": "Unknown message type."})
@@ -113,6 +122,9 @@ class LiveWebSocketSession:
             }
         )
 
+        if self.adapter.name == "gemini":
+            await self._start_gemini_session(interview_id)
+
         mock_transcript = live_payload.get("mock_transcript")
         if mock_transcript:
             if self._stream_task and not self._stream_task.done():
@@ -120,6 +132,33 @@ class LiveWebSocketSession:
             self._stream_task = asyncio.create_task(
                 self._stream_mock_transcript(interview_id, mock_transcript)
             )
+
+    async def _start_gemini_session(self, interview_id: str) -> None:
+        if self._gemini_bridge is not None:
+            await self._stop_gemini_session()
+
+        api_key = getattr(self.adapter, "api_key", None)
+        if not api_key:
+            await self._send({"type": "error", "message": "GEMINI_API_KEY is required."})
+            return
+
+        self._gemini_bridge = GeminiLiveBridge(
+            api_key=api_key,
+            model=self.settings.live_model,
+            interview_id=interview_id,
+            send_json=self._send
+        )
+        try:
+            await self._gemini_bridge.connect()
+        except Exception as exc:
+            await self._send({"type": "error", "message": str(exc)})
+            await self._stop_gemini_session()
+
+    async def _stop_gemini_session(self) -> None:
+        if self._gemini_bridge is None:
+            return
+        await self._gemini_bridge.stop()
+        self._gemini_bridge = None
 
     async def _stream_mock_transcript(self, interview_id: str, transcript: list[dict]) -> None:
         try:
@@ -155,6 +194,7 @@ class LiveWebSocketSession:
         self._active = False
         if self._stream_task and not self._stream_task.done():
             self._stream_task.cancel()
+        await self._stop_gemini_session()
         await self._send({"type": "status", "state": "stopped"})
 
     async def _send(self, payload: dict[str, Any]) -> None:
@@ -168,6 +208,7 @@ class LiveWebSocketSession:
         self._active = False
         if self._stream_task and not self._stream_task.done():
             self._stream_task.cancel()
+        await self._stop_gemini_session()
         try:
             await self.websocket.close()
         except RuntimeError:

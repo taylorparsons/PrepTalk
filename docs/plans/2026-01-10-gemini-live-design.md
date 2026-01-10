@@ -81,7 +81,7 @@ The backend runs a FastAPI service that handles uploads, session state, and Gemi
 - [x] FastAPI scaffold and base routes (`/`, `/health`).
 - [x] Interview API endpoints (mock): create, live session, scoring.
 - [x] WebSocket endpoint for full-duplex audio streaming.
-- [ ] Gemini Live adapter: session creation + audio frame forwarding.
+- [x] Gemini Live adapter: session creation + audio frame forwarding.
 - [ ] Gemini text adapter: question generation + scoring.
 - [ ] Session store persistence on disk (`app/session_store/<user_id>`).
 - [ ] PDF study guide rendering + export endpoint (rubric + transcript + summary).

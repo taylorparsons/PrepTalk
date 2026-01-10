@@ -337,9 +337,15 @@ function buildControlsPanel(state, ui, config) {
         },
         onAudio: (payload) => {
           const pcm16 = coercePcm16(payload);
-          if (pcm16 && state.audioPlayback) {
-            state.audioPlayback.play(pcm16);
+          if (!pcm16) return;
+          const sampleRate = payload?.sample_rate || 24000;
+          if (!state.audioPlayback || state.audioPlaybackSampleRate !== sampleRate) {
+            state.audioPlayback?.stop();
+            state.audioPlayback = createAudioPlayback({ sampleRate });
+            state.audioPlaybackSampleRate = sampleRate;
+            state.audioPlayback.resume();
           }
+          state.audioPlayback.play(pcm16);
         }
       });
     }
@@ -378,6 +384,7 @@ function buildControlsPanel(state, ui, config) {
       await ensureTransport();
       if (!state.audioPlayback) {
         state.audioPlayback = createAudioPlayback({ sampleRate: 24000 });
+        state.audioPlaybackSampleRate = 24000;
       }
       await state.audioPlayback.resume();
       await startMicrophoneIfNeeded();
@@ -411,6 +418,7 @@ function buildControlsPanel(state, ui, config) {
     if (state.audioPlayback) {
       await state.audioPlayback.stop();
       state.audioPlayback = null;
+      state.audioPlaybackSampleRate = null;
     }
 
     try {
@@ -543,7 +551,8 @@ export function buildVoiceLayout() {
     liveMode: null,
     transport: null,
     audioCapture: null,
-    audioPlayback: null
+    audioPlayback: null,
+    audioPlaybackSampleRate: null
   };
 
   const ui = {};
