@@ -6,6 +6,13 @@ VENV_DIR="${VENV_DIR:-$ROOT_DIR/.venv}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 MODE="${1:-ui}"
 
+if [[ -f "$ROOT_DIR/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$ROOT_DIR/.env"
+  set +a
+fi
+
 usage() {
   cat <<'USAGE'
 Usage: ./run.sh [install|ui|test|e2e]
