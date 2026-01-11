@@ -15,7 +15,7 @@ except ImportError as exc:
     _GENAI_IMPORT_ERROR = exc
 
 from .store import store
-from .logging_config import get_logger
+from ..logging_config import get_logger
 
 
 DEFAULT_SYSTEM_PROMPT = (
