@@ -377,6 +377,14 @@ body {
   color: var(--ui-color-ink);
 }
 
+.ui-transcript__list {
+  max-height: clamp(240px, 40vh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
+  scrollbar-gutter: stable;
+}
+
 .layout-split {
   display: grid;
   gap: 24px;

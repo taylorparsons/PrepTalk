@@ -92,6 +92,7 @@ function renderTranscript(list, entries) {
         timestamp: ''
       })
     );
+    list.scrollTop = 0;
     return;
   }
 
@@ -105,6 +106,7 @@ function renderTranscript(list, entries) {
       })
     );
   });
+  list.scrollTop = 0;
 }
 
 function renderScore(ui, score) {
@@ -505,7 +507,7 @@ function buildQuestionsPanel(ui) {
 
 function buildTranscriptPanel(ui) {
   const transcriptList = document.createElement('div');
-  transcriptList.className = 'layout-stack';
+  transcriptList.className = 'layout-stack ui-transcript__list';
   transcriptList.setAttribute('data-testid', 'transcript-list');
 
   renderTranscript(transcriptList, []);
