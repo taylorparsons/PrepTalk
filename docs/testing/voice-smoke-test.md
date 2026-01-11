@@ -11,7 +11,7 @@ Validate microphone permissions, live audio loop, transcript updates, and latenc
 
 ## Steps
 1. Load the page and confirm the UI renders.
-2. Upload a resume PDF and a job description PDF.
+2. Upload a resume (PDF, DOCX, or TXT) and a job description (PDF, DOCX, or TXT).
 3. Click **Generate Questions** and confirm questions appear.
 4. Click **Start Interview** and allow microphone permissions.
 5. Speak a short answer (5-10 seconds) and confirm:

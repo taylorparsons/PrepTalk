@@ -67,4 +67,4 @@ npm test
 ```
 
 ## Voice App Layout
-The voice-first layout is built in `app/static/js/ui.js`. It renders the setup, controls, questions, transcript, and score panels. The resume and job description inputs are PDF-only and tagged with `data-testid` attributes for Playwright E2E tests.
+The voice-first layout is built in `app/static/js/ui.js`. It renders the setup, controls, questions, transcript, and score panels. The resume and job description inputs accept PDF, DOCX, or TXT and are tagged with `data-testid` attributes for Playwright E2E tests.
