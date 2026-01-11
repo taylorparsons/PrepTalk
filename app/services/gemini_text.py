@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from ..logging_config import get_logger
+
 try:
     from google import genai
 except ImportError:
@@ -10,6 +12,8 @@ except ImportError:
 
 
 FALLBACK_TEXT_MODEL = "gemini-2.5-flash"
+
+logger = get_logger()
 
 
 def _is_model_unsupported(exc: Exception) -> bool:
@@ -37,11 +41,18 @@ def _call_gemini(api_key: str, model: str, prompt: str, fallback_model: str | No
         return getattr(response, "text", "") or ""
     except Exception as exc:
         if fallback_model and fallback_model != model and _is_model_unsupported(exc):
+            logger.warning(
+                "event=text_model_fallback primary_model=%s fallback_model=%s",
+                model,
+                fallback_model
+            )
             try:
                 response = client.models.generate_content(model=fallback_model, contents=prompt)
                 return getattr(response, "text", "") or ""
             except Exception as fallback_exc:
+                logger.exception("event=text_model_error model=%s", fallback_model)
                 raise RuntimeError(_friendly_text_error(fallback_model, fallback_exc)) from fallback_exc
+        logger.exception("event=text_model_error model=%s", model)
         raise RuntimeError(_friendly_text_error(model, exc)) from exc
 
 

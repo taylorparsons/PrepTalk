@@ -7,10 +7,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from .api import router as api_router
+from .logging_config import setup_logging
 from .settings import load_settings
 from .ws import live_audio_websocket
 
 BASE_DIR = Path(__file__).resolve().parent
+
+setup_logging()
 
 app = FastAPI()
 app.include_router(api_router)
