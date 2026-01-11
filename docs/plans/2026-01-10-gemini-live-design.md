@@ -133,6 +133,10 @@ Left Drawer (Session Tools)
 ```
 
 Task tracking
+- [ ] TDD gate: write a failing test for each new UI action before coding.
+- [ ] Verify each test fails for the expected reason (RED).
+- [ ] Implement minimal UI logic to pass each test (GREEN).
+- [ ] Refactor only after green; keep tests passing.
 - [ ] Add the Session Tools launcher near Session Controls and a left slide-in drawer shell.
 - [ ] Wire session naming (save and display) with the current interview id.
 - [ ] Add custom question input with add-and-jump and add-only flows.
