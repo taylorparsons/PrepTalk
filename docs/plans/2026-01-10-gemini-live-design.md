@@ -51,6 +51,95 @@ The backend runs a FastAPI service that handles uploads, session state, and Gemi
 - app/static/js/ui.js: transcript rendering and session status.
 - Responsive layout with stacked panels on mobile and split panes on desktop.
 
+
+## UI Feature Design (Session Tools Drawer)
+The Session Tools drawer slides in from the left and centralizes non-live actions while keeping the live controls uncluttered. Mute remains next to Start/Stop for immediate access during the conversation. The drawer is state-aware but always openable; actions are disabled with short helper text when unavailable.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Session Controls                                                            │
+│ [Start Interview] [Stop Session] [Mute/Unmute]   Status: Connected          │
+│                                                                             │
+│ [≡ Session Tools] (opens left drawer)                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Main Content (Questions | Transcript | Score)                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Left Drawer (Session Tools)
+┌───────────────────────────────┐
+│ Session Tools          [×]     │
+│ ───────────────────────────── │
+│ Session name                  │
+│ [___________rename__________] │
+│ [Save name]                   │
+│                               │
+│ Add known questions           │
+│ [textarea …]                  │
+│ [Add & jump] [Add only]       │
+│                               │
+│ Export transcript             │
+│ [Export TXT]  (disabled until │
+│  transcript exists)           │
+│                               │
+│ Restart interview             │
+│ [Restart] (disabled until     │
+│  session started)             │
+└───────────────────────────────┘
+```
+
+```html
+<section class="ui-controls">
+  <button id="start-interview">Start Interview</button>
+  <button id="stop-interview">Stop Session</button>
+  <button id="mute-interview">Mute</button>
+  <button id="open-session-tools" aria-controls="session-tools-drawer">
+    ☰ Session Tools
+  </button>
+</section>
+
+<aside id="session-tools-drawer" class="drawer drawer--left" aria-hidden="true">
+  <header class="drawer__header">
+    <h3>Session Tools</h3>
+    <button id="close-session-tools" aria-label="Close">×</button>
+  </header>
+
+  <section class="drawer__section">
+    <label>Session name</label>
+    <input id="session-name-input" />
+    <button id="save-session-name">Save name</button>
+  </section>
+
+  <section class="drawer__section">
+    <label>Add known questions</label>
+    <textarea id="custom-questions-input"></textarea>
+    <div class="row">
+      <button id="add-question-jump">Add &amp; jump</button>
+      <button id="add-question">Add only</button>
+    </div>
+  </section>
+
+  <section class="drawer__section">
+    <label>Export transcript</label>
+    <button id="export-transcript" disabled>Export TXT</button>
+    <small>Enabled after transcript exists.</small>
+  </section>
+
+  <section class="drawer__section">
+    <label>Restart interview</label>
+    <button id="restart-interview" disabled>Restart</button>
+    <small>Enabled after session starts.</small>
+  </section>
+</aside>
+```
+
+Task tracking
+- [ ] Add the Session Tools launcher near Session Controls and a left slide-in drawer shell.
+- [ ] Wire session naming (save and display) with the current interview id.
+- [ ] Add custom question input with add-and-jump and add-only flows.
+- [ ] Add transcript export (TXT) from the stored session transcript.
+- [ ] Add restart interview flow (reset transcript/score, keep questions by default).
+- [ ] Make drawer actions state-aware with inline helper text for disabled states.
+
 ## Data Flow
 1. User uploads resume and job description (PDF, DOCX, or TXT).
 2. Backend uses Gemini question model to create an agenda and evaluation rubric.
