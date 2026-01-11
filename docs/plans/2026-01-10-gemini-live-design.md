@@ -218,6 +218,7 @@ Task tracking
 - [x] API tests for session lifecycle (mock adapter).
 - [x] Playwright E2E flow (mock adapter).
 - [x] Mocked Gemini Live streaming tests for event flow.
+- [ ] Resolve `google/genai` DeprecationWarning on Python 3.14 (pin/upgrade or warn filter).
 - [ ] Manual voice smoke tests (mic permissions + latency).
   - Run steps in `docs/testing/voice-smoke-test.md`.
 - [x] Optional live-mode E2E with AI Studio persona (gated by `E2E_LIVE=1`).
