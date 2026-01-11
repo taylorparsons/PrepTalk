@@ -101,6 +101,7 @@ The backend runs a FastAPI service that handles uploads, session state, and Gemi
 - [x] Session store persistence on disk (`app/session_store/<user_id>`).
 - [x] PDF study guide rendering + export endpoint (rubric + transcript + summary).
 - [x] Error handling for mic denial, WS disconnects, and quota limits.
+- [ ] Model usage logging (requested vs effective) with interview_id hash + per-request token_usage_pct.
 
 ### Frontend
 - [x] Voice-first UI shell (setup, controls, transcript, score).
