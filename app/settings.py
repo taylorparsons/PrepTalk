@@ -24,7 +24,7 @@ def load_settings() -> AppSettings:
             "GEMINI_LIVE_MODEL",
             "gemini-2.5-flash-native-audio-preview-12-2025",
         ),
-        text_model=os.getenv("GEMINI_TEXT_MODEL", "gemini-2.5-flash"),
+        text_model=os.getenv("GEMINI_TEXT_MODEL", "gemini-3"),
         api_base=os.getenv("APP_API_BASE", "/api"),
         session_store_dir=os.getenv("SESSION_STORE_DIR", str(session_store)),
         user_id=os.getenv("APP_USER_ID", "local")

@@ -26,7 +26,7 @@ Adapter modes (set in `.env`):
 - `INTERVIEW_ADAPTER`: `mock` (default) or `gemini`
 - `GEMINI_API_KEY`: required when `INTERVIEW_ADAPTER=gemini`
 - `GEMINI_LIVE_MODEL`: override live audio model (default `gemini-2.5-flash-native-audio-preview-12-2025`)
-- `GEMINI_TEXT_MODEL`: override text model for questions/scoring (default `gemini-2.5-flash`, unsupported models fall back to this)
+- `GEMINI_TEXT_MODEL`: override text model for questions/scoring (default `gemini-3`, unsupported models fall back to `gemini-2.5-flash`)
 - `APP_API_BASE`: API base path for the UI (default `/api`)
 - `SESSION_STORE_DIR`: session storage directory (default `app/session_store`)
 - `APP_USER_ID`: default user id for session storage (default `local`)

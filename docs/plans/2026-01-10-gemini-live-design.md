@@ -19,7 +19,7 @@
 
 ## Decisions
 - Audio streaming format: PCM16 mono at 24 kHz in ~20 ms frames for natural conversation.
-- Text generation uses `gemini-2.5-flash` until Gemini 3 supports generateContent.
+- Text generation uses `gemini-3` for question generation and scoring; live audio uses `gemini-2.5-flash-native-audio-preview-12-2025` for streaming.
 - Study guide includes rubric, transcript, and summary.
 - Session persistence is per user, stored under app/session_store/<user_id>.
 - Logs are user-facing; keep IDs short and readable (5-char alphanumeric hash).
