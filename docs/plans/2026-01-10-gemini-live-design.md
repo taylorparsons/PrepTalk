@@ -22,6 +22,7 @@
 - Text generation uses `gemini-2.5-flash` until Gemini 3 supports generateContent.
 - Study guide includes rubric, transcript, and summary.
 - Session persistence is per user, stored under app/session_store/<user_id>.
+- Logs are user-facing; keep IDs short and readable (5-char alphanumeric hash).
 
 ## Architecture Overview
 The backend runs a FastAPI service that handles uploads, session state, and Gemini 3 calls. A WebSocket endpoint bridges the browser microphone stream to Gemini Live and streams audio responses back to the client. A separate Gemini text client handles agenda generation and post-session summaries. Session data is stored as per-user JSON on disk (app/session_store/<user_id>) and used to generate a PDF study guide with rubric, transcript, and summary.
@@ -36,6 +37,7 @@ The backend runs a FastAPI service that handles uploads, session state, and Gemi
 - Session store for per-user JSON persistence under app/session_store/<user_id>.
 - PDF renderer using WeasyPrint or a similar library (includes rubric + transcript + summary).
 - Test-only Gemini Live adapter to simulate streaming events for E2E tests.
+- Resume/JD ingestion supports PDF, DOCX, and TXT.
 
 ### Frontend
 - app/templates/index.html: voice-first UI with start and stop controls.
@@ -45,7 +47,7 @@ The backend runs a FastAPI service that handles uploads, session state, and Gemi
 - Responsive layout with stacked panels on mobile and split panes on desktop.
 
 ## Data Flow
-1. User uploads resume and job description.
+1. User uploads resume and job description (PDF, DOCX, or TXT).
 2. Backend uses Gemini question model to create an agenda and evaluation rubric.
 3. User starts the live interview; browser streams mic audio to the backend.
 4. Backend forwards audio to Gemini Live; receives audio and transcript events.
@@ -57,6 +59,18 @@ The backend runs a FastAPI service that handles uploads, session state, and Gemi
 - WebSocket disconnect: offer retry and preserve session state on disk.
 - Gemini Live errors: log details, show user-friendly messages, and backoff.
 - Rate limits or quota: notify the user and keep the transcript for later resume.
+- Keepalive pings on the live WebSocket; reconnect reuses the same interview session.
+
+## Logging & Observability
+- Log per request with short, user-friendly fields; use interview_id hash only (5-char alphanumeric).
+- Record requested_model and effective_model on every Gemini text/live call, including fallbacks.
+- Include per-request token_usage_pct when available (tokens only; no near-limit thresholds yet).
+- Emit structured event types (e.g., interview_create, gemini_live_connect, gemini_text_call).
+- Avoid logging sensitive content; prefer sizes and counts over raw text.
+
+## Data Privacy and Retention
+- Transcripts and uploads are stored per user in app/session_store/<user_id>.
+- Logs are intended for end users; exclude raw resume/JD text and redact sensitive fields.
 
 ## Testing Plan
 - Unit tests for session storage and transcript assembly.
