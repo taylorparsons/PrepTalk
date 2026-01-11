@@ -468,10 +468,11 @@ function buildControlsPanel(state, ui, config) {
         state.audioPlaybackSampleRate = 24000;
       }
       await state.audioPlayback.resume();
-      await startMicrophoneIfNeeded();
       state.transport.start(state.interviewId, state.userId);
+      await startMicrophoneIfNeeded();
     } catch (error) {
       if (config.adapter !== 'mock') {
+        state.transport?.stop();
         updateStatusPill(statusPill, { label: 'Live error', tone: 'danger' });
         state.sessionActive = false;
         startButton.disabled = false;
