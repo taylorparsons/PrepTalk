@@ -78,6 +78,9 @@ export async function startMicrophoneCapture({
   });
 
   const context = new AudioContext();
+  if (context.state === 'suspended') {
+    await context.resume();
+  }
   const source = context.createMediaStreamSource(stream);
   const processor = context.createScriptProcessor(2048, 1, 1);
   const inputSampleRate = context.sampleRate;

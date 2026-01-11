@@ -274,9 +274,42 @@ function buildControlsPanel(state, ui, config) {
     state.score = null;
     state.sessionId = null;
     state.liveMode = null;
+    state.sessionActive = false;
     renderTranscript(ui.transcriptList, state.transcript);
     renderScore(ui, null);
   }
+
+  async function endLiveSession({ label, tone, allowRestart = false } = {}) {
+    if (label && tone) {
+      updateStatusPill(statusPill, { label, tone });
+    }
+
+    if (!state.sessionActive) {
+      return;
+    }
+
+    state.sessionActive = false;
+
+    if (state.transport) {
+      state.transport.stop();
+      state.transport = null;
+    }
+
+    if (state.audioCapture) {
+      await state.audioCapture.stop();
+      state.audioCapture = null;
+    }
+
+    if (state.audioPlayback) {
+      await state.audioPlayback.stop();
+      state.audioPlayback = null;
+      state.audioPlaybackSampleRate = null;
+    }
+
+    stopButton.disabled = true;
+    startButton.disabled = !(allowRestart && state.interviewId);
+  }
+
 
   async function startMockFallback() {
     const live = await startLiveSession({ interviewId: state.interviewId });
@@ -307,11 +340,17 @@ function buildControlsPanel(state, ui, config) {
           updateStatusPill(statusPill, { label: 'Connected', tone: 'info' });
         },
         onClose: () => {
-          updateStatusPill(statusPill, { label: 'Disconnected', tone: 'warning' });
+          if (state.sessionActive) {
+            updateStatusPill(statusPill, { label: 'Disconnected', tone: 'warning' });
+          }
         },
         onError: (payload) => {
           const message = typeof payload === 'string' ? payload : payload?.message;
           const label = message && message.length < 24 ? message : 'Connection error';
+          if (state.sessionActive) {
+            void endLiveSession({ label, tone: 'danger', allowRestart: true });
+            return;
+          }
           updateStatusPill(statusPill, { label, tone: 'danger' });
         },
         onSession: (payload) => {
@@ -331,12 +370,29 @@ function buildControlsPanel(state, ui, config) {
           }
           if (payload.state === 'reconnected') {
             updateStatusPill(statusPill, { label: 'Reconnected', tone: 'info' });
+            if (state.sessionActive && state.interviewId) {
+              state.transport.start(state.interviewId, state.userId);
+            }
           }
           if (payload.state === 'disconnected') {
+            if (state.sessionActive) {
+              void endLiveSession({ label: 'Disconnected', tone: 'warning', allowRestart: true });
+              return;
+            }
             updateStatusPill(statusPill, { label: 'Disconnected', tone: 'warning' });
           }
           if (payload.state === 'gemini-connected') {
             updateStatusPill(statusPill, { label: 'Gemini live', tone: 'success' });
+          }
+          if (payload.state === 'gemini-error') {
+            if (state.sessionActive) {
+              void endLiveSession({ label: 'Live error', tone: 'danger', allowRestart: true });
+            }
+          }
+          if (payload.state === 'gemini-disconnected') {
+            if (state.sessionActive) {
+              void endLiveSession({ label: 'Live ended', tone: 'warning', allowRestart: true });
+            }
           }
           if (payload.state === 'stream-complete') {
             updateStatusPill(statusPill, { label: 'Stream complete', tone: 'success' });
@@ -403,6 +459,7 @@ function buildControlsPanel(state, ui, config) {
     stopButton.disabled = false;
     updateStatusPill(statusPill, { label: 'Connecting', tone: 'info' });
     resetSessionState();
+    state.sessionActive = true;
 
     try {
       await ensureTransport();
@@ -416,6 +473,7 @@ function buildControlsPanel(state, ui, config) {
     } catch (error) {
       if (config.adapter !== 'mock') {
         updateStatusPill(statusPill, { label: 'Live error', tone: 'danger' });
+        state.sessionActive = false;
         startButton.disabled = false;
         stopButton.disabled = true;
         return;
@@ -425,6 +483,7 @@ function buildControlsPanel(state, ui, config) {
         await startMockFallback();
       } catch (fallbackError) {
         updateStatusPill(statusPill, { label: 'Error', tone: 'danger' });
+        state.sessionActive = false;
         startButton.disabled = false;
         stopButton.disabled = true;
       }
@@ -432,6 +491,7 @@ function buildControlsPanel(state, ui, config) {
   });
 
   stopButton.addEventListener('click', async () => {
+    state.sessionActive = false;
     stopButton.disabled = true;
     updateStatusPill(statusPill, { label: 'Scoring', tone: 'info' });
 
@@ -583,7 +643,8 @@ export function buildVoiceLayout() {
     transport: null,
     audioCapture: null,
     audioPlayback: null,
-    audioPlaybackSampleRate: null
+    audioPlaybackSampleRate: null,
+    sessionActive: false
   };
 
   const ui = {};

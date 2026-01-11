@@ -111,6 +111,9 @@ class LiveWebSocketSession:
                 self._audio_bytes += len(audio_bytes)
                 await self._gemini_bridge.send_audio(audio_bytes)
             return
+        elif message_type == "ping":
+            await self._send({"type": "status", "state": "alive"})
+            return
         else:
             logger.warning("event=ws_message status=unknown_type user_id=%s message_type=%s", self._user_id, message_type)
             await self._send({"type": "error", "message": "Unknown message type."})

@@ -15,12 +15,15 @@ except ImportError as exc:
     _GENAI_IMPORT_ERROR = exc
 
 from .store import store
+from .logging_config import get_logger
 
 
 DEFAULT_SYSTEM_PROMPT = (
     "You are an interview coach. Keep responses concise, friendly, and aligned "
     "to the candidate's target role. Ask one question at a time."
 )
+
+logger = get_logger()
 
 
 @dataclass(frozen=True)
@@ -117,7 +120,9 @@ class GeminiLiveBridge:
         if self._closed:
             return
         self._closed = True
+        await self._close_session()
 
+    async def _close_session(self, *, skip_task: asyncio.Task | None = None) -> None:
         if self._session:
             try:
                 await self._session.send_realtime_input(audio_stream_end=True)
@@ -125,6 +130,8 @@ class GeminiLiveBridge:
                 pass
 
         for task in self._tasks:
+            if task is skip_task:
+                continue
             task.cancel()
         self._tasks = []
 
@@ -146,7 +153,13 @@ class GeminiLiveBridge:
         except asyncio.CancelledError:
             return
         except Exception as exc:
+            if self._closed:
+                return
+            logger.exception("event=gemini_live_send status=error interview_id=%s user_id=%s", self._interview_id, self._user_id)
             await self._send_json({"type": "error", "message": _friendly_error(exc)})
+            await self._send_json({"type": "status", "state": "gemini-error"})
+            self._closed = True
+            await self._close_session(skip_task=asyncio.current_task())
 
     async def _receive_loop(self) -> None:
         assert self._session is not None
@@ -156,7 +169,20 @@ class GeminiLiveBridge:
         except asyncio.CancelledError:
             return
         except Exception as exc:
+            if self._closed:
+                return
+            logger.exception("event=gemini_live_receive status=error interview_id=%s user_id=%s", self._interview_id, self._user_id)
             await self._send_json({"type": "error", "message": _friendly_error(exc)})
+            await self._send_json({"type": "status", "state": "gemini-error"})
+            self._closed = True
+            await self._close_session(skip_task=asyncio.current_task())
+        else:
+            if self._closed:
+                return
+            logger.info("event=gemini_live_receive status=ended interview_id=%s user_id=%s", self._interview_id, self._user_id)
+            await self._send_json({"type": "status", "state": "gemini-disconnected"})
+            self._closed = True
+            await self._close_session(skip_task=asyncio.current_task())
 
     async def _handle_response(self, response: Any) -> None:
         server_content = getattr(response, "server_content", None)

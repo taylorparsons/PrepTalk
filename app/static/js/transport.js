@@ -9,7 +9,8 @@ export class LiveTransport {
     onOpen,
     onClose,
     maxReconnectAttempts = 3,
-    reconnectDelayMs = 600
+    reconnectDelayMs = 600,
+    heartbeatIntervalMs = 10000
   } = {}) {
     this.url = url || LiveTransport.defaultUrl();
     this.onStatus = onStatus;
@@ -26,6 +27,8 @@ export class LiveTransport {
     this.maxReconnectAttempts = maxReconnectAttempts;
     this.reconnectDelayMs = reconnectDelayMs;
     this.reconnectTimer = null;
+    this.heartbeatIntervalMs = heartbeatIntervalMs;
+    this.heartbeatTimer = null;
   }
 
   static defaultUrl() {
@@ -58,6 +61,7 @@ export class LiveTransport {
         this.reconnectAttempts = 0;
         this.onOpen?.();
         this.onStatus?.({ type: 'status', state: 'connected' });
+        this._startHeartbeat();
         resolve();
       });
       this.ws.addEventListener('error', (event) => {
@@ -85,6 +89,7 @@ export class LiveTransport {
     });
 
     this.ws.addEventListener('close', () => {
+      this._stopHeartbeat();
       if (this.shouldReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
         this._scheduleReconnect();
         return;
@@ -134,11 +139,28 @@ export class LiveTransport {
   close() {
     this.shouldReconnect = false;
     this._clearReconnectTimer();
+    this._stopHeartbeat();
     if (!this.ws) return;
     if (this.ws.readyState === WebSocket.CLOSING || this.ws.readyState === WebSocket.CLOSED) {
       return;
     }
     this.ws.close();
+  }
+
+  _startHeartbeat() {
+    if (this.heartbeatTimer || !this.heartbeatIntervalMs) return;
+    this.heartbeatTimer = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.send({ type: 'ping', ts: Date.now() });
+      }
+    }, this.heartbeatIntervalMs);
+  }
+
+  _stopHeartbeat() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
   }
 
   _scheduleReconnect() {
