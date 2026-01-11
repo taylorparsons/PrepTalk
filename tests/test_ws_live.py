@@ -73,3 +73,21 @@ def test_websocket_streams_mock_transcript(monkeypatch):
         websocket.send_json({"type": "stop"})
         stopped = _receive_until(websocket, "status")
         assert stopped["state"] in {"stopped", "stream-complete"}
+
+
+def test_websocket_ping_returns_alive(monkeypatch):
+    monkeypatch.setenv("INTERVIEW_ADAPTER", "mock")
+    os.environ.pop("GEMINI_API_KEY", None)
+
+    client = TestClient(app)
+
+    with client.websocket_connect("/ws/live") as websocket:
+        status = websocket.receive_json()
+        assert status["type"] == "status"
+        assert status["state"] == "connected"
+
+        websocket.send_json({"type": "ping"})
+
+        alive = _receive_until(websocket, "status")
+        assert alive["state"] == "alive"
+
