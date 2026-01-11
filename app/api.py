@@ -14,6 +14,7 @@ from .schemas import (
     ScoreResponse
 )
 from .services import interview_service
+from .services.document_text import DocumentInput, is_supported_document
 from .settings import load_settings
 
 router = APIRouter(prefix="/api")
@@ -26,12 +27,8 @@ def _model_dump(item):
     return item.dict()
 
 
-def _is_pdf(upload: UploadFile) -> bool:
-    if upload.content_type == "application/pdf":
-        return True
-    if upload.filename and upload.filename.lower().endswith(".pdf"):
-        return True
-    return False
+def _is_supported(upload: UploadFile) -> bool:
+    return is_supported_document(upload.filename, upload.content_type)
 
 
 def _get_user_id(request: Request) -> str:
@@ -50,11 +47,24 @@ async def create_interview(
     job_description: UploadFile = File(...),
     role_title: str | None = Form(default=None)
 ):
-    if not _is_pdf(resume) or not _is_pdf(job_description):
-        raise HTTPException(status_code=400, detail="Resume and job description must be PDFs.")
+    if not _is_supported(resume) or not _is_supported(job_description):
+        raise HTTPException(
+            status_code=400,
+            detail="Resume and job description must be PDF, DOCX, or TXT files."
+        )
 
     resume_bytes = await resume.read()
     job_bytes = await job_description.read()
+    resume_doc = DocumentInput(
+        data=resume_bytes,
+        filename=resume.filename,
+        content_type=resume.content_type
+    )
+    job_doc = DocumentInput(
+        data=job_bytes,
+        filename=job_description.filename,
+        content_type=job_description.content_type
+    )
     user_id = _get_user_id(request)
     start = time.perf_counter()
 
@@ -67,7 +77,7 @@ async def create_interview(
     )
 
     try:
-        payload = interview_service.prepare_interview(resume_bytes, job_bytes, role_title, user_id)
+        payload = interview_service.prepare_interview(resume_doc, job_doc, role_title, user_id)
     except RuntimeError as exc:
         logger.exception(
             "event=interview_create status=error user_id=%s duration_ms=%s",

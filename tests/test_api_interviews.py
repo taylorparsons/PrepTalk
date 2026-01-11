@@ -103,3 +103,17 @@ def test_summary_and_pdf_exports():
     assert pdf_response.status_code == 200
     assert pdf_response.headers["content-type"].startswith("application/pdf")
     assert pdf_response.content.startswith(b"%PDF")
+
+
+def test_create_interview_accepts_txt():
+    client = TestClient(app)
+    files = {
+        "resume": ("resume.txt", b"Resume text", "text/plain"),
+        "job_description": ("job.txt", b"Job text", "text/plain")
+    }
+    response = client.post("/api/interviews", files=files)
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["interview_id"]
+

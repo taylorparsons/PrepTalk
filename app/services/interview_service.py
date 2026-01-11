@@ -3,18 +3,19 @@ from __future__ import annotations
 import uuid
 
 from .adapters import get_adapter
+from .document_text import DocumentInput
 from .store import store
 from .pdf_service import build_study_guide_pdf
 
 
 def prepare_interview(
-    resume_bytes: bytes,
-    job_bytes: bytes,
+    resume: DocumentInput,
+    job: DocumentInput,
     role_title: str | None,
     user_id: str | None = None
 ) -> dict:
     adapter = get_adapter()
-    questions, focus_areas = adapter.generate_questions(resume_bytes, job_bytes, role_title)
+    questions, focus_areas = adapter.generate_questions(resume, job, role_title)
     interview_id = str(uuid.uuid4())
 
     record = store.create(

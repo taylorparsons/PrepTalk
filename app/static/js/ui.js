@@ -44,7 +44,7 @@ function createFileField({ id, label, helpText, testId }) {
   const input = document.createElement('input');
   input.className = 'ui-field__input';
   input.type = 'file';
-  input.accept = 'application/pdf';
+  input.accept = 'application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,.pdf,.docx,.txt';
   input.id = id;
   input.setAttribute('data-testid', testId);
 
@@ -153,14 +153,14 @@ function buildSetupPanel(state, ui) {
   const resumeField = createFileField({
     id: 'resume-file',
     label: 'Resume (PDF)',
-    helpText: 'Upload the candidate resume to personalize questions.',
+    helpText: 'Upload the candidate resume (PDF, DOCX, or TXT).',
     testId: 'resume-file'
   });
 
   const jobField = createFileField({
     id: 'job-file',
     label: 'Job Description (PDF)',
-    helpText: 'Add the role description to focus the interview.',
+    helpText: 'Add the role description (PDF, DOCX, or TXT).',
     testId: 'job-file'
   });
 

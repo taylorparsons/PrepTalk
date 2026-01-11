@@ -7,7 +7,7 @@ import uuid
 
 from .gemini_text import generate_interview_questions, score_interview_transcript
 from .mock_data import MOCK_FOCUS_AREAS, MOCK_QUESTIONS, MOCK_SCORE, MOCK_TRANSCRIPT
-from .pdf_text import extract_pdf_text
+from .document_text import DocumentInput, extract_document_text
 from ..settings import load_settings
 
 if TYPE_CHECKING:
@@ -27,8 +27,8 @@ class InterviewAdapter:
 
     def generate_questions(
         self,
-        resume_bytes: bytes,
-        job_bytes: bytes,
+        resume: DocumentInput,
+        job: DocumentInput,
         role_title: str | None
     ) -> tuple[list[str], list[str]]:
         raise NotImplementedError
@@ -45,8 +45,8 @@ class MockInterviewAdapter(InterviewAdapter):
 
     def generate_questions(
         self,
-        resume_bytes: bytes,
-        job_bytes: bytes,
+        resume: DocumentInput,
+        job: DocumentInput,
         role_title: str | None
     ) -> tuple[list[str], list[str]]:
         return list(MOCK_QUESTIONS), list(MOCK_FOCUS_AREAS)
@@ -78,13 +78,13 @@ class GeminiInterviewAdapter(InterviewAdapter):
 
     def generate_questions(
         self,
-        resume_bytes: bytes,
-        job_bytes: bytes,
+        resume: DocumentInput,
+        job: DocumentInput,
         role_title: str | None
     ) -> tuple[list[str], list[str]]:
         self._ensure_configured()
-        resume_text = extract_pdf_text(resume_bytes)
-        job_text = extract_pdf_text(job_bytes)
+        resume_text = extract_document_text(resume)
+        job_text = extract_document_text(job)
         return generate_interview_questions(
             api_key=self.api_key,
             model=self.settings.text_model,
