@@ -4,23 +4,31 @@ from typing import Iterable
 
 try:
     from fpdf import FPDF
+    from fpdf.enums import XPos, YPos
 except ImportError:
     FPDF = None
+    XPos = None
+    YPos = None
 
 from .store import InterviewRecord
+
+def _cell_newline_kwargs() -> dict:
+    if XPos is None or YPos is None:
+        return {"ln": True}
+    return {"new_x": XPos.LMARGIN, "new_y": YPos.NEXT}
 
 
 class _StudyGuidePDF(FPDF):
     def header(self) -> None:
         self.set_font("Helvetica", style="B", size=14)
-        self.cell(0, 8, "Interview Study Guide", ln=True)
+        self.cell(0, 8, "Interview Study Guide", **_cell_newline_kwargs())
         self.ln(2)
         self.set_x(self.l_margin)
 
 
 def _write_section(pdf: FPDF, title: str, lines: Iterable[str]) -> None:
     pdf.set_font("Helvetica", style="B", size=12)
-    pdf.cell(0, 8, title, ln=True)
+    pdf.cell(0, 8, title, **_cell_newline_kwargs())
     pdf.ln(1)
     pdf.set_x(pdf.l_margin)
     pdf.set_font("Helvetica", size=11)
@@ -39,12 +47,12 @@ def build_study_guide_pdf(record: InterviewRecord) -> bytes:
     pdf.add_page()
 
     pdf.set_font("Helvetica", size=11)
-    pdf.cell(0, 6, f"Interview ID: {record.interview_id}", ln=True)
+    pdf.cell(0, 6, f"Interview ID: {record.interview_id}", **_cell_newline_kwargs())
     pdf.set_x(pdf.l_margin)
     if record.role_title:
-        pdf.cell(0, 6, f"Role: {record.role_title}", ln=True)
+        pdf.cell(0, 6, f"Role: {record.role_title}", **_cell_newline_kwargs())
         pdf.set_x(pdf.l_margin)
-    pdf.cell(0, 6, f"Adapter: {record.adapter}", ln=True)
+    pdf.cell(0, 6, f"Adapter: {record.adapter}", **_cell_newline_kwargs())
     pdf.set_x(pdf.l_margin)
     pdf.ln(4)
 
@@ -54,7 +62,7 @@ def build_study_guide_pdf(record: InterviewRecord) -> bytes:
 
     if overall is not None:
         pdf.set_font("Helvetica", style="B", size=12)
-        pdf.cell(0, 8, f"Overall Score: {overall}", ln=True)
+        pdf.cell(0, 8, f"Overall Score: {overall}", **_cell_newline_kwargs())
         pdf.set_x(pdf.l_margin)
         pdf.set_font("Helvetica", size=11)
         pdf.ln(2)
@@ -83,7 +91,7 @@ def build_study_guide_pdf(record: InterviewRecord) -> bytes:
     if transcript_lines:
         _write_section(pdf, "Transcript", transcript_lines)
 
-    data = pdf.output(dest="S")
+    data = pdf.output()
     if isinstance(data, bytes):
         return data
     if isinstance(data, bytearray):

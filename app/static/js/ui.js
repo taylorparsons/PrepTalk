@@ -382,7 +382,7 @@ function buildControlsPanel(state, ui, config) {
             updateStatusPill(statusPill, { label: 'Disconnected', tone: 'warning' });
           }
           if (payload.state === 'gemini-connected') {
-            updateStatusPill(statusPill, { label: 'Gemini live', tone: 'success' });
+            updateStatusPill(statusPill, { label: 'Live', tone: 'success' });
           }
           if (payload.state === 'gemini-error') {
             if (state.sessionActive) {

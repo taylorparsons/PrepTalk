@@ -60,7 +60,7 @@ test('candidate interview flow (gemini live)', async ({ page }) => {
   await expect(page.getByTestId('start-interview')).toBeEnabled();
 
   await page.getByTestId('start-interview').click();
-  await expect(page.getByTestId('session-status')).toHaveText(/^(Live|Gemini live)$/);
+  await expect(page.getByTestId('session-status')).toHaveText('Live');
 
   await page.waitForTimeout(2000);
 
