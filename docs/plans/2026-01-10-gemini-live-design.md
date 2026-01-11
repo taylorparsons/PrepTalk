@@ -40,6 +40,11 @@ The backend runs a FastAPI service that handles uploads, session state, and Gemi
 - Resume/JD ingestion supports PDF, DOCX, and TXT.
 
 ### Frontend
+- Export transcript (TXT) from the live session transcript.
+- Mute toggle for live voice input (pause mic frames).
+- Restart interview flow (reset transcript/score, keep question set).
+- Session naming UI (rename current interview).
+- Add custom questions to the interview agenda.
 - app/templates/index.html: voice-first UI with start and stop controls.
 - app/static/js/voice.js: mic capture, audio buffering, and playback.
 - app/static/js/transport.js: WebSocket lifecycle, reconnect, and status.
@@ -53,6 +58,7 @@ The backend runs a FastAPI service that handles uploads, session state, and Gemi
 4. Backend forwards audio to Gemini Live; receives audio and transcript events.
 5. Client plays coach audio and renders rolling transcripts.
 6. On stop, backend runs Gemini summary model and generates a PDF study guide with rubric and transcript.
+7. User can export a full transcript and manage session settings (mute, restart, name, custom questions).
 
 ## Error Handling and Resilience
 - Mic permission denied: block the session and display clear re-enable steps.
@@ -104,6 +110,11 @@ The backend runs a FastAPI service that handles uploads, session state, and Gemi
 - [ ] Model usage logging (requested vs effective) with interview_id hash + per-request token_usage_pct.
 
 ### Frontend
+- [ ] Export transcript (TXT) from the live session transcript.
+- [ ] Mute toggle for live voice input (pause mic frames).
+- [ ] Restart interview flow (reset transcript/score, keep question set).
+- [ ] Session naming UI (rename current interview).
+- [ ] Custom question input to append known questions.
 - [x] Voice-first UI shell (setup, controls, transcript, score).
 - [x] Microphone capture + audio playback pipeline (PCM16 @ 24 kHz).
 - [x] WebSocket transport layer with reconnect + status.
