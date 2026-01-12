@@ -116,3 +116,44 @@ def test_session_store_reset_clears_transcript_and_score(tmp_path):
     assert loaded is not None
     assert loaded.transcript == []
     assert loaded.score is None
+
+
+
+def test_session_store_merges_transcript_entries(tmp_path):
+    store = InterviewStore(base_dir=tmp_path, default_user_id='tester')
+    record = store.create(
+        interview_id='merge123',
+        adapter='mock',
+        role_title='Engineer',
+        questions=['Q1'],
+        focus_areas=['Focus'],
+        user_id='candidate-1'
+    )
+
+    store.append_transcript_entry(
+        record.interview_id,
+        {'role': 'candidate', 'text': 'I', 'timestamp': '19:01:41'},
+        user_id='candidate-1'
+    )
+    store.append_transcript_entry(
+        record.interview_id,
+        {'role': 'candidate', 'text': 'am', 'timestamp': '19:01:42'},
+        user_id='candidate-1'
+    )
+    store.append_transcript_entry(
+        record.interview_id,
+        {'role': 'candidate', 'text': 'wha', 'timestamp': '19:01:42'},
+        user_id='candidate-1'
+    )
+    store.append_transcript_entry(
+        record.interview_id,
+        {'role': 'candidate', 'text': 't', 'timestamp': '19:01:43'},
+        user_id='candidate-1'
+    )
+
+    reloaded = InterviewStore(base_dir=tmp_path, default_user_id='tester')
+    loaded = reloaded.get(record.interview_id, user_id='candidate-1')
+    assert loaded is not None
+    assert loaded.transcript == [
+        {'role': 'candidate', 'text': 'I am what', 'timestamp': '19:01:41'}
+    ]

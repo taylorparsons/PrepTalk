@@ -61,6 +61,25 @@ class InterviewRecord:
         )
 
 
+def _merge_transcript_text(previous: str, incoming: str) -> str:
+    prev = previous or ''
+    next_text = (incoming or '').strip()
+    if not prev:
+        return next_text
+    if not next_text:
+        return prev
+    last_char = prev[-1]
+    starts_with_punct = next_text[0] in ',.;:!?)'
+    starts_with_quote = next_text[0] in "'’"
+    is_single_char = len(next_text) == 1 and last_char.isalnum()
+    if last_char == '-' or starts_with_punct or starts_with_quote or is_single_char:
+        return f"{prev}{next_text}"
+    if prev.endswith(' '):
+        return f"{prev}{next_text}"
+    return f"{prev} {next_text}"
+
+
+
 class InterviewStore:
     def __init__(self, base_dir: Path | None = None, default_user_id: str = "local") -> None:
         self._records: dict[tuple[str, str], InterviewRecord] = {}
@@ -145,9 +164,22 @@ class InterviewStore:
         user_id: str | None = None
     ) -> None:
         record = self.get(interview_id, user_id)
-        if record:
-            record.transcript.append(dict(entry))
+        if not record:
+            return
+        payload = dict(entry)
+        text_value = str(payload.get("text") or "").strip()
+        if not text_value:
+            return
+        payload["text"] = text_value
+        last = record.transcript[-1] if record.transcript else None
+        if last and last.get("role") == payload.get("role"):
+            last["text"] = _merge_transcript_text(last.get("text", ""), text_value)
+            if not last.get("timestamp") and payload.get("timestamp"):
+                last["timestamp"] = payload.get("timestamp")
             self._persist(record)
+            return
+        record.transcript.append(payload)
+        self._persist(record)
 
     def set_score(self, interview_id: str, score: dict, user_id: str | None = None) -> None:
         record = self.get(interview_id, user_id)

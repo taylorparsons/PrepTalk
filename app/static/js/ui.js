@@ -67,6 +67,48 @@ function createFileField({ id, label, helpText, testId }) {
   return { wrapper, input, help };
 }
 
+function mergeTranscriptText(previous, incoming) {
+  const prev = previous || '';
+  const next = (incoming || '').trim();
+  if (!prev) return next;
+  if (!next) return prev;
+  const lastChar = prev.slice(-1);
+  const startsWithPunct = /^[,.;:!?)]/.test(next);
+  const startsWithQuote = /^['’]/.test(next);
+  const isSingleCharContinuation = next.length === 1 && /[A-Za-z0-9]$/.test(prev);
+  if (lastChar === '-' || startsWithPunct || startsWithQuote || isSingleCharContinuation) {
+    return `${prev}${next}`;
+  }
+  if (prev.endsWith(' ')) {
+    return `${prev}${next}`;
+  }
+  return `${prev} ${next}`;
+}
+
+export function appendTranscriptEntry(state, entry) {
+  if (!state || !entry) return null;
+  const text = (entry.text || '').trim();
+  if (!text) return null;
+  const transcript = Array.isArray(state.transcript) ? state.transcript : [];
+  state.transcript = transcript;
+  const last = transcript[transcript.length - 1];
+  if (last && last.role === entry.role) {
+    last.text = mergeTranscriptText(last.text || '', text);
+    if (!last.timestamp && entry.timestamp) {
+      last.timestamp = entry.timestamp;
+    }
+    return { entry: last, merged: true };
+  }
+  const nextEntry = {
+    role: entry.role,
+    text,
+    timestamp: entry.timestamp
+  };
+  transcript.push(nextEntry);
+  return { entry: nextEntry, merged: false };
+}
+
+
 function createListPlaceholder(text) {
   const item = document.createElement('li');
   item.className = 'ui-list__item';
@@ -463,12 +505,11 @@ function buildControlsPanel(state, ui, config) {
           }
         },
         onTranscript: (payload) => {
-          const entry = {
+          appendTranscriptEntry(state, {
             role: payload.role,
             text: payload.text,
             timestamp: payload.timestamp
-          };
-          state.transcript.push(entry);
+          });
           renderTranscript(ui.transcriptList, state.transcript);
           ui.updateSessionToolsState?.();
         },
