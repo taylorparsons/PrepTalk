@@ -11,8 +11,6 @@ except ImportError:
     genai = None
 
 
-FALLBACK_TEXT_MODEL = "gemini-2.5-flash"
-
 logger = get_logger()
 
 
@@ -27,12 +25,12 @@ def _friendly_text_error(model: str, exc: Exception) -> str:
     if "not found" in lowered or "not supported" in lowered:
         return (
             f"Text model '{model}' is not supported for generateContent. "
-            "Set GEMINI_TEXT_MODEL to a supported text model like gemini-2.5-flash."
+            "Set GEMINI_TEXT_MODEL to a supported text model."
         )
     return message
 
 
-def _call_gemini(api_key: str, model: str, prompt: str, fallback_model: str | None = None) -> str:
+def _call_gemini(api_key: str, model: str, prompt: str) -> str:
     if genai is None:
         raise RuntimeError("google-genai is required for Gemini text.")
     client = genai.Client(api_key=api_key)
@@ -40,18 +38,6 @@ def _call_gemini(api_key: str, model: str, prompt: str, fallback_model: str | No
         response = client.models.generate_content(model=model, contents=prompt)
         return getattr(response, "text", "") or ""
     except Exception as exc:
-        if fallback_model and fallback_model != model and _is_model_unsupported(exc):
-            logger.warning(
-                "event=text_model_fallback primary_model=%s fallback_model=%s",
-                model,
-                fallback_model
-            )
-            try:
-                response = client.models.generate_content(model=fallback_model, contents=prompt)
-                return getattr(response, "text", "") or ""
-            except Exception as fallback_exc:
-                logger.exception("event=text_model_error model=%s", fallback_model)
-                raise RuntimeError(_friendly_text_error(fallback_model, fallback_exc)) from fallback_exc
         logger.exception("event=text_model_error model=%s", model)
         raise RuntimeError(_friendly_text_error(model, exc)) from exc
 
@@ -104,7 +90,7 @@ Job description:
 
 Return JSON with keys questions (array) and focus_areas (array)."""
 
-    text = _call_gemini(api_key, model, prompt, fallback_model=FALLBACK_TEXT_MODEL)
+    text = _call_gemini(api_key, model, prompt)
     payload = _extract_json(text) or {}
     questions = _coerce_list(payload.get("questions"))
     focus_areas = _coerce_list(payload.get("focus_areas"))
@@ -152,7 +138,7 @@ Transcript:
 
 Return JSON with keys overall_score (0-100), summary (string), strengths (array), improvements (array)."""
 
-    text = _call_gemini(api_key, model, prompt, fallback_model=FALLBACK_TEXT_MODEL)
+    text = _call_gemini(api_key, model, prompt)
     payload = _extract_json(text) or {}
 
     overall_score = payload.get("overall_score")

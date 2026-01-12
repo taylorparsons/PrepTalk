@@ -33,33 +33,10 @@ class _FakeGenAI:
         return _FakeClient(api_key, self._calls, self._behavior)
 
 
-def test_generate_questions_falls_back_on_unsupported_model(monkeypatch):
+def test_generate_questions_raises_on_unsupported_model(monkeypatch):
     calls = []
     behavior = {
-        "gemini-3": Exception("models/gemini-3 is not supported for generateContent"),
-        gemini_text.FALLBACK_TEXT_MODEL: '{"questions": ["Q1"], "focus_areas": ["F1"]}'
-    }
-
-    monkeypatch.setattr(gemini_text, "genai", _FakeGenAI(calls, behavior))
-
-    questions, focus = gemini_text.generate_interview_questions(
-        api_key="test",
-        model="gemini-3",
-        resume_text="resume",
-        job_text="job",
-        role_title="Role"
-    )
-
-    assert questions == ["Q1"]
-    assert focus == ["F1"]
-    assert calls == ["gemini-3", gemini_text.FALLBACK_TEXT_MODEL]
-
-
-def test_generate_questions_raises_when_fallback_fails(monkeypatch):
-    calls = []
-    behavior = {
-        "gemini-3": Exception("models/gemini-3 is not supported for generateContent"),
-        gemini_text.FALLBACK_TEXT_MODEL: Exception("models/gemini-2.5-flash is not supported")
+        "gemini-3": Exception("models/gemini-3 is not supported for generateContent")
     }
 
     monkeypatch.setattr(gemini_text, "genai", _FakeGenAI(calls, behavior))
@@ -78,7 +55,7 @@ def test_generate_questions_raises_when_fallback_fails(monkeypatch):
         assert "not supported" in message
         assert "GEMINI_TEXT_MODEL" in message
 
-    assert calls == ["gemini-3", gemini_text.FALLBACK_TEXT_MODEL]
+    assert calls == ["gemini-3"]
 
 
 def test_score_uses_primary_model_when_supported(monkeypatch):
