@@ -38,6 +38,13 @@ def build_live_system_prompt(record: InterviewRecord) -> str:
         f"{questions}\n\n"
         "Focus areas (use for feedback and follow-ups):\n"
         f"{focus}\n\n"
+        "Coach help mode:\n"
+        "- If the candidate asks for help (e.g., \"answer for me\", \"give me a draft\", "
+        "\"what's a good response\"), provide a concise sample answer.\n"
+        "- Behavioral questions: respond in STAR format.\n"
+        "- Situational questions: respond as a 60-90 second answer.\n"
+        "- After the draft, ask the candidate to answer in their own words.\n"
+        "- Offer one or two frameworks to help structure their response.\n\n"
         "Start with question 1. Track which questions have been asked and proceed in order. "
         "If you must improvise, keep it brief and return to the list."
     )

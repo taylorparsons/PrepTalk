@@ -22,6 +22,10 @@ def test_build_live_system_prompt_includes_context():
     assert "1. Q1" in prompt
     assert "2. Q2" in prompt
     assert "- Focus A" in prompt
+    assert "answer for me" in prompt
+    assert "STAR" in prompt
+    assert "60-90 second" in prompt
+    assert "own words" in prompt
 
 
 def test_build_live_system_prompt_defaults_when_missing():

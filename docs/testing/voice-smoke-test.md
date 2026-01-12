@@ -17,7 +17,10 @@ Validate microphone permissions, live audio loop, transcript updates, and latenc
 5. Speak a short answer (5-10 seconds) and confirm:
    - Transcript updates with your speech.
    - You can hear the coach audio response.
-6. Click **Stop Session** and confirm:
+6. Ask the coach for help (e.g., “give me a draft”) and confirm:
+   - Coach provides a concise sample answer.
+   - Coach asks you to respond in your own words.
+7. Click **Stop Session** and confirm:
    - Score panel populates.
    - Transcript remains visible.
 

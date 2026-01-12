@@ -23,6 +23,7 @@
 - Study guide includes rubric, transcript, and summary.
 - Session persistence is per user, stored under app/session_store/<user_id>.
 - Logs are user-facing; keep IDs short and readable (5-char alphanumeric hash).
+- Coach help mode: if the candidate asks for help, provide a concise draft answer, then prompt them to answer in their own words (STAR for behavioral; 60-90 seconds for situational) and offer frameworks.
 
 ## Architecture Overview
 The backend runs a FastAPI service that handles uploads, session state, and Gemini 3 calls. A WebSocket endpoint bridges the browser microphone stream to Gemini Live and streams audio responses back to the client. A separate Gemini text client handles agenda generation and post-session summaries. Session data is stored as per-user JSON on disk (app/session_store/<user_id>) and used to generate a PDF study guide with rubric, transcript, and summary.
