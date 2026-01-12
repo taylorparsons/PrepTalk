@@ -11,7 +11,12 @@ from .schemas import (
     LiveSessionRequest,
     LiveSessionResponse,
     ScoreRequest,
-    ScoreResponse
+    ScoreResponse,
+    SessionNameRequest,
+    SessionNameResponse,
+    CustomQuestionRequest,
+    CustomQuestionResponse,
+    RestartResponse
 )
 from .services import interview_service
 from .services.document_text import DocumentInput, is_supported_document
@@ -182,6 +187,110 @@ async def score_interview(interview_id: str, request: Request, payload: ScoreReq
         user_id,
         interview_id,
         response.get("overall_score"),
+        _duration_ms(start)
+    )
+
+    return response
+
+
+@router.post("/interviews/{interview_id}/name", response_model=SessionNameResponse)
+async def update_session_name(interview_id: str, request: Request, payload: SessionNameRequest):
+    user_id = _get_user_id(request)
+    start = time.perf_counter()
+
+    logger.info(
+        "event=session_name_update status=start user_id=%s interview_id=%s",
+        user_id,
+        interview_id
+    )
+
+    try:
+        response = interview_service.set_session_name(interview_id, payload.name, user_id)
+    except KeyError as exc:
+        logger.warning(
+            "event=session_name_update status=not_found user_id=%s interview_id=%s duration_ms=%s",
+            user_id,
+            interview_id,
+            _duration_ms(start)
+        )
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    logger.info(
+        "event=session_name_update status=complete user_id=%s interview_id=%s version=%s duration_ms=%s",
+        user_id,
+        interview_id,
+        response.get("version"),
+        _duration_ms(start)
+    )
+
+    return response
+
+
+@router.post("/interviews/{interview_id}/questions/custom", response_model=CustomQuestionResponse)
+async def add_custom_question(interview_id: str, request: Request, payload: CustomQuestionRequest):
+    user_id = _get_user_id(request)
+    start = time.perf_counter()
+
+    logger.info(
+        "event=custom_question_add status=start user_id=%s interview_id=%s position=%s",
+        user_id,
+        interview_id,
+        payload.position
+    )
+
+    try:
+        response = interview_service.add_custom_question(
+            interview_id,
+            payload.question,
+            payload.position,
+            user_id
+        )
+    except KeyError as exc:
+        logger.warning(
+            "event=custom_question_add status=not_found user_id=%s interview_id=%s duration_ms=%s",
+            user_id,
+            interview_id,
+            _duration_ms(start)
+        )
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    logger.info(
+        "event=custom_question_add status=complete user_id=%s interview_id=%s index=%s duration_ms=%s",
+        user_id,
+        interview_id,
+        response.get("index"),
+        _duration_ms(start)
+    )
+
+    return response
+
+
+@router.post("/interviews/{interview_id}/restart", response_model=RestartResponse)
+async def restart_interview(interview_id: str, request: Request):
+    user_id = _get_user_id(request)
+    start = time.perf_counter()
+
+    logger.info(
+        "event=interview_restart status=start user_id=%s interview_id=%s",
+        user_id,
+        interview_id
+    )
+
+    try:
+        response = interview_service.reset_interview(interview_id, user_id)
+    except KeyError as exc:
+        logger.warning(
+            "event=interview_restart status=not_found user_id=%s interview_id=%s duration_ms=%s",
+            user_id,
+            interview_id,
+            _duration_ms(start)
+        )
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    logger.info(
+        "event=interview_restart status=complete user_id=%s interview_id=%s duration_ms=%s",
+        user_id,
+        interview_id,
         _duration_ms(start)
     )
 

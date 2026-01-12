@@ -31,6 +31,7 @@ class LiveSessionResponse(BaseModel):
 class InterviewSummaryResponse(BaseModel):
     interview_id: str
     role_title: str | None = None
+    session_name: str | None = None
     questions: list[str] = Field(default_factory=list)
     focus_areas: list[str] = Field(default_factory=list)
     overall_score: int | None = None
@@ -38,6 +39,33 @@ class InterviewSummaryResponse(BaseModel):
     strengths: list[str] = Field(default_factory=list)
     improvements: list[str] = Field(default_factory=list)
     transcript: list[TranscriptEntry] = Field(default_factory=list)
+
+
+class SessionNameRequest(BaseModel):
+    name: str
+
+
+class SessionNameResponse(BaseModel):
+    interview_id: str
+    session_name: str
+    version: int
+
+
+class CustomQuestionRequest(BaseModel):
+    question: str
+    position: int = Field(ge=1)
+
+
+class CustomQuestionResponse(BaseModel):
+    interview_id: str
+    questions: list[str]
+    position: int
+    index: int
+
+
+class RestartResponse(BaseModel):
+    interview_id: str
+    status: str
 
 
 class ScoreRequest(BaseModel):

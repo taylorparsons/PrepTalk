@@ -4,7 +4,15 @@ import {
   createStatusPill,
   createTranscriptRow
 } from './components/index.js';
-import { createInterview, scoreInterview, startLiveSession } from './api/client.js';
+import {
+  addCustomQuestion,
+  createInterview,
+  downloadStudyGuide,
+  restartInterview,
+  scoreInterview,
+  startLiveSession,
+  updateSessionName
+} from './api/client.js';
 import { getAppConfig } from './config.js';
 import { LiveTransport } from './transport.js';
 import { createAudioPlayback, decodePcm16Base64, startMicrophoneCapture } from './voice.js';
@@ -74,10 +82,11 @@ function renderList(list, items, placeholder) {
     return;
   }
 
-  items.forEach((item) => {
+  items.forEach((item, index) => {
     const li = document.createElement('li');
     li.className = 'ui-list__item';
     li.textContent = item;
+    li.dataset.index = String(index);
     list.appendChild(li);
   });
 }
@@ -209,10 +218,21 @@ function buildSetupPanel(state, ui) {
       state.interviewId = result.interview_id;
       state.questions = result.questions || [];
       state.adapter = result.adapter || state.adapter;
+      state.sessionName = '';
+      state.sessionStarted = false;
       renderList(ui.questionList, state.questions, ui.questionPlaceholder);
+      ui.resetSessionState?.();
       ui.startButton.disabled = false;
       status.textContent = 'Questions ready. Start the live session when ready.';
       ui.adapterMeta.textContent = `Adapter: ${state.adapter}`;
+      ui.updateMeta?.();
+      if (ui.sessionNameInput) {
+        ui.sessionNameInput.value = '';
+      }
+      if (ui.customQuestionInput) {
+        ui.customQuestionInput.value = '';
+      }
+      ui.updateSessionToolsState?.();
     } catch (error) {
       status.className = 'ui-field__error';
       status.textContent = error.message || 'Unable to generate questions.';
@@ -265,9 +285,45 @@ function buildControlsPanel(state, ui, config) {
     attrs: { 'data-testid': 'stop-interview' }
   });
 
+  const muteButton = createButton({
+    label: 'Mute',
+    variant: 'secondary',
+    size: 'md',
+    attrs: {
+      'data-testid': 'mute-interview',
+      'aria-pressed': 'false'
+    },
+    onClick: () => {
+      setMuteState(!state.isMuted);
+    }
+  });
+
+  const sessionToolsButton = createButton({
+    label: 'Session Tools',
+    variant: 'ghost',
+    size: 'sm',
+    attrs: {
+      'data-testid': 'session-tools-toggle',
+      'aria-controls': 'session-tools-drawer',
+      'aria-expanded': 'false'
+    }
+  });
+
+  function setMuteState(isMuted) {
+    state.isMuted = isMuted;
+    updateButtonLabel(muteButton, isMuted ? 'Unmute' : 'Mute');
+    muteButton.setAttribute('aria-pressed', String(isMuted));
+  }
+
   const meta = document.createElement('p');
   meta.className = 'ui-meta';
-  meta.textContent = `Adapter: ${state.adapter} | Live: ${config.liveModel}`;
+
+  function updateMeta() {
+    const sessionLabel = state.sessionName ? ` | Session: ${state.sessionName}` : '';
+    meta.textContent = `Adapter: ${state.adapter} | Live: ${config.liveModel}${sessionLabel}`;
+  }
+
+  updateMeta();
 
   function resetSessionState() {
     state.transcript = [];
@@ -275,8 +331,10 @@ function buildControlsPanel(state, ui, config) {
     state.sessionId = null;
     state.liveMode = null;
     state.sessionActive = false;
+    setMuteState(false);
     renderTranscript(ui.transcriptList, state.transcript);
     renderScore(ui, null);
+    ui.updateSessionToolsState?.();
   }
 
   async function endLiveSession({ label, tone, allowRestart = false } = {}) {
@@ -308,6 +366,7 @@ function buildControlsPanel(state, ui, config) {
 
     stopButton.disabled = true;
     startButton.disabled = !(allowRestart && state.interviewId);
+    ui.updateSessionToolsState?.();
   }
 
 
@@ -323,11 +382,13 @@ function buildControlsPanel(state, ui, config) {
     if (live.mock_transcript?.length) {
       state.transcript = [];
       renderTranscript(ui.transcriptList, state.transcript);
+      ui.updateSessionToolsState?.();
       const delay = config.adapter === 'mock' ? 120 : 220;
       live.mock_transcript.forEach((entry, index) => {
         window.setTimeout(() => {
           state.transcript.push(entry);
           renderTranscript(ui.transcriptList, state.transcript);
+          ui.updateSessionToolsState?.();
         }, delay * index);
       });
     }
@@ -409,6 +470,7 @@ function buildControlsPanel(state, ui, config) {
           };
           state.transcript.push(entry);
           renderTranscript(ui.transcriptList, state.transcript);
+          ui.updateSessionToolsState?.();
         },
         onAudio: (payload) => {
           const pcm16 = coercePcm16(payload);
@@ -437,7 +499,9 @@ function buildControlsPanel(state, ui, config) {
       state.audioCapture = await startMicrophoneCapture({
         targetSampleRate: 24000,
         onAudioFrame: (frame) => {
-          state.transport?.sendAudio(frame);
+          if (!state.isMuted) {
+            state.transport?.sendAudio(frame);
+          }
         },
         onStatus: () => {
           updateStatusPill(statusPill, { label: 'Mic ready', tone: 'info' });
@@ -460,6 +524,8 @@ function buildControlsPanel(state, ui, config) {
     updateStatusPill(statusPill, { label: 'Connecting', tone: 'info' });
     resetSessionState();
     state.sessionActive = true;
+    state.sessionStarted = true;
+    ui.updateSessionToolsState?.();
 
     try {
       await ensureTransport();
@@ -477,6 +543,7 @@ function buildControlsPanel(state, ui, config) {
         state.sessionActive = false;
         startButton.disabled = false;
         stopButton.disabled = true;
+        ui.updateSessionToolsState?.();
         return;
       }
       updateStatusPill(statusPill, { label: 'Fallback', tone: 'warning' });
@@ -487,6 +554,7 @@ function buildControlsPanel(state, ui, config) {
         state.sessionActive = false;
         startButton.disabled = false;
         stopButton.disabled = true;
+        ui.updateSessionToolsState?.();
       }
     }
   });
@@ -524,20 +592,36 @@ function buildControlsPanel(state, ui, config) {
       updateStatusPill(statusPill, { label: 'Score Error', tone: 'danger' });
     } finally {
       startButton.disabled = true;
+      setMuteState(false);
+      ui.updateSessionToolsState?.();
     }
   });
+
+  const actionsRow = document.createElement('div');
+  actionsRow.className = 'ui-controls__row';
+  actionsRow.appendChild(startButton);
+  actionsRow.appendChild(stopButton);
+  actionsRow.appendChild(muteButton);
+
+  const toolsRow = document.createElement('div');
+  toolsRow.className = 'ui-controls__row ui-controls__row--tools';
+  toolsRow.appendChild(sessionToolsButton);
 
   const content = document.createElement('div');
   content.className = 'layout-stack';
   content.appendChild(statusPill);
-  content.appendChild(startButton);
-  content.appendChild(stopButton);
+  content.appendChild(actionsRow);
+  content.appendChild(toolsRow);
   content.appendChild(meta);
 
   ui.statusPill = statusPill;
   ui.startButton = startButton;
   ui.stopButton = stopButton;
+  ui.muteButton = muteButton;
+  ui.sessionToolsToggle = sessionToolsButton;
   ui.adapterMeta = meta;
+  ui.updateMeta = updateMeta;
+  ui.resetSessionState = resetSessionState;
 
   return createPanel({
     title: 'Session Controls',
@@ -546,6 +630,196 @@ function buildControlsPanel(state, ui, config) {
     attrs: { 'data-testid': 'controls-panel' }
   });
 }
+
+function buildSessionToolsDrawer(state, ui) {
+  const drawer = document.createElement('aside');
+  drawer.className = 'ui-drawer ui-drawer--left';
+  drawer.id = 'session-tools-drawer';
+  drawer.setAttribute('aria-hidden', 'true');
+  drawer.setAttribute('data-testid', 'session-tools-drawer');
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'ui-drawer__backdrop';
+  backdrop.setAttribute('aria-hidden', 'true');
+  backdrop.setAttribute('data-testid', 'session-tools-backdrop');
+
+  const header = document.createElement('div');
+  header.className = 'ui-drawer__header';
+
+  const title = document.createElement('h3');
+  title.className = 'ui-drawer__title';
+  title.textContent = 'Session Tools';
+
+  const closeButton = createButton({
+    label: 'Close',
+    variant: 'ghost',
+    size: 'sm',
+    attrs: {
+      'data-testid': 'session-tools-close',
+      'aria-label': 'Close Session Tools'
+    }
+  });
+
+  header.appendChild(title);
+  header.appendChild(closeButton);
+
+  const nameSection = document.createElement('section');
+  nameSection.className = 'ui-drawer__section';
+
+  const nameLabel = document.createElement('label');
+  nameLabel.className = 'ui-field__label';
+  nameLabel.textContent = 'Session name';
+
+  const nameInput = document.createElement('input');
+  nameInput.className = 'ui-field__input';
+  nameInput.type = 'text';
+  nameInput.placeholder = 'e.g. PM system design';
+  nameInput.setAttribute('data-testid', 'session-name-input');
+
+  const nameSave = createButton({
+    label: 'Save name',
+    variant: 'secondary',
+    size: 'sm',
+    disabled: true,
+    attrs: { 'data-testid': 'session-name-save' }
+  });
+
+  const nameHelp = document.createElement('p');
+  nameHelp.className = 'ui-field__help';
+  nameHelp.textContent = 'Names are versioned per interview.';
+
+  nameSection.appendChild(nameLabel);
+  nameSection.appendChild(nameInput);
+  nameSection.appendChild(nameSave);
+  nameSection.appendChild(nameHelp);
+
+  const questionSection = document.createElement('section');
+  questionSection.className = 'ui-drawer__section';
+
+  const questionLabel = document.createElement('label');
+  questionLabel.className = 'ui-field__label';
+  questionLabel.textContent = 'Add known question';
+
+  const questionInput = document.createElement('textarea');
+  questionInput.className = 'ui-field__input ui-field__input--textarea';
+  questionInput.placeholder = 'Paste the question the interviewer will ask.';
+  questionInput.setAttribute('data-testid', 'custom-question-input');
+
+  const positionLabel = document.createElement('label');
+  positionLabel.className = 'ui-field__label';
+  positionLabel.textContent = 'Insert position';
+
+  const positionInput = document.createElement('input');
+  positionInput.className = 'ui-field__input ui-field__input--number';
+  positionInput.type = 'number';
+  positionInput.min = '1';
+  positionInput.value = '1';
+  positionInput.setAttribute('data-testid', 'custom-question-position');
+
+  const questionRow = document.createElement('div');
+  questionRow.className = 'ui-drawer__row';
+
+  const addAndJump = createButton({
+    label: 'Add & jump',
+    variant: 'primary',
+    size: 'sm',
+    disabled: true,
+    attrs: { 'data-testid': 'custom-question-add-jump' }
+  });
+
+  const addOnly = createButton({
+    label: 'Add only',
+    variant: 'ghost',
+    size: 'sm',
+    disabled: true,
+    attrs: { 'data-testid': 'custom-question-add' }
+  });
+
+  questionRow.appendChild(addAndJump);
+  questionRow.appendChild(addOnly);
+
+  const questionHelp = document.createElement('p');
+  questionHelp.className = 'ui-field__help';
+  questionHelp.textContent = 'Positions are 1-based in the question list.';
+
+  questionSection.appendChild(questionLabel);
+  questionSection.appendChild(questionInput);
+  questionSection.appendChild(positionLabel);
+  questionSection.appendChild(positionInput);
+  questionSection.appendChild(questionRow);
+  questionSection.appendChild(questionHelp);
+
+  const exportSection = document.createElement('section');
+  exportSection.className = 'ui-drawer__section';
+
+  const exportLabel = document.createElement('label');
+  exportLabel.className = 'ui-field__label';
+  exportLabel.textContent = 'Export transcript';
+
+  const exportButton = createButton({
+    label: 'Export PDF',
+    variant: 'secondary',
+    size: 'sm',
+    disabled: true,
+    attrs: { 'data-testid': 'export-transcript' }
+  });
+
+  const exportHelp = document.createElement('p');
+  exportHelp.className = 'ui-field__help';
+  exportHelp.textContent = 'Enabled after transcript exists.';
+
+  exportSection.appendChild(exportLabel);
+  exportSection.appendChild(exportButton);
+  exportSection.appendChild(exportHelp);
+
+  const restartSection = document.createElement('section');
+  restartSection.className = 'ui-drawer__section';
+
+  const restartLabel = document.createElement('label');
+  restartLabel.className = 'ui-field__label';
+  restartLabel.textContent = 'Restart interview';
+
+  const restartButton = createButton({
+    label: 'Restart',
+    variant: 'ghost',
+    size: 'sm',
+    disabled: true,
+    attrs: { 'data-testid': 'restart-interview' }
+  });
+
+  const restartHelp = document.createElement('p');
+  restartHelp.className = 'ui-field__help';
+  restartHelp.textContent = 'Enabled after a session starts.';
+
+  restartSection.appendChild(restartLabel);
+  restartSection.appendChild(restartButton);
+  restartSection.appendChild(restartHelp);
+
+  drawer.appendChild(header);
+  drawer.appendChild(nameSection);
+  drawer.appendChild(questionSection);
+  drawer.appendChild(exportSection);
+  drawer.appendChild(restartSection);
+
+  ui.sessionToolsDrawer = drawer;
+  ui.sessionToolsBackdrop = backdrop;
+  ui.sessionToolsClose = closeButton;
+  ui.sessionNameInput = nameInput;
+  ui.sessionNameSave = nameSave;
+  ui.sessionNameHelp = nameHelp;
+  ui.customQuestionInput = questionInput;
+  ui.customQuestionPosition = positionInput;
+  ui.customQuestionAdd = addOnly;
+  ui.customQuestionAddJump = addAndJump;
+  ui.customQuestionHelp = questionHelp;
+  ui.exportTranscript = exportButton;
+  ui.exportHelp = exportHelp;
+  ui.restartButton = restartButton;
+  ui.restartHelp = restartHelp;
+
+  return { drawer, backdrop };
+}
+
 
 function buildQuestionsPanel(ui) {
   const list = document.createElement('ul');
@@ -645,7 +919,10 @@ export function buildVoiceLayout() {
     audioCapture: null,
     audioPlayback: null,
     audioPlaybackSampleRate: null,
-    sessionActive: false
+    sessionActive: false,
+    sessionStarted: false,
+    isMuted: false,
+    sessionName: ''
   };
 
   const ui = {};
@@ -665,6 +942,161 @@ export function buildVoiceLayout() {
   layout.className = 'layout-split';
   layout.appendChild(leftColumn);
   layout.appendChild(rightColumn);
+
+  const { drawer, backdrop } = buildSessionToolsDrawer(state, ui);
+  layout.appendChild(drawer);
+  layout.appendChild(backdrop);
+
+  function setDrawerOpen(isOpen) {
+    const hidden = !isOpen;
+    drawer.setAttribute('aria-hidden', String(hidden));
+    backdrop.setAttribute('aria-hidden', String(hidden));
+    drawer.classList.toggle('ui-drawer--open', isOpen);
+    backdrop.classList.toggle('ui-drawer__backdrop--open', isOpen);
+    if (ui.sessionToolsToggle) {
+      ui.sessionToolsToggle.setAttribute('aria-expanded', String(isOpen));
+    }
+  }
+
+  ui.sessionToolsToggle?.addEventListener('click', () => setDrawerOpen(true));
+  ui.sessionToolsClose?.addEventListener('click', () => setDrawerOpen(false));
+  ui.sessionToolsBackdrop?.addEventListener('click', () => setDrawerOpen(false));
+
+  function updateSessionToolsState() {
+    const hasInterview = Boolean(state.interviewId);
+    const hasTranscript = state.transcript.length > 0;
+    const canRestart = hasInterview && state.sessionStarted && !state.sessionActive;
+    const nameValue = ui.sessionNameInput?.value.trim() || '';
+    const questionValue = ui.customQuestionInput?.value.trim() || '';
+
+    if (ui.sessionNameSave) {
+      ui.sessionNameSave.disabled = !(hasInterview && nameValue.length > 0);
+    }
+    if (ui.customQuestionAdd) {
+      ui.customQuestionAdd.disabled = !(hasInterview && questionValue.length > 0);
+    }
+    if (ui.customQuestionAddJump) {
+      ui.customQuestionAddJump.disabled = !(hasInterview && questionValue.length > 0);
+    }
+    if (ui.exportTranscript) {
+      ui.exportTranscript.disabled = !(hasInterview && hasTranscript);
+    }
+    if (ui.restartButton) {
+      ui.restartButton.disabled = !canRestart;
+    }
+
+    if (ui.exportHelp) {
+      ui.exportHelp.textContent = hasTranscript
+        ? 'Downloads the study guide PDF.'
+        : 'Enabled after transcript exists.';
+    }
+    if (ui.restartHelp) {
+      ui.restartHelp.textContent = state.sessionActive
+        ? 'Stop the session to restart.'
+        : 'Enabled after a session starts.';
+    }
+  }
+
+  ui.updateSessionToolsState = updateSessionToolsState;
+
+  ui.sessionNameInput?.addEventListener('input', updateSessionToolsState);
+  ui.customQuestionInput?.addEventListener('input', updateSessionToolsState);
+  ui.customQuestionPosition?.addEventListener('input', updateSessionToolsState);
+
+  ui.sessionNameSave?.addEventListener('click', async () => {
+    const name = ui.sessionNameInput?.value.trim();
+    if (!state.interviewId || !name) {
+      updateSessionToolsState();
+      return;
+    }
+    try {
+      const response = await updateSessionName({
+        interviewId: state.interviewId,
+        name
+      });
+      state.sessionName = response.session_name;
+      ui.sessionNameHelp.textContent = `Saved as v${response.version}.`;
+      ui.updateMeta?.();
+    } catch (error) {
+      ui.sessionNameHelp.textContent = error.message || 'Unable to save session name.';
+    } finally {
+      updateSessionToolsState();
+    }
+  });
+
+  async function handleCustomQuestion({ jump }) {
+    const question = ui.customQuestionInput?.value.trim();
+    if (!state.interviewId || !question) {
+      updateSessionToolsState();
+      return;
+    }
+    const positionValue = Number.parseInt(ui.customQuestionPosition?.value || '1', 10);
+    const position = Number.isFinite(positionValue) && positionValue > 0 ? positionValue : 1;
+    try {
+      const response = await addCustomQuestion({
+        interviewId: state.interviewId,
+        question,
+        position
+      });
+      state.questions = response.questions || [];
+      renderList(ui.questionList, state.questions, ui.questionPlaceholder);
+      if (jump) {
+        const target = ui.questionList.querySelector(`[data-index="${response.index}"]`);
+        target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      ui.customQuestionInput.value = '';
+    } catch (error) {
+      ui.customQuestionHelp.textContent = error.message || 'Unable to add question.';
+      updateSessionToolsState();
+      return;
+    }
+    ui.customQuestionHelp.textContent = 'Positions are 1-based in the question list.';
+    updateSessionToolsState();
+  }
+
+  ui.customQuestionAdd?.addEventListener('click', () => {
+    void handleCustomQuestion({ jump: false });
+  });
+  ui.customQuestionAddJump?.addEventListener('click', () => {
+    void handleCustomQuestion({ jump: true });
+  });
+
+  ui.exportTranscript?.addEventListener('click', async () => {
+    if (!state.interviewId) return;
+    try {
+      const blob = await downloadStudyGuide({ interviewId: state.interviewId });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `interview-${state.interviewId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      ui.exportHelp.textContent = 'Download started.';
+    } catch (error) {
+      ui.exportHelp.textContent = error.message || 'Unable to export PDF.';
+    }
+  });
+
+  ui.restartButton?.addEventListener('click', async () => {
+    if (!state.interviewId) return;
+    try {
+      await restartInterview({ interviewId: state.interviewId });
+      ui.resetSessionState?.();
+      state.sessionStarted = false;
+      ui.startButton.disabled = false;
+      ui.stopButton.disabled = true;
+      updateStatusPill(ui.statusPill, { label: 'Idle', tone: 'neutral' });
+    } catch (error) {
+      ui.restartHelp.textContent = error.message || 'Unable to restart session.';
+    } finally {
+      updateSessionToolsState();
+    }
+  });
+
+  updateSessionToolsState();
+
   return layout;
 }
 

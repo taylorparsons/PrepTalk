@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import re
@@ -22,6 +23,8 @@ class InterviewRecord:
     focus_areas: list[str]
     transcript: list[dict] = field(default_factory=list)
     score: Optional[dict] = None
+    session_name_history: list[dict] = field(default_factory=list)
+    custom_questions: list[dict] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -32,8 +35,15 @@ class InterviewRecord:
             "questions": list(self.questions),
             "focus_areas": list(self.focus_areas),
             "transcript": list(self.transcript),
-            "score": dict(self.score) if self.score else None
+            "score": dict(self.score) if self.score else None,
+            "session_name_history": list(self.session_name_history),
+            "custom_questions": list(self.custom_questions)
         }
+
+    def current_session_name(self) -> str | None:
+        if not self.session_name_history:
+            return None
+        return self.session_name_history[-1].get('name')
 
     @classmethod
     def from_dict(cls, payload: dict) -> "InterviewRecord":
@@ -45,7 +55,9 @@ class InterviewRecord:
             questions=list(payload.get("questions", [])),
             focus_areas=list(payload.get("focus_areas", [])),
             transcript=list(payload.get("transcript", [])),
-            score=payload.get("score")
+            score=payload.get("score"),
+            session_name_history=list(payload.get("session_name_history", [])),
+            custom_questions=list(payload.get("custom_questions", []))
         )
 
 
@@ -141,6 +153,46 @@ class InterviewStore:
         record = self.get(interview_id, user_id)
         if record:
             record.score = dict(score)
+            self._persist(record)
+
+    def set_session_name(self, interview_id: str, name: str, user_id: str | None = None) -> dict | None:
+        record = self.get(interview_id, user_id)
+        if not record:
+            return None
+        cleaned = name.strip()
+        entry = {
+            "name": cleaned,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "version": len(record.session_name_history) + 1
+        }
+        record.session_name_history.append(entry)
+        self._persist(record)
+        return entry
+
+    def add_custom_question(
+        self,
+        interview_id: str,
+        question: str,
+        position: int,
+        user_id: str | None = None
+    ) -> dict | None:
+        record = self.get(interview_id, user_id)
+        if not record:
+            return None
+        cleaned = question.strip()
+        safe_position = max(1, int(position)) if position is not None else len(record.questions) + 1
+        index = min(safe_position - 1, len(record.questions))
+        record.questions.insert(index, cleaned)
+        entry = {"question": cleaned, "position": safe_position, "index": index}
+        record.custom_questions.append(entry)
+        self._persist(record)
+        return {"record": record, "entry": entry, "index": index}
+
+    def reset_session(self, interview_id: str, user_id: str | None = None) -> None:
+        record = self.get(interview_id, user_id)
+        if record:
+            record.transcript = []
+            record.score = None
             self._persist(record)
 
 

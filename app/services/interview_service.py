@@ -73,6 +73,50 @@ def score_interview(interview_id: str, transcript: list[dict], user_id: str | No
     }
 
 
+def set_session_name(interview_id: str, name: str, user_id: str | None = None) -> dict:
+    record = store.get(interview_id, user_id)
+    if not record:
+        raise KeyError("Interview not found")
+    entry = store.set_session_name(interview_id, name, user_id)
+    if not entry:
+        raise KeyError("Interview not found")
+    return {
+        "interview_id": record.interview_id,
+        "session_name": entry.get("name", ""),
+        "version": entry.get("version", 1)
+    }
+
+
+
+def add_custom_question(interview_id: str, question: str, position: int, user_id: str | None = None) -> dict:
+    record = store.get(interview_id, user_id)
+    if not record:
+        raise KeyError("Interview not found")
+    result = store.add_custom_question(interview_id, question, position, user_id)
+    if not result:
+        raise KeyError("Interview not found")
+    entry = result["entry"]
+    return {
+        "interview_id": record.interview_id,
+        "questions": list(record.questions),
+        "position": entry.get("position", position),
+        "index": result.get("index", 0)
+    }
+
+
+
+def reset_interview(interview_id: str, user_id: str | None = None) -> dict:
+    record = store.get(interview_id, user_id)
+    if not record:
+        raise KeyError("Interview not found")
+    store.reset_session(interview_id, user_id)
+    return {
+        "interview_id": record.interview_id,
+        "status": "reset"
+    }
+
+
+
 
 def get_interview_summary(interview_id: str, user_id: str | None = None) -> dict:
     record = store.get(interview_id, user_id)
@@ -83,6 +127,7 @@ def get_interview_summary(interview_id: str, user_id: str | None = None) -> dict
     return {
         "interview_id": record.interview_id,
         "role_title": record.role_title,
+        "session_name": record.current_session_name(),
         "questions": record.questions,
         "focus_areas": record.focus_areas,
         "overall_score": score.get("overall_score"),

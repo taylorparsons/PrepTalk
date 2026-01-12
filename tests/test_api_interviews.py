@@ -117,3 +117,71 @@ def test_create_interview_accepts_txt():
     payload = response.json()
     assert payload["interview_id"]
 
+
+
+
+def test_session_name_updates_and_versions():
+    client = TestClient(app)
+    interview_id = _create_interview(client)
+
+    response = client.post(
+        f"/api/interviews/{interview_id}/name",
+        json={"name": "Session One"}
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["session_name"] == "Session One"
+
+    response = client.post(
+        f"/api/interviews/{interview_id}/name",
+        json={"name": "Session Two"}
+    )
+    assert response.status_code == 200
+
+    summary_response = client.get(f"/api/interviews/{interview_id}")
+    assert summary_response.status_code == 200
+    summary = summary_response.json()
+    assert summary["session_name"] == "Session Two"
+
+
+def test_custom_question_inserts_at_position():
+    client = TestClient(app)
+    interview_id = _create_interview(client)
+
+    response = client.post(
+        f"/api/interviews/{interview_id}/questions/custom",
+        json={"question": "Custom question", "position": 2}
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["questions"][1] == "Custom question"
+
+    summary_response = client.get(f"/api/interviews/{interview_id}")
+    assert summary_response.status_code == 200
+    summary = summary_response.json()
+    assert summary["questions"][1] == "Custom question"
+
+
+def test_restart_clears_transcript_and_score():
+    client = TestClient(app)
+    interview_id = _create_interview(client)
+
+    transcript = [
+        {"role": "coach", "text": "Welcome", "timestamp": "00:00"},
+        {"role": "candidate", "text": "Hello", "timestamp": "00:04"}
+    ]
+
+    score_response = client.post(
+        f"/api/interviews/{interview_id}/score",
+        json={"transcript": transcript}
+    )
+    assert score_response.status_code == 200
+
+    reset_response = client.post(f"/api/interviews/{interview_id}/restart")
+    assert reset_response.status_code == 200
+
+    summary_response = client.get(f"/api/interviews/{interview_id}")
+    assert summary_response.status_code == 200
+    summary = summary_response.json()
+    assert summary["transcript"] == []
+    assert summary["overall_score"] is None

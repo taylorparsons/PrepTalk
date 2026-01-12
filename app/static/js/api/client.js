@@ -64,3 +64,45 @@ export async function scoreInterview({ interviewId, transcript }) {
 
   return handleResponse(response);
 }
+
+
+export async function updateSessionName({ interviewId, name }) {
+  const response = await fetch(`${getApiBase()}/interviews/${interviewId}/name`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
+    body: JSON.stringify({ name })
+  });
+
+  return handleResponse(response);
+}
+
+export async function addCustomQuestion({ interviewId, question, position }) {
+  const response = await fetch(`${getApiBase()}/interviews/${interviewId}/questions/custom`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
+    body: JSON.stringify({ question, position })
+  });
+
+  return handleResponse(response);
+}
+
+export async function restartInterview({ interviewId }) {
+  const response = await fetch(`${getApiBase()}/interviews/${interviewId}/restart`, {
+    method: 'POST',
+    headers: { 'X-User-Id': getUserId() }
+  });
+
+  return handleResponse(response);
+}
+
+export async function downloadStudyGuide({ interviewId }) {
+  const response = await fetch(`${getApiBase()}/interviews/${interviewId}/study-guide`, {
+    headers: { 'X-User-Id': getUserId() }
+  });
+
+  if (!response.ok) {
+    await handleResponse(response);
+  }
+
+  return response.blob();
+}
