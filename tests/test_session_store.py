@@ -9,6 +9,8 @@ def test_session_store_persists(tmp_path):
         role_title='Recruiter',
         questions=['Q1'],
         focus_areas=['Focus'],
+        resume_text='Resume text',
+        job_text='Job text',
         user_id='candidate-1'
     )
 
@@ -33,6 +35,8 @@ def test_session_store_persists(tmp_path):
     assert loaded is not None
     assert loaded.transcript[0]['text'] == 'Welcome'
     assert loaded.score['overall_score'] == 90
+    assert loaded.resume_text == 'Resume text'
+    assert loaded.job_text == 'Job text'
 
 
 

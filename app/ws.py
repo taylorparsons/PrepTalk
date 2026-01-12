@@ -13,6 +13,7 @@ from starlette.websockets import WebSocketDisconnect
 from .services import interview_service
 from .services.adapters import get_adapter
 from .services.gemini_live import GeminiLiveBridge
+from .services.live_context import build_live_system_prompt
 from .services.store import store
 from .settings import load_settings
 from .logging_config import get_logger
@@ -126,7 +127,8 @@ class LiveWebSocketSession:
             await self._send({"type": "error", "message": "interview_id is required."})
             return
 
-        if not store.get(interview_id, self._user_id):
+        record = store.get(interview_id, self._user_id)
+        if not record:
             logger.warning("event=ws_start status=not_found user_id=%s interview_id=%s", self._user_id, interview_id)
             await self._send({"type": "error", "message": "Interview not found."})
             return
@@ -164,7 +166,7 @@ class LiveWebSocketSession:
         )
 
         if self.adapter.name == "gemini":
-            await self._start_gemini_session(interview_id)
+            await self._start_gemini_session(interview_id, record)
 
         mock_transcript = live_payload.get("mock_transcript")
         if mock_transcript:
@@ -174,7 +176,7 @@ class LiveWebSocketSession:
                 self._stream_mock_transcript(interview_id, self._user_id, mock_transcript)
             )
 
-    async def _start_gemini_session(self, interview_id: str) -> None:
+    async def _start_gemini_session(self, interview_id: str, record) -> None:
         if self._gemini_bridge is not None:
             await self._stop_gemini_session()
 
@@ -191,12 +193,14 @@ class LiveWebSocketSession:
             self.settings.live_model
         )
 
+        system_prompt = build_live_system_prompt(record)
         self._gemini_bridge = GeminiLiveBridge(
             api_key=api_key,
             model=self.settings.live_model,
             interview_id=interview_id,
             user_id=self._user_id,
-            send_json=self._send
+            send_json=self._send,
+            system_prompt=system_prompt
         )
         try:
             await self._gemini_bridge.connect()

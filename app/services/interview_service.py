@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 
 from .adapters import get_adapter
-from .document_text import DocumentInput
+from .document_text import DocumentInput, extract_document_text
 from .store import store
 from .pdf_service import build_study_guide_pdf
 
@@ -15,6 +15,8 @@ def prepare_interview(
     user_id: str | None = None
 ) -> dict:
     adapter = get_adapter()
+    resume_text = extract_document_text(resume, max_chars=4000)
+    job_text = extract_document_text(job, max_chars=4000)
     questions, focus_areas = adapter.generate_questions(resume, job, role_title)
     interview_id = str(uuid.uuid4())
 
@@ -24,6 +26,8 @@ def prepare_interview(
         role_title=role_title,
         questions=questions,
         focus_areas=focus_areas,
+        resume_text=resume_text,
+        job_text=job_text,
         user_id=user_id
     )
 

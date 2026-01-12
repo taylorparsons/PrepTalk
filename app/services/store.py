@@ -21,6 +21,8 @@ class InterviewRecord:
     role_title: str | None
     questions: list[str]
     focus_areas: list[str]
+    resume_text: str = ""
+    job_text: str = ""
     transcript: list[dict] = field(default_factory=list)
     score: Optional[dict] = None
     session_name_history: list[dict] = field(default_factory=list)
@@ -34,6 +36,8 @@ class InterviewRecord:
             "role_title": self.role_title,
             "questions": list(self.questions),
             "focus_areas": list(self.focus_areas),
+            "resume_text": self.resume_text,
+            "job_text": self.job_text,
             "transcript": list(self.transcript),
             "score": dict(self.score) if self.score else None,
             "session_name_history": list(self.session_name_history),
@@ -54,6 +58,8 @@ class InterviewRecord:
             role_title=payload.get("role_title"),
             questions=list(payload.get("questions", [])),
             focus_areas=list(payload.get("focus_areas", [])),
+            resume_text=payload.get("resume_text", ""),
+            job_text=payload.get("job_text", ""),
             transcript=list(payload.get("transcript", [])),
             score=payload.get("score"),
             session_name_history=list(payload.get("session_name_history", [])),
@@ -118,6 +124,8 @@ class InterviewStore:
         role_title: str | None,
         questions: list[str],
         focus_areas: list[str],
+        resume_text: str | None = None,
+        job_text: str | None = None,
         user_id: str | None = None
     ) -> InterviewRecord:
         normalized = self._normalize_user_id(user_id)
@@ -127,7 +135,9 @@ class InterviewStore:
             adapter=adapter,
             role_title=role_title,
             questions=questions,
-            focus_areas=focus_areas
+            focus_areas=focus_areas,
+            resume_text=resume_text or "",
+            job_text=job_text or ""
         )
         self._records[(normalized, interview_id)] = record
         self._persist(record)
