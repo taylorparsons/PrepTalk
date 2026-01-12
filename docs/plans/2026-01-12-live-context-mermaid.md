@@ -32,6 +32,17 @@ sequenceDiagram
     API->>S: Update asked_question_index (target)
     deactivate U
 
+    U->>UI: Stop session
+    UI->>API: POST /api/interviews/{id}/score (transcript)
+    API->>TXT: generate_content(score prompt)
+    TXT-->>API: overall_score + summary
+    API->>S: Store transcript + score
+    API-->>UI: Score payload
+    UI->>API: GET /api/interviews/{id}/study-guide
+    API->>S: Load interview record
+    API->>API: Build PDF study guide
+    API-->>UI: PDF download
+
     Note over S: Target keeps asked_question_index + transcript history
 ```
 
@@ -43,3 +54,12 @@ sequenceDiagram
 5. Backend loads the interview record and builds the Gemini Live system prompt with context.
 6. Gemini Live streams audio and transcript events; the UI renders them and appends to the session store.
 7. Target behavior: Gemini Live reports question progression, and the backend tracks asked questions.
+8. User stops the session when finished.
+9. UI posts the transcript to the scoring endpoint.
+10. Backend calls Gemini Text to score the transcript.
+11. Backend stores the transcript and score in the session store.
+12. UI renders the score summary and rubric feedback.
+13. User requests the PDF study guide export.
+14. Backend loads the interview record from session storage.
+15. Backend builds the PDF study guide from score + transcript.
+16. UI receives the PDF blob and triggers the download.
