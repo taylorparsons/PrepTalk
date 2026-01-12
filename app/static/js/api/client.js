@@ -86,6 +86,16 @@ export async function addCustomQuestion({ interviewId, question, position }) {
   return handleResponse(response);
 }
 
+export async function updateQuestionStatus({ interviewId, index, status, source }) {
+  const response = await fetch(`${getApiBase()}/interviews/${interviewId}/questions/status`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
+    body: JSON.stringify({ index, status, source })
+  });
+
+  return handleResponse(response);
+}
+
 export async function restartInterview({ interviewId }) {
   const response = await fetch(`${getApiBase()}/interviews/${interviewId}/restart`, {
     method: 'POST',

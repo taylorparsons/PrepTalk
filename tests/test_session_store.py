@@ -37,6 +37,7 @@ def test_session_store_persists(tmp_path):
     assert loaded.score['overall_score'] == 90
     assert loaded.resume_text == 'Resume text'
     assert loaded.job_text == 'Job text'
+    assert loaded.question_statuses[0]['status'] == 'not_started'
 
 
 
@@ -84,6 +85,7 @@ def test_session_store_inserts_custom_question(tmp_path):
     assert loaded is not None
     assert loaded.questions == ['Q1', 'Custom question', 'Q2', 'Q3']
     assert loaded.custom_questions[0]['position'] == 2
+    assert len(loaded.question_statuses) == 4
 
 
 def test_session_store_reset_clears_transcript_and_score(tmp_path):
@@ -161,3 +163,47 @@ def test_session_store_merges_transcript_entries(tmp_path):
     assert loaded.transcript == [
         {'role': 'candidate', 'text': 'I am what', 'timestamp': '19:01:41'}
     ]
+
+
+def test_question_status_updates_and_history(tmp_path):
+    store = InterviewStore(base_dir=tmp_path, default_user_id='tester')
+    record = store.create(
+        interview_id='status123',
+        adapter='mock',
+        role_title='Engineer',
+        questions=['Q1', 'Q2'],
+        focus_areas=['Focus'],
+        user_id='candidate-1'
+    )
+
+    entry = store.update_question_status(
+        record.interview_id,
+        0,
+        'started',
+        user_id='candidate-1',
+        source='auto'
+    )
+    assert entry is not None
+
+    store.update_question_status(
+        record.interview_id,
+        0,
+        'answered',
+        user_id='candidate-1',
+        source='user'
+    )
+    store.update_question_status(
+        record.interview_id,
+        0,
+        'started',
+        user_id='candidate-1',
+        source='auto'
+    )
+
+    reloaded = InterviewStore(base_dir=tmp_path, default_user_id='tester')
+    loaded = reloaded.get(record.interview_id, user_id='candidate-1')
+    assert loaded is not None
+    assert loaded.question_statuses[0]['status'] == 'answered'
+    assert loaded.question_status_history[-1]['status'] == 'answered'
+    assert loaded.question_status_history[-1]['source'] == 'user'
+    assert loaded.question_status_history[-1]['timestamp']

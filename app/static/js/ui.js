@@ -11,6 +11,7 @@ import {
   restartInterview,
   scoreInterview,
   startLiveSession,
+  updateQuestionStatus,
   updateSessionName
 } from './api/client.js';
 import { getAppConfig } from './config.js';
@@ -20,6 +21,14 @@ import { createAudioPlayback, decodePcm16Base64, startMicrophoneCapture } from '
 const STATUS_TONES = ['neutral', 'success', 'warning', 'danger', 'info'];
 const GEMINI_RECONNECT_MAX_ATTEMPTS = 3;
 const GEMINI_RECONNECT_DELAY_MS = 600;
+const QUESTION_STATUS_OPTIONS = [
+  { value: 'not_started', label: 'Not started' },
+  { value: 'started', label: 'Started' },
+  { value: 'answered', label: 'Answered' }
+];
+const QUESTION_STATUS_LOOKUP = new Map(
+  QUESTION_STATUS_OPTIONS.map((option) => [option.value, option.label])
+);
 
 function updateStatusPill(pill, { label, tone }) {
   const toneValue = STATUS_TONES.includes(tone) ? tone : 'neutral';
@@ -169,6 +178,65 @@ function renderList(list, items, placeholder) {
   });
 }
 
+export function normalizeQuestionStatuses(questions, statuses) {
+  const output = [];
+  const input = Array.isArray(statuses) ? statuses : [];
+  for (let i = 0; i < questions.length; i += 1) {
+    const entry = input[i] || {};
+    const status = QUESTION_STATUS_LOOKUP.has(entry.status) ? entry.status : 'not_started';
+    output.push({
+      status,
+      updated_at: entry.updated_at || ''
+    });
+  }
+  return output;
+}
+
+export function renderQuestions(list, questions, statuses, placeholder, onStatusChange) {
+  list.innerHTML = '';
+  if (!questions || questions.length === 0) {
+    list.appendChild(placeholder);
+    return;
+  }
+
+  questions.forEach((question, index) => {
+    const statusEntry = statuses[index] || { status: 'not_started' };
+    const statusValue = QUESTION_STATUS_LOOKUP.has(statusEntry.status)
+      ? statusEntry.status
+      : 'not_started';
+
+    const li = document.createElement('li');
+    li.className = `ui-list__item ui-question ui-question--${statusValue}`;
+    li.dataset.index = String(index);
+
+    const text = document.createElement('div');
+    text.className = 'ui-question__text';
+    text.textContent = question;
+
+    const controls = document.createElement('div');
+    controls.className = 'ui-question__controls';
+
+    const select = document.createElement('select');
+    select.className = 'ui-question__select';
+    select.setAttribute('data-testid', `question-status-${index}`);
+    QUESTION_STATUS_OPTIONS.forEach((option) => {
+      const opt = document.createElement('option');
+      opt.value = option.value;
+      opt.textContent = option.label;
+      select.appendChild(opt);
+    });
+    select.value = statusValue;
+    select.addEventListener('change', () => {
+      onStatusChange?.(index, select.value);
+    });
+
+    controls.appendChild(select);
+    li.appendChild(text);
+    li.appendChild(controls);
+    list.appendChild(li);
+  });
+}
+
 function renderTranscript(list, entries) {
   list.innerHTML = '';
   if (!entries || entries.length === 0) {
@@ -280,10 +348,17 @@ function buildSetupPanel(state, ui) {
     updateButtonLabel(generateButton, 'Generating...');
     state.interviewId = null;
     state.questions = [];
+    state.questionStatuses = [];
     state.transcript = [];
     state.score = null;
     ui.startButton.disabled = true;
-    renderList(ui.questionList, state.questions, ui.questionPlaceholder);
+    renderQuestions(
+      ui.questionList,
+      state.questions,
+      state.questionStatuses,
+      ui.questionPlaceholder,
+      ui.onQuestionStatusChange
+    );
     renderTranscript(ui.transcriptList, state.transcript);
     renderScore(ui, null);
 
@@ -295,10 +370,17 @@ function buildSetupPanel(state, ui) {
 
       state.interviewId = result.interview_id;
       state.questions = result.questions || [];
+      state.questionStatuses = normalizeQuestionStatuses(state.questions, result.question_statuses);
       state.adapter = result.adapter || state.adapter;
       state.sessionName = '';
       state.sessionStarted = false;
-      renderList(ui.questionList, state.questions, ui.questionPlaceholder);
+      renderQuestions(
+        ui.questionList,
+        state.questions,
+        state.questionStatuses,
+        ui.questionPlaceholder,
+        ui.onQuestionStatusChange
+      );
       ui.resetSessionState?.();
       ui.startButton.disabled = false;
       status.textContent = 'Questions ready. Start the live session when ready.';
@@ -468,6 +550,7 @@ function buildControlsPanel(state, ui, config) {
         window.setTimeout(() => {
           state.transcript.push(entry);
           renderTranscript(ui.transcriptList, state.transcript);
+          autoStartNextQuestion(entry.role);
           ui.updateSessionToolsState?.();
         }, delay * index);
       });
@@ -553,6 +636,7 @@ function buildControlsPanel(state, ui, config) {
             timestamp: payload.timestamp
           });
           renderTranscript(ui.transcriptList, state.transcript);
+          autoStartNextQuestion(payload.role);
           ui.updateSessionToolsState?.();
         },
         onAudio: (payload) => {
@@ -994,6 +1078,7 @@ export function buildVoiceLayout() {
     interviewId: null,
     sessionId: null,
     questions: [],
+    questionStatuses: [],
     transcript: [],
     score: null,
     adapter: config.adapter,
@@ -1012,6 +1097,79 @@ export function buildVoiceLayout() {
   };
 
   const ui = {};
+
+  function syncQuestionStatuses(statuses) {
+    state.questionStatuses = normalizeQuestionStatuses(state.questions, statuses);
+    if (ui.questionList && ui.questionPlaceholder) {
+      renderQuestions(ui.questionList, state.questions, state.questionStatuses, ui.questionPlaceholder, onQuestionStatusChange);
+    }
+  }
+
+  function applyLocalQuestionStatus(index, status, updatedAt) {
+    if (!state.questionStatuses?.length) {
+      state.questionStatuses = normalizeQuestionStatuses(state.questions, state.questionStatuses);
+    }
+    if (!state.questionStatuses[index]) {
+      return;
+    }
+    state.questionStatuses[index] = {
+      status,
+      updated_at: updatedAt || state.questionStatuses[index].updated_at || ''
+    };
+  }
+
+  async function setQuestionStatus(index, status, source = 'user') {
+    if (!state.interviewId) {
+      return;
+    }
+    const previous = state.questionStatuses[index];
+    applyLocalQuestionStatus(index, status);
+    renderQuestions(ui.questionList, state.questions, state.questionStatuses, ui.questionPlaceholder, onQuestionStatusChange);
+    try {
+      const response = await updateQuestionStatus({
+        interviewId: state.interviewId,
+        index,
+        status,
+        source
+      });
+      syncQuestionStatuses(response.question_statuses);
+    } catch (error) {
+      if (previous) {
+        applyLocalQuestionStatus(index, previous.status, previous.updated_at);
+      }
+      renderQuestions(ui.questionList, state.questions, state.questionStatuses, ui.questionPlaceholder, onQuestionStatusChange);
+    }
+  }
+
+  function onQuestionStatusChange(index, status) {
+    void setQuestionStatus(index, status, 'user');
+  }
+
+  ui.onQuestionStatusChange = onQuestionStatusChange;
+
+  function isCoachRole(role) {
+    const normalized = String(role || '').toLowerCase();
+    return normalized === 'coach' || normalized === 'assistant' || normalized === 'ai';
+  }
+
+  function autoStartNextQuestion(role) {
+    if (!isCoachRole(role)) {
+      return;
+    }
+    if (!state.questionStatuses?.length) {
+      return;
+    }
+    if (state.questionStatuses.some((entry) => entry.status === 'started')) {
+      return;
+    }
+    const index = state.questionStatuses.findIndex((entry) => entry.status !== 'answered');
+    if (index === -1) {
+      return;
+    }
+    if (state.questionStatuses[index].status === 'not_started') {
+      void setQuestionStatus(index, 'started', 'auto');
+    }
+  }
 
   const leftColumn = document.createElement('div');
   leftColumn.className = 'layout-stack';
@@ -1125,7 +1283,7 @@ export function buildVoiceLayout() {
         position
       });
       state.questions = response.questions || [];
-      renderList(ui.questionList, state.questions, ui.questionPlaceholder);
+      syncQuestionStatuses(response.question_statuses);
       if (jump) {
         const target = ui.questionList.querySelector(`[data-index="${response.index}"]`);
         target?.scrollIntoView({ behavior: 'smooth', block: 'center' });

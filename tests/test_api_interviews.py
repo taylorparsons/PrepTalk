@@ -42,6 +42,7 @@ def test_create_interview_returns_questions():
     assert payload["interview_id"]
     assert len(payload["questions"]) >= 3
     assert payload["adapter"] == "mock"
+    assert payload["question_statuses"]
 
 
 def test_live_session_returns_mock_transcript():
@@ -160,6 +161,7 @@ def test_custom_question_inserts_at_position():
     assert summary_response.status_code == 200
     summary = summary_response.json()
     assert summary["questions"][1] == "Custom question"
+    assert summary["question_statuses"][1]["status"] == "not_started"
 
 
 def test_restart_clears_transcript_and_score():
@@ -185,3 +187,21 @@ def test_restart_clears_transcript_and_score():
     summary = summary_response.json()
     assert summary["transcript"] == []
     assert summary["overall_score"] is None
+
+
+def test_question_status_update_endpoint():
+    client = TestClient(app)
+    interview_id = _create_interview(client)
+
+    response = client.post(
+        f"/api/interviews/{interview_id}/questions/status",
+        json={"index": 0, "status": "started", "source": "user"}
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["question_statuses"][0]["status"] == "started"
+
+    summary_response = client.get(f"/api/interviews/{interview_id}")
+    assert summary_response.status_code == 200
+    summary = summary_response.json()
+    assert summary["question_statuses"][0]["status"] == "started"

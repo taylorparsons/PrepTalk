@@ -16,6 +16,8 @@ from .schemas import (
     SessionNameResponse,
     CustomQuestionRequest,
     CustomQuestionResponse,
+    QuestionStatusRequest,
+    QuestionStatusResponse,
     RestartResponse
 )
 from .services import interview_service
@@ -259,6 +261,53 @@ async def add_custom_question(interview_id: str, request: Request, payload: Cust
         user_id,
         interview_id,
         response.get("index"),
+        _duration_ms(start)
+    )
+
+    return response
+
+
+@router.post("/interviews/{interview_id}/questions/status", response_model=QuestionStatusResponse)
+async def update_question_status(interview_id: str, request: Request, payload: QuestionStatusRequest):
+    user_id = _get_user_id(request)
+    start = time.perf_counter()
+
+    logger.info(
+        "event=question_status_update status=start user_id=%s interview_id=%s index=%s",
+        user_id,
+        interview_id,
+        payload.index
+    )
+
+    try:
+        response = interview_service.set_question_status(
+            interview_id,
+            payload.index,
+            payload.status,
+            user_id,
+            source=payload.source or "user"
+        )
+    except KeyError as exc:
+        logger.warning(
+            "event=question_status_update status=not_found user_id=%s interview_id=%s duration_ms=%s",
+            user_id,
+            interview_id,
+            _duration_ms(start)
+        )
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (ValueError, IndexError) as exc:
+        logger.warning(
+            "event=question_status_update status=invalid user_id=%s interview_id=%s duration_ms=%s",
+            user_id,
+            interview_id,
+            _duration_ms(start)
+        )
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    logger.info(
+        "event=question_status_update status=complete user_id=%s interview_id=%s duration_ms=%s",
+        user_id,
+        interview_id,
         _duration_ms(start)
     )
 

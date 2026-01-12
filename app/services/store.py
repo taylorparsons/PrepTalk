@@ -23,6 +23,8 @@ class InterviewRecord:
     focus_areas: list[str]
     resume_text: str = ""
     job_text: str = ""
+    question_statuses: list[dict] = field(default_factory=list)
+    question_status_history: list[dict] = field(default_factory=list)
     transcript: list[dict] = field(default_factory=list)
     score: Optional[dict] = None
     session_name_history: list[dict] = field(default_factory=list)
@@ -38,6 +40,8 @@ class InterviewRecord:
             "focus_areas": list(self.focus_areas),
             "resume_text": self.resume_text,
             "job_text": self.job_text,
+            "question_statuses": list(self.question_statuses),
+            "question_status_history": list(self.question_status_history),
             "transcript": list(self.transcript),
             "score": dict(self.score) if self.score else None,
             "session_name_history": list(self.session_name_history),
@@ -60,6 +64,8 @@ class InterviewRecord:
             focus_areas=list(payload.get("focus_areas", [])),
             resume_text=payload.get("resume_text", ""),
             job_text=payload.get("job_text", ""),
+            question_statuses=list(payload.get("question_statuses", [])),
+            question_status_history=list(payload.get("question_status_history", [])),
             transcript=list(payload.get("transcript", [])),
             score=payload.get("score"),
             session_name_history=list(payload.get("session_name_history", [])),
@@ -84,6 +90,21 @@ def _merge_transcript_text(previous: str, incoming: str) -> str:
         return f"{prev}{next_text}"
     return f"{prev} {next_text}"
 
+
+QUESTION_STATUS_DEFAULT = "not_started"
+QUESTION_STATUS_VALUES = {"not_started", "started", "answered"}
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _status_entry(status: str) -> dict:
+    return {"status": status, "updated_at": _now_iso()}
+
+
+def _default_statuses(questions: list[str]) -> list[dict]:
+    return [_status_entry(QUESTION_STATUS_DEFAULT) for _ in questions]
 
 
 class InterviewStore:
@@ -117,6 +138,21 @@ class InterviewStore:
         tmp_path.write_text(json.dumps(record.to_dict(), indent=2))
         tmp_path.replace(path)
 
+    def _ensure_question_statuses(self, record: InterviewRecord) -> bool:
+        changed = False
+        if not record.question_statuses:
+            record.question_statuses = _default_statuses(record.questions)
+            changed = True
+        if len(record.question_statuses) < len(record.questions):
+            record.question_statuses.extend(
+                _default_statuses(record.questions[len(record.question_statuses):])
+            )
+            changed = True
+        if len(record.question_statuses) > len(record.questions):
+            record.question_statuses = record.question_statuses[:len(record.questions)]
+            changed = True
+        return changed
+
     def create(
         self,
         interview_id: str,
@@ -139,6 +175,7 @@ class InterviewStore:
             resume_text=resume_text or "",
             job_text=job_text or ""
         )
+        self._ensure_question_statuses(record)
         self._records[(normalized, interview_id)] = record
         self._persist(record)
         return record
@@ -152,6 +189,8 @@ class InterviewStore:
         if path and path.exists():
             payload = json.loads(path.read_text())
             record = InterviewRecord.from_dict(payload)
+            if self._ensure_question_statuses(record):
+                self._persist(record)
             self._records[key] = record
             return record
         return None
@@ -225,10 +264,48 @@ class InterviewStore:
         safe_position = max(1, int(position)) if position is not None else len(record.questions) + 1
         index = min(safe_position - 1, len(record.questions))
         record.questions.insert(index, cleaned)
+        self._ensure_question_statuses(record)
+        record.question_statuses.insert(index, _status_entry(QUESTION_STATUS_DEFAULT))
         entry = {"question": cleaned, "position": safe_position, "index": index}
         record.custom_questions.append(entry)
         self._persist(record)
         return {"record": record, "entry": entry, "index": index}
+
+    def update_question_status(
+        self,
+        interview_id: str,
+        index: int,
+        status: str,
+        user_id: str | None = None,
+        source: str = "user"
+    ) -> dict | None:
+        record = self.get(interview_id, user_id)
+        if not record:
+            return None
+        if status not in QUESTION_STATUS_VALUES:
+            raise ValueError("Invalid question status.")
+        if self._ensure_question_statuses(record):
+            self._persist(record)
+        if index < 0 or index >= len(record.question_statuses):
+            raise IndexError("Question index out of range.")
+        current = record.question_statuses[index]
+        if source != "user" and current.get("status") == "answered" and status != "answered":
+            return current
+        if current.get("status") == status and source != "user":
+            return current
+        updated = _status_entry(status)
+        record.question_statuses[index] = updated
+        record.question_status_history.append(
+            {
+                "index": index,
+                "question": record.questions[index],
+                "status": status,
+                "timestamp": updated["updated_at"],
+                "source": source
+            }
+        )
+        self._persist(record)
+        return updated
 
     def reset_session(self, interview_id: str, user_id: str | None = None) -> None:
         record = self.get(interview_id, user_id)

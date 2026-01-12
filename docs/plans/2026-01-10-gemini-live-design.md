@@ -83,6 +83,7 @@ sequenceDiagram
 - Restart interview flow (reset transcript/score, keep question set).
 - Session naming UI (rename current interview).
 - Add custom questions to the interview agenda.
+- Question status tracking (non-started/started/answered) with manual toggles and auto-start on coach prompts.
 - app/templates/index.html: voice-first UI with start and stop controls.
 - app/static/js/voice.js: mic capture, audio buffering, and playback.
 - app/static/js/transport.js: WebSocket lifecycle, reconnect, and status.
@@ -251,6 +252,7 @@ Task tracking
 - [ ] Restart interview flow (reset transcript/score, keep question set).
 - [ ] Session naming UI (rename current interview).
 - [ ] Custom question input to append known questions.
+- [ ] Question status tracking with manual toggles and auto-start on coach prompts.
 - [x] Voice-first UI shell (setup, controls, transcript, score).
 - [x] Microphone capture + audio playback pipeline (PCM16 @ 24 kHz).
 - [x] WebSocket transport layer with reconnect + status.

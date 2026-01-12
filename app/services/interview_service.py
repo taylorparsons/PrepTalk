@@ -35,6 +35,7 @@ def prepare_interview(
         "interview_id": record.interview_id,
         "questions": record.questions,
         "focus_areas": record.focus_areas,
+        "question_statuses": list(record.question_statuses),
         "adapter": record.adapter
     }
 
@@ -103,6 +104,7 @@ def add_custom_question(interview_id: str, question: str, position: int, user_id
     return {
         "interview_id": record.interview_id,
         "questions": list(record.questions),
+        "question_statuses": list(record.question_statuses),
         "position": entry.get("position", position),
         "index": result.get("index", 0)
     }
@@ -134,11 +136,34 @@ def get_interview_summary(interview_id: str, user_id: str | None = None) -> dict
         "session_name": record.current_session_name(),
         "questions": record.questions,
         "focus_areas": record.focus_areas,
+        "question_statuses": list(record.question_statuses),
         "overall_score": score.get("overall_score"),
         "summary": score.get("summary"),
         "strengths": score.get("strengths") or [],
         "improvements": score.get("improvements") or [],
         "transcript": list(record.transcript)
+    }
+
+
+def set_question_status(
+    interview_id: str,
+    index: int,
+    status: str,
+    user_id: str | None = None,
+    source: str = "user"
+) -> dict:
+    record = store.get(interview_id, user_id)
+    if not record:
+        raise KeyError("Interview not found")
+    entry = store.update_question_status(interview_id, index, status, user_id, source=source)
+    if entry is None:
+        raise KeyError("Interview not found")
+    return {
+        "interview_id": record.interview_id,
+        "question_statuses": list(record.question_statuses),
+        "index": index,
+        "status": entry.get("status"),
+        "updated_at": entry.get("updated_at")
     }
 
 
