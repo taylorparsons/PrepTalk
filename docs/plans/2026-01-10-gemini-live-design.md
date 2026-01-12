@@ -28,6 +28,8 @@
 ## Architecture Overview
 The backend runs a FastAPI service that handles uploads, session state, and Gemini 3 calls. A WebSocket endpoint bridges the browser microphone stream to Gemini Live and streams audio responses back to the client. A separate Gemini text client handles agenda generation and post-session summaries. Session data is stored as per-user JSON on disk (app/session_store/<user_id>) and used to generate a PDF study guide with rubric, transcript, and summary.
 
+Mermaid reference diagram: `docs/plans/2026-01-12-live-context-mermaid.md`.
+
 ## Context & Question Tracking (Current Flow)
 The resume and job description are only used to generate the initial questions/rubric. The live Gemini coach session is started without those artifacts, so it lacks role context and does not follow the question list or track what has been asked.
 
