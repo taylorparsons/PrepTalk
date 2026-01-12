@@ -27,6 +27,41 @@
 ## Architecture Overview
 The backend runs a FastAPI service that handles uploads, session state, and Gemini 3 calls. A WebSocket endpoint bridges the browser microphone stream to Gemini Live and streams audio responses back to the client. A separate Gemini text client handles agenda generation and post-session summaries. Session data is stored as per-user JSON on disk (app/session_store/<user_id>) and used to generate a PDF study guide with rubric, transcript, and summary.
 
+## Context & Question Tracking (Current Flow)
+The resume and job description are only used to generate the initial questions/rubric. The live Gemini coach session is started without those artifacts, so it lacks role context and does not follow the question list or track what has been asked.
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant UI as Web UI
+    participant API as FastAPI
+    participant TXT as Gemini Text
+    participant S as Session Store
+    participant LIVE as Gemini Live
+
+    U->>UI: Upload resume + job description
+    UI->>API: POST /api/interviews (files, role_title)
+    API->>TXT: generate_content(prompt with resume + job)
+    TXT-->>API: questions + focus_areas
+    API->>S: Persist interview_id, questions, focus_areas
+    API-->>UI: interview_id + questions
+
+    U->>UI: Start interview (voice)
+    UI->>API: POST /api/live/session
+    API-->>UI: session_id + mode
+    UI->>LIVE: WebSocket connect + start
+    Note over LIVE: System prompt only (no resume/job/questions)
+    LIVE-->>UI: Audio + transcript events
+    UI->>S: Append transcript entries
+
+    Note over S: No asked-question tracking yet (gap)
+```
+
+### UAT Observations (Gap Symptoms)
+- Coach asks for the target role despite job description already supplied.
+- Coach improvises instead of following the question list.
+- Coach repeats “what role are you interviewing for.”
+
 ## Components
 ### Backend
 - FastAPI routes for session creation, upload, summary retrieval, and PDF export.
@@ -159,6 +194,11 @@ Task tracking
 - Gemini Live errors: log details, show user-friendly messages, and backoff.
 - Rate limits or quota: notify the user and keep the transcript for later resume.
 - Keepalive pings on the live WebSocket; reconnect reuses the same interview session.
+
+## Live Voice Streaming Fallback (Current)
+- Transport-level reconnect: the WebSocket client retries if the connection drops.
+- Gemini session reconnect: on `gemini-disconnected`, the UI retries `start` up to 3 times.
+- No model fallback: if Gemini Live returns a policy error (e.g., 1008), the session ends and the user must restart. Set `GEMINI_LIVE_MODEL` to a supported model to stabilize Live sessions.
 
 ## Logging & Observability
 - Log per request with short, user-friendly fields; use interview_id hash only (5-char alphanumeric).
