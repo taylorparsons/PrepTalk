@@ -5,7 +5,7 @@ import uuid
 from .adapters import get_adapter
 from .document_text import DocumentInput, extract_document_text
 from .store import store
-from .pdf_service import build_study_guide_pdf
+from .pdf_service import build_study_guide_pdf, build_study_guide_text as build_study_guide_text_output
 
 
 def prepare_interview(
@@ -134,6 +134,9 @@ def get_interview_summary(interview_id: str, user_id: str | None = None) -> dict
         "interview_id": record.interview_id,
         "role_title": record.role_title,
         "session_name": record.current_session_name(),
+        "adapter": record.adapter,
+        "created_at": record.created_at,
+        "updated_at": record.updated_at,
         "questions": record.questions,
         "focus_areas": record.focus_areas,
         "question_statuses": list(record.question_statuses),
@@ -143,6 +146,21 @@ def get_interview_summary(interview_id: str, user_id: str | None = None) -> dict
         "improvements": score.get("improvements") or [],
         "transcript": list(record.transcript)
     }
+
+
+def list_sessions(user_id: str | None = None) -> list[dict]:
+    records = store.list_sessions(user_id)
+    return [
+        {
+            "interview_id": record.interview_id,
+            "session_name": record.current_session_name(),
+            "role_title": record.role_title,
+            "adapter": record.adapter,
+            "created_at": record.created_at,
+            "updated_at": record.updated_at
+        }
+        for record in records
+    ]
 
 
 def set_question_status(
@@ -172,3 +190,10 @@ def build_study_guide(interview_id: str, user_id: str | None = None) -> bytes:
     if not record:
         raise KeyError("Interview not found")
     return build_study_guide_pdf(record)
+
+
+def build_study_guide_text(interview_id: str, user_id: str | None = None) -> str:
+    record = store.get(interview_id, user_id)
+    if not record:
+        raise KeyError("Interview not found")
+    return build_study_guide_text_output(record)

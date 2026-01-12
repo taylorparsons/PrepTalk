@@ -12,6 +12,8 @@ describe('session tools drawer', () => {
     const drawer = layout.querySelector('[data-testid="session-tools-drawer"]');
     expect(drawer).toBeTruthy();
     expect(drawer.getAttribute('aria-hidden')).toBe('true');
+    expect(drawer.querySelector('[data-testid="session-select"]')).toBeTruthy();
+    expect(drawer.querySelector('[data-testid="export-format"]')).toBeTruthy();
   });
 
   it('toggles the session tools drawer open and closed', () => {
@@ -46,8 +48,11 @@ describe('session tools drawer', () => {
 
     const exportButton = layout.querySelector('[data-testid="export-transcript"]');
     const restartButton = layout.querySelector('[data-testid="restart-interview"]');
+    const exportFormat = layout.querySelector('[data-testid="export-format"]');
 
     expect(exportButton.disabled).toBe(true);
+    expect(exportButton.textContent).toContain('Export PDF');
+    expect(exportFormat.value).toBe('pdf');
     expect(restartButton.disabled).toBe(true);
   });
 });

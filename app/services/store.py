@@ -21,6 +21,8 @@ class InterviewRecord:
     role_title: str | None
     questions: list[str]
     focus_areas: list[str]
+    created_at: str = ""
+    updated_at: str = ""
     resume_text: str = ""
     job_text: str = ""
     question_statuses: list[dict] = field(default_factory=list)
@@ -36,6 +38,8 @@ class InterviewRecord:
             "user_id": self.user_id,
             "adapter": self.adapter,
             "role_title": self.role_title,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
             "questions": list(self.questions),
             "focus_areas": list(self.focus_areas),
             "resume_text": self.resume_text,
@@ -60,6 +64,8 @@ class InterviewRecord:
             user_id=payload.get("user_id", "local"),
             adapter=payload.get("adapter", "mock"),
             role_title=payload.get("role_title"),
+            created_at=payload.get("created_at", ""),
+            updated_at=payload.get("updated_at", ""),
             questions=list(payload.get("questions", [])),
             focus_areas=list(payload.get("focus_areas", [])),
             resume_text=payload.get("resume_text", ""),
@@ -105,6 +111,13 @@ def _status_entry(status: str) -> dict:
 
 def _default_statuses(questions: list[str]) -> list[dict]:
     return [_status_entry(QUESTION_STATUS_DEFAULT) for _ in questions]
+
+
+def _touch(record: InterviewRecord) -> None:
+    now = _now_iso()
+    if not record.created_at:
+        record.created_at = now
+    record.updated_at = now
 
 
 class InterviewStore:
@@ -165,11 +178,14 @@ class InterviewStore:
         user_id: str | None = None
     ) -> InterviewRecord:
         normalized = self._normalize_user_id(user_id)
+        now = _now_iso()
         record = InterviewRecord(
             interview_id=interview_id,
             user_id=normalized,
             adapter=adapter,
             role_title=role_title,
+            created_at=now,
+            updated_at=now,
             questions=questions,
             focus_areas=focus_areas,
             resume_text=resume_text or "",
@@ -189,7 +205,14 @@ class InterviewStore:
         if path and path.exists():
             payload = json.loads(path.read_text())
             record = InterviewRecord.from_dict(payload)
-            if self._ensure_question_statuses(record):
+            changed = self._ensure_question_statuses(record)
+            if not record.created_at:
+                record.created_at = _now_iso()
+                changed = True
+            if not record.updated_at:
+                record.updated_at = record.created_at or _now_iso()
+                changed = True
+            if changed:
                 self._persist(record)
             self._records[key] = record
             return record
@@ -204,6 +227,7 @@ class InterviewStore:
         record = self.get(interview_id, user_id)
         if record:
             record.transcript = list(transcript)
+            _touch(record)
             self._persist(record)
 
     def append_transcript_entry(
@@ -225,15 +249,18 @@ class InterviewStore:
             last["text"] = _merge_transcript_text(last.get("text", ""), text_value)
             if not last.get("timestamp") and payload.get("timestamp"):
                 last["timestamp"] = payload.get("timestamp")
+            _touch(record)
             self._persist(record)
             return
         record.transcript.append(payload)
+        _touch(record)
         self._persist(record)
 
     def set_score(self, interview_id: str, score: dict, user_id: str | None = None) -> None:
         record = self.get(interview_id, user_id)
         if record:
             record.score = dict(score)
+            _touch(record)
             self._persist(record)
 
     def set_session_name(self, interview_id: str, name: str, user_id: str | None = None) -> dict | None:
@@ -247,6 +274,7 @@ class InterviewStore:
             "version": len(record.session_name_history) + 1
         }
         record.session_name_history.append(entry)
+        _touch(record)
         self._persist(record)
         return entry
 
@@ -268,6 +296,7 @@ class InterviewStore:
         record.question_statuses.insert(index, _status_entry(QUESTION_STATUS_DEFAULT))
         entry = {"question": cleaned, "position": safe_position, "index": index}
         record.custom_questions.append(entry)
+        _touch(record)
         self._persist(record)
         return {"record": record, "entry": entry, "index": index}
 
@@ -304,6 +333,7 @@ class InterviewStore:
                 "source": source
             }
         )
+        _touch(record)
         self._persist(record)
         return updated
 
@@ -312,7 +342,35 @@ class InterviewStore:
         if record:
             record.transcript = []
             record.score = None
+            _touch(record)
             self._persist(record)
+
+    def list_sessions(self, user_id: str | None = None) -> list[InterviewRecord]:
+        normalized = self._normalize_user_id(user_id)
+        records: dict[str, InterviewRecord] = {}
+
+        if self._base_dir is not None:
+            dir_path = self._base_dir / normalized
+            if dir_path.exists():
+                for path in dir_path.glob("*.json"):
+                    payload = json.loads(path.read_text())
+                    record = InterviewRecord.from_dict(payload)
+                    if not record.created_at:
+                        record.created_at = _now_iso()
+                    if not record.updated_at:
+                        record.updated_at = record.created_at or _now_iso()
+                    records[record.interview_id] = record
+
+        for (user_key, interview_id), record in self._records.items():
+            if user_key == normalized:
+                records[interview_id] = record
+
+        output = list(records.values())
+        output.sort(
+            key=lambda record: record.updated_at or record.created_at or "",
+            reverse=True
+        )
+        return output
 
 
 settings = load_settings()

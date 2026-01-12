@@ -97,3 +97,55 @@ def build_study_guide_pdf(record: InterviewRecord) -> bytes:
     if isinstance(data, bytearray):
         return bytes(data)
     return str(data).encode("latin-1")
+
+
+def build_study_guide_text(record: InterviewRecord) -> str:
+    lines: list[str] = []
+    lines.append("Interview Study Guide")
+    lines.append("")
+    lines.append(f"Interview ID: {record.interview_id}")
+    if record.role_title:
+        lines.append(f"Role: {record.role_title}")
+    lines.append(f"Adapter: {record.adapter}")
+    lines.append("")
+
+    score = record.score or {}
+    overall = score.get("overall_score")
+    summary = score.get("summary") or "Summary pending."
+
+    if overall is not None:
+        lines.append(f"Overall Score: {overall}")
+        lines.append("")
+
+    lines.append("Summary")
+    lines.append(summary)
+    lines.append("")
+
+    strengths = score.get("strengths") or []
+    if strengths:
+        lines.append("Strengths")
+        lines.extend([f"- {item}" for item in strengths])
+        lines.append("")
+
+    improvements = score.get("improvements") or []
+    if improvements:
+        lines.append("Focus Next")
+        lines.extend([f"- {item}" for item in improvements])
+        lines.append("")
+
+    if record.focus_areas:
+        lines.append("Rubric")
+        lines.extend([f"- {item}" for item in record.focus_areas])
+        lines.append("")
+
+    if record.transcript:
+        lines.append("Transcript")
+        for entry in record.transcript:
+            timestamp = entry.get("timestamp") or ""
+            role = entry.get("role", "")
+            text = entry.get("text", "")
+            prefix = f"[{timestamp}] " if timestamp else ""
+            lines.append(f"{prefix}{role}: {text}")
+        lines.append("")
+
+    return "\n".join(lines).strip() + "\n"

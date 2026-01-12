@@ -1,3 +1,5 @@
+import time
+
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -17,12 +19,13 @@ def _pdf_bytes(label: str) -> bytes:
     ).encode("utf-8")
 
 
-def _create_interview(client: TestClient) -> str:
+def _create_interview(client: TestClient, user_id: str | None = None) -> str:
     files = {
         "resume": ("resume.pdf", _pdf_bytes("Resume"), "application/pdf"),
         "job_description": ("job.pdf", _pdf_bytes("Job"), "application/pdf")
     }
-    response = client.post("/api/interviews", files=files)
+    headers = {"X-User-Id": user_id} if user_id else None
+    response = client.post("/api/interviews", files=files, headers=headers)
     assert response.status_code == 200
     payload = response.json()
     assert payload["questions"]
@@ -104,6 +107,11 @@ def test_summary_and_pdf_exports():
     assert pdf_response.status_code == 200
     assert pdf_response.headers["content-type"].startswith("application/pdf")
     assert pdf_response.content.startswith(b"%PDF")
+
+    text_response = client.get(f"/api/interviews/{interview_id}/study-guide?format=txt")
+    assert text_response.status_code == 200
+    assert text_response.headers["content-type"].startswith("text/plain")
+    assert b"Interview Study Guide" in text_response.content
 
 
 def test_create_interview_accepts_txt():
@@ -205,3 +213,24 @@ def test_question_status_update_endpoint():
     assert summary_response.status_code == 200
     summary = summary_response.json()
     assert summary["question_statuses"][0]["status"] == "started"
+
+
+def test_session_list_orders_by_updated_at():
+    client = TestClient(app)
+    user_id = "list-user"
+    first_id = _create_interview(client, user_id=user_id)
+    time.sleep(0.001)
+    second_id = _create_interview(client, user_id=user_id)
+
+    client.post(
+        f"/api/interviews/{first_id}/name",
+        json={"name": "Updated Session"},
+        headers={"X-User-Id": user_id}
+    )
+
+    response = client.get("/api/interviews", headers={"X-User-Id": user_id})
+    assert response.status_code == 200
+    payload = response.json()
+    ids = [entry["interview_id"] for entry in payload["sessions"]]
+    assert ids[0] == first_id
+    assert ids[1] == second_id

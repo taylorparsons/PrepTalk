@@ -412,8 +412,42 @@ body {
 
 .ui-transcript__text {
   font-size: 15px;
-  margin: 0;
   color: var(--ui-color-ink);
+}
+
+.ui-markdown p {
+  margin: 0 0 8px;
+}
+
+.ui-markdown p:last-child {
+  margin-bottom: 0;
+}
+
+.ui-markdown ul,
+.ui-markdown ol {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.ui-markdown li {
+  margin-bottom: 4px;
+}
+
+.ui-markdown code {
+  font-family: var(--ui-font-mono);
+  font-size: 0.92em;
+  background: #efece6;
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+.ui-markdown pre {
+  font-family: var(--ui-font-mono);
+  background: #efece6;
+  border-radius: 6px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  margin: 0;
 }
 
 .ui-transcript__list {

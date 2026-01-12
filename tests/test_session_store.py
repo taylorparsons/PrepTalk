@@ -1,3 +1,5 @@
+import time
+
 from app.services.store import InterviewStore
 
 
@@ -207,3 +209,52 @@ def test_question_status_updates_and_history(tmp_path):
     assert loaded.question_status_history[-1]['status'] == 'answered'
     assert loaded.question_status_history[-1]['source'] == 'user'
     assert loaded.question_status_history[-1]['timestamp']
+
+
+def test_session_store_updates_updated_at(tmp_path):
+    store = InterviewStore(base_dir=tmp_path, default_user_id='tester')
+    record = store.create(
+        interview_id='updated123',
+        adapter='mock',
+        role_title='Engineer',
+        questions=['Q1'],
+        focus_areas=['Focus'],
+        user_id='candidate-1'
+    )
+    first_updated = record.updated_at
+
+    time.sleep(0.001)
+    store.set_session_name(record.interview_id, 'Session One', user_id='candidate-1')
+
+    loaded = store.get(record.interview_id, user_id='candidate-1')
+    assert loaded is not None
+    assert loaded.updated_at != first_updated
+
+
+def test_session_store_lists_sessions_ordered_by_updated_at(tmp_path):
+    store = InterviewStore(base_dir=tmp_path, default_user_id='tester')
+    first = store.create(
+        interview_id='first123',
+        adapter='mock',
+        role_title='Engineer',
+        questions=['Q1'],
+        focus_areas=['Focus'],
+        user_id='candidate-1'
+    )
+    time.sleep(0.001)
+    second = store.create(
+        interview_id='second123',
+        adapter='mock',
+        role_title='PM',
+        questions=['Q1'],
+        focus_areas=['Focus'],
+        user_id='candidate-1'
+    )
+
+    time.sleep(0.001)
+    store.set_session_name(first.interview_id, 'Session One', user_id='candidate-1')
+
+    sessions = store.list_sessions(user_id='candidate-1')
+    ids = [entry.interview_id for entry in sessions]
+    assert ids[0] == first.interview_id
+    assert ids[1] == second.interview_id

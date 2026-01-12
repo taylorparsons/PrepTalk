@@ -38,6 +38,9 @@ class InterviewSummaryResponse(BaseModel):
     interview_id: str
     role_title: str | None = None
     session_name: str | None = None
+    adapter: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
     questions: list[str] = Field(default_factory=list)
     focus_areas: list[str] = Field(default_factory=list)
     question_statuses: list[QuestionStatusEntry] = Field(default_factory=list)
@@ -101,3 +104,16 @@ class QuestionStatusResponse(BaseModel):
     index: int
     status: str
     updated_at: str
+
+
+class SessionListEntry(BaseModel):
+    interview_id: str
+    session_name: str | None = None
+    role_title: str | None = None
+    adapter: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
+class SessionListResponse(BaseModel):
+    sessions: list[SessionListEntry] = Field(default_factory=list)

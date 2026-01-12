@@ -27,4 +27,14 @@ describe('createTranscriptRow', () => {
     expect(row.classList.contains('ui-transcript__row--candidate')).toBe(true);
     expect(row.dataset.state).toBe('final');
   });
+
+  it('renders markdown formatting in transcript text', () => {
+    const row = createTranscriptRow({
+      role: 'coach',
+      text: 'Use **metrics** in your answer.'
+    });
+    document.body.appendChild(row);
+
+    expect(row.querySelector('strong')?.textContent).toBe('metrics');
+  });
 });

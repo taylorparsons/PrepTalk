@@ -105,8 +105,29 @@ export async function restartInterview({ interviewId }) {
   return handleResponse(response);
 }
 
-export async function downloadStudyGuide({ interviewId }) {
-  const response = await fetch(`${getApiBase()}/interviews/${interviewId}/study-guide`, {
+export async function listSessions() {
+  const response = await fetch(`${getApiBase()}/interviews`, {
+    headers: { 'X-User-Id': getUserId() }
+  });
+
+  return handleResponse(response);
+}
+
+export async function getInterviewSummary({ interviewId }) {
+  const response = await fetch(`${getApiBase()}/interviews/${interviewId}`, {
+    headers: { 'X-User-Id': getUserId() }
+  });
+
+  return handleResponse(response);
+}
+
+export async function downloadStudyGuide({ interviewId, format = 'pdf' }) {
+  const params = new URLSearchParams();
+  if (format) {
+    params.set('format', format);
+  }
+  const query = params.toString();
+  const response = await fetch(`${getApiBase()}/interviews/${interviewId}/study-guide${query ? `?${query}` : ''}`, {
     headers: { 'X-User-Id': getUserId() }
   });
 

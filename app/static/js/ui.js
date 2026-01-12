@@ -8,6 +8,8 @@ import {
   addCustomQuestion,
   createInterview,
   downloadStudyGuide,
+  getInterviewSummary,
+  listSessions,
   restartInterview,
   scoreInterview,
   startLiveSession,
@@ -17,6 +19,7 @@ import {
 import { getAppConfig } from './config.js';
 import { LiveTransport } from './transport.js';
 import { createAudioPlayback, decodePcm16Base64, startMicrophoneCapture } from './voice.js';
+import { renderMarkdownInto } from './markdown.js';
 
 const STATUS_TONES = ['neutral', 'success', 'warning', 'danger', 'info'];
 const GEMINI_RECONNECT_MAX_ATTEMPTS = 3;
@@ -237,7 +240,7 @@ export function renderQuestions(list, questions, statuses, placeholder, onStatus
   });
 }
 
-function renderTranscript(list, entries) {
+export function renderTranscript(list, entries) {
   list.innerHTML = '';
   if (!entries || entries.length === 0) {
     list.appendChild(
@@ -251,7 +254,8 @@ function renderTranscript(list, entries) {
     return;
   }
 
-  entries.forEach((entry) => {
+  const ordered = [...entries].reverse();
+  ordered.forEach((entry) => {
     list.appendChild(
       createTranscriptRow({
         role: entry.role,
@@ -274,7 +278,7 @@ function renderScore(ui, score) {
   }
 
   ui.scoreValue.textContent = String(score.overall_score ?? '--');
-  ui.scoreSummary.textContent = score.summary || 'Summary pending.';
+  renderMarkdownInto(ui.scoreSummary, score.summary || 'Summary pending.');
 
   ui.scoreStrengths.innerHTML = '';
   (score.strengths || []).forEach((item) => {
@@ -393,6 +397,7 @@ function buildSetupPanel(state, ui) {
         ui.customQuestionInput.value = '';
       }
       ui.updateSessionToolsState?.();
+      ui.refreshSessionList?.();
     } catch (error) {
       status.className = 'ui-field__error';
       status.textContent = error.message || 'Unable to generate questions.';
@@ -831,6 +836,34 @@ function buildSessionToolsDrawer(state, ui) {
   header.appendChild(title);
   header.appendChild(closeButton);
 
+  const sessionSection = document.createElement('section');
+  sessionSection.className = 'ui-drawer__section';
+
+  const sessionLabel = document.createElement('label');
+  sessionLabel.className = 'ui-field__label';
+  sessionLabel.textContent = 'Load session';
+
+  const sessionSelect = document.createElement('select');
+  sessionSelect.className = 'ui-field__input';
+  sessionSelect.setAttribute('data-testid', 'session-select');
+
+  const sessionLoad = createButton({
+    label: 'Load session',
+    variant: 'secondary',
+    size: 'sm',
+    disabled: true,
+    attrs: { 'data-testid': 'session-load' }
+  });
+
+  const sessionHelp = document.createElement('p');
+  sessionHelp.className = 'ui-field__help';
+  sessionHelp.textContent = 'Select a saved session to resume.';
+
+  sessionSection.appendChild(sessionLabel);
+  sessionSection.appendChild(sessionSelect);
+  sessionSection.appendChild(sessionLoad);
+  sessionSection.appendChild(sessionHelp);
+
   const nameSection = document.createElement('section');
   nameSection.className = 'ui-drawer__section';
 
@@ -924,6 +957,21 @@ function buildSessionToolsDrawer(state, ui) {
   exportLabel.className = 'ui-field__label';
   exportLabel.textContent = 'Export transcript';
 
+  const exportFormat = document.createElement('select');
+  exportFormat.className = 'ui-field__input';
+  exportFormat.setAttribute('data-testid', 'export-format');
+
+  [
+    { value: 'pdf', label: 'PDF (default)' },
+    { value: 'txt', label: 'Text (.txt)' }
+  ].forEach((option) => {
+    const opt = document.createElement('option');
+    opt.value = option.value;
+    opt.textContent = option.label;
+    exportFormat.appendChild(opt);
+  });
+  exportFormat.value = 'pdf';
+
   const exportButton = createButton({
     label: 'Export PDF',
     variant: 'secondary',
@@ -937,6 +985,7 @@ function buildSessionToolsDrawer(state, ui) {
   exportHelp.textContent = 'Enabled after transcript exists.';
 
   exportSection.appendChild(exportLabel);
+  exportSection.appendChild(exportFormat);
   exportSection.appendChild(exportButton);
   exportSection.appendChild(exportHelp);
 
@@ -964,6 +1013,7 @@ function buildSessionToolsDrawer(state, ui) {
   restartSection.appendChild(restartHelp);
 
   drawer.appendChild(header);
+  drawer.appendChild(sessionSection);
   drawer.appendChild(nameSection);
   drawer.appendChild(questionSection);
   drawer.appendChild(exportSection);
@@ -972,6 +1022,9 @@ function buildSessionToolsDrawer(state, ui) {
   ui.sessionToolsDrawer = drawer;
   ui.sessionToolsBackdrop = backdrop;
   ui.sessionToolsClose = closeButton;
+  ui.sessionSelect = sessionSelect;
+  ui.sessionLoad = sessionLoad;
+  ui.sessionHelp = sessionHelp;
   ui.sessionNameInput = nameInput;
   ui.sessionNameSave = nameSave;
   ui.sessionNameHelp = nameHelp;
@@ -980,6 +1033,7 @@ function buildSessionToolsDrawer(state, ui) {
   ui.customQuestionAdd = addOnly;
   ui.customQuestionAddJump = addAndJump;
   ui.customQuestionHelp = questionHelp;
+  ui.exportFormat = exportFormat;
   ui.exportTranscript = exportButton;
   ui.exportHelp = exportHelp;
   ui.restartButton = restartButton;
@@ -1030,8 +1084,8 @@ function buildScorePanel(ui) {
   scoreValue.className = 'ui-score__value';
   scoreValue.setAttribute('data-testid', 'score-value');
 
-  const scoreSummary = document.createElement('p');
-  scoreSummary.className = 'ui-score__summary';
+  const scoreSummary = document.createElement('div');
+  scoreSummary.className = 'ui-score__summary ui-markdown';
 
   const strengthsLabel = document.createElement('div');
   strengthsLabel.className = 'ui-score__label';
@@ -1092,6 +1146,7 @@ export function buildVoiceLayout() {
     sessionStarted: false,
     isMuted: false,
     sessionName: '',
+    sessions: [],
     geminiReconnectAttempts: 0,
     geminiReconnectTimer: null
   };
@@ -1191,6 +1246,132 @@ export function buildVoiceLayout() {
   layout.appendChild(drawer);
   layout.appendChild(backdrop);
 
+  function formatSessionTimestamp(value) {
+    if (!value) return '';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return value;
+    }
+    return parsed.toLocaleString();
+  }
+
+  function formatSessionLabel(session) {
+    const name = session.session_name || session.role_title || 'Untitled session';
+    const role = session.session_name && session.role_title ? ` • ${session.role_title}` : '';
+    const timestamp = formatSessionTimestamp(session.updated_at || session.created_at);
+    const timeLabel = timestamp ? ` • ${timestamp}` : '';
+    return `${name}${role}${timeLabel}`;
+  }
+
+  function populateSessionSelect(sessions) {
+    if (!ui.sessionSelect) return;
+    ui.sessionSelect.innerHTML = '';
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    placeholder.textContent = sessions.length ? 'Select a session' : 'No sessions found';
+    ui.sessionSelect.appendChild(placeholder);
+    sessions.forEach((session) => {
+      const option = document.createElement('option');
+      option.value = session.interview_id;
+      option.textContent = formatSessionLabel(session);
+      ui.sessionSelect.appendChild(option);
+    });
+    if (state.interviewId && sessions.some((session) => session.interview_id === state.interviewId)) {
+      ui.sessionSelect.value = state.interviewId;
+    }
+  }
+
+  async function refreshSessionList() {
+    if (!ui.sessionSelect || !ui.sessionHelp) return;
+    ui.sessionHelp.textContent = 'Loading sessions...';
+    try {
+      const response = await listSessions();
+      const sessions = response.sessions || [];
+      state.sessions = sessions;
+      populateSessionSelect(sessions);
+      ui.sessionHelp.textContent = sessions.length
+        ? `${sessions.length} saved sessions available.`
+        : 'No saved sessions yet.';
+    } catch (error) {
+      ui.sessionHelp.textContent = error.message || 'Unable to load sessions.';
+    } finally {
+      ui.updateSessionToolsState?.();
+    }
+  }
+
+  async function loadSelectedSession() {
+    const selectedId = ui.sessionSelect?.value;
+    if (!selectedId) {
+      ui.updateSessionToolsState?.();
+      return;
+    }
+    if (state.sessionActive) {
+      ui.sessionHelp.textContent = 'Stop the live session before loading another.';
+      return;
+    }
+    ui.sessionHelp.textContent = 'Loading session...';
+    try {
+      const summary = await getInterviewSummary({ interviewId: selectedId });
+      state.interviewId = summary.interview_id;
+      state.questions = summary.questions || [];
+      state.questionStatuses = normalizeQuestionStatuses(state.questions, summary.question_statuses);
+      state.transcript = summary.transcript || [];
+      const hasScore = summary.overall_score !== null
+        || summary.summary
+        || (summary.strengths && summary.strengths.length > 0)
+        || (summary.improvements && summary.improvements.length > 0);
+      state.score = hasScore
+        ? {
+          overall_score: summary.overall_score,
+          summary: summary.summary,
+          strengths: summary.strengths || [],
+          improvements: summary.improvements || []
+        }
+        : null;
+      state.adapter = summary.adapter || state.adapter;
+      state.sessionName = summary.session_name || '';
+      state.sessionStarted = state.transcript.length > 0 || hasScore;
+      state.sessionActive = false;
+      state.sessionId = null;
+      state.liveMode = null;
+      clearGeminiReconnect(state);
+
+      renderQuestions(
+        ui.questionList,
+        state.questions,
+        state.questionStatuses,
+        ui.questionPlaceholder,
+        ui.onQuestionStatusChange
+      );
+      renderTranscript(ui.transcriptList, state.transcript);
+      renderScore(ui, state.score);
+
+      if (ui.sessionNameInput) {
+        ui.sessionNameInput.value = state.sessionName;
+      }
+      if (ui.sessionNameHelp) {
+        ui.sessionNameHelp.textContent = state.sessionName
+          ? 'Session name loaded.'
+          : 'Add a name to keep sessions organized.';
+      }
+      if (ui.setupStatus) {
+        ui.setupStatus.className = 'ui-field__help';
+        ui.setupStatus.textContent = 'Session loaded. Start the live session when ready.';
+      }
+      ui.sessionHelp.textContent = 'Session loaded.';
+      ui.startButton.disabled = !state.interviewId;
+      ui.stopButton.disabled = true;
+      updateStatusPill(ui.statusPill, { label: 'Idle', tone: 'neutral' });
+      ui.updateMeta?.();
+      ui.updateSessionToolsState?.();
+    } catch (error) {
+      ui.sessionHelp.textContent = error.message || 'Unable to load session.';
+      ui.updateSessionToolsState?.();
+    }
+  }
+
   function setDrawerOpen(isOpen) {
     const hidden = !isOpen;
     drawer.setAttribute('aria-hidden', String(hidden));
@@ -1199,6 +1380,9 @@ export function buildVoiceLayout() {
     backdrop.classList.toggle('ui-drawer__backdrop--open', isOpen);
     if (ui.sessionToolsToggle) {
       ui.sessionToolsToggle.setAttribute('aria-expanded', String(isOpen));
+    }
+    if (isOpen) {
+      void refreshSessionList();
     }
   }
 
@@ -1212,9 +1396,14 @@ export function buildVoiceLayout() {
     const canRestart = hasInterview && state.sessionStarted && !state.sessionActive;
     const nameValue = ui.sessionNameInput?.value.trim() || '';
     const questionValue = ui.customQuestionInput?.value.trim() || '';
+    const selectedSession = ui.sessionSelect?.value || '';
+    const exportFormat = ui.exportFormat?.value || 'pdf';
 
     if (ui.sessionNameSave) {
       ui.sessionNameSave.disabled = !(hasInterview && nameValue.length > 0);
+    }
+    if (ui.sessionLoad) {
+      ui.sessionLoad.disabled = !selectedSession || state.sessionActive;
     }
     if (ui.customQuestionAdd) {
       ui.customQuestionAdd.disabled = !(hasInterview && questionValue.length > 0);
@@ -1228,10 +1417,13 @@ export function buildVoiceLayout() {
     if (ui.restartButton) {
       ui.restartButton.disabled = !canRestart;
     }
+    if (ui.exportTranscript) {
+      updateButtonLabel(ui.exportTranscript, exportFormat === 'txt' ? 'Export TXT' : 'Export PDF');
+    }
 
     if (ui.exportHelp) {
       ui.exportHelp.textContent = hasTranscript
-        ? 'Downloads the study guide PDF.'
+        ? `Downloads the study guide ${exportFormat === 'txt' ? 'text file' : 'PDF'}.`
         : 'Enabled after transcript exists.';
     }
     if (ui.restartHelp) {
@@ -1242,7 +1434,24 @@ export function buildVoiceLayout() {
   }
 
   ui.updateSessionToolsState = updateSessionToolsState;
+  ui.refreshSessionList = refreshSessionList;
 
+  ui.sessionSelect?.addEventListener('change', () => {
+    const selectedId = ui.sessionSelect?.value || '';
+    const session = state.sessions.find((entry) => entry.interview_id === selectedId);
+    if (ui.sessionHelp) {
+      ui.sessionHelp.textContent = session
+        ? `Selected: ${formatSessionLabel(session)}`
+        : 'Select a saved session to resume.';
+    }
+    updateSessionToolsState();
+  });
+
+  ui.sessionLoad?.addEventListener('click', () => {
+    void loadSelectedSession();
+  });
+
+  ui.exportFormat?.addEventListener('change', updateSessionToolsState);
   ui.sessionNameInput?.addEventListener('input', updateSessionToolsState);
   ui.customQuestionInput?.addEventListener('input', updateSessionToolsState);
   ui.customQuestionPosition?.addEventListener('input', updateSessionToolsState);
@@ -1261,6 +1470,7 @@ export function buildVoiceLayout() {
       state.sessionName = response.session_name;
       ui.sessionNameHelp.textContent = `Saved as v${response.version}.`;
       ui.updateMeta?.();
+      ui.refreshSessionList?.();
     } catch (error) {
       ui.sessionNameHelp.textContent = error.message || 'Unable to save session name.';
     } finally {
@@ -1308,11 +1518,12 @@ export function buildVoiceLayout() {
   ui.exportTranscript?.addEventListener('click', async () => {
     if (!state.interviewId) return;
     try {
-      const blob = await downloadStudyGuide({ interviewId: state.interviewId });
+      const format = ui.exportFormat?.value || 'pdf';
+      const blob = await downloadStudyGuide({ interviewId: state.interviewId, format });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `interview-${state.interviewId}.pdf`;
+      link.download = `interview-${state.interviewId}.${format === 'txt' ? 'txt' : 'pdf'}`;
       document.body.appendChild(link);
       link.click();
       link.remove();

@@ -1,3 +1,5 @@
+import { renderMarkdownInto } from '../markdown.js';
+
 const ROLE_MAP = {
   coach: 'Coach',
   assistant: 'Coach',
@@ -46,9 +48,9 @@ export function createTranscriptRow(options = {}) {
     meta.appendChild(timeSpan);
   }
 
-  const body = document.createElement('p');
-  body.className = 'ui-transcript__text';
-  body.textContent = text;
+  const body = document.createElement('div');
+  body.className = 'ui-transcript__text ui-markdown';
+  renderMarkdownInto(body, text);
 
   row.appendChild(meta);
   row.appendChild(body);

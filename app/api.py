@@ -18,7 +18,8 @@ from .schemas import (
     CustomQuestionResponse,
     QuestionStatusRequest,
     QuestionStatusResponse,
-    RestartResponse
+    RestartResponse,
+    SessionListResponse
 )
 from .services import interview_service
 from .services.document_text import DocumentInput, is_supported_document
@@ -378,19 +379,49 @@ async def get_interview_summary(interview_id: str, request: Request):
     return response
 
 
-@router.get("/interviews/{interview_id}/study-guide")
-async def get_study_guide(interview_id: str, request: Request):
+@router.get("/interviews", response_model=SessionListResponse)
+async def list_interviews(request: Request):
     user_id = _get_user_id(request)
     start = time.perf_counter()
 
     logger.info(
-        "event=study_guide_export status=start user_id=%s interview_id=%s",
+        "event=session_list status=start user_id=%s",
+        user_id
+    )
+
+    response = interview_service.list_sessions(user_id)
+
+    logger.info(
+        "event=session_list status=complete user_id=%s sessions=%s duration_ms=%s",
         user_id,
-        interview_id
+        len(response),
+        _duration_ms(start)
+    )
+
+    return {"sessions": response}
+
+
+@router.get("/interviews/{interview_id}/study-guide")
+async def get_study_guide(interview_id: str, request: Request, format: str = "pdf"):
+    user_id = _get_user_id(request)
+    start = time.perf_counter()
+    output_format = (format or "pdf").lower()
+
+    logger.info(
+        "event=study_guide_export status=start user_id=%s interview_id=%s format=%s",
+        user_id,
+        interview_id,
+        output_format
     )
 
     try:
-        pdf_bytes = interview_service.build_study_guide(interview_id, user_id)
+        if output_format in {"txt", "text"}:
+            text_payload = interview_service.build_study_guide_text(interview_id, user_id)
+            payload_bytes = text_payload.encode("utf-8")
+        elif output_format == "pdf":
+            payload_bytes = interview_service.build_study_guide(interview_id, user_id)
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported export format.")
     except KeyError as exc:
         logger.warning(
             "event=study_guide_export status=not_found user_id=%s interview_id=%s duration_ms=%s",
@@ -409,14 +440,21 @@ async def get_study_guide(interview_id: str, request: Request):
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     logger.info(
-        "event=study_guide_export status=complete user_id=%s interview_id=%s bytes=%s duration_ms=%s",
+        "event=study_guide_export status=complete user_id=%s interview_id=%s bytes=%s duration_ms=%s format=%s",
         user_id,
         interview_id,
-        len(pdf_bytes),
-        _duration_ms(start)
+        len(payload_bytes),
+        _duration_ms(start),
+        output_format
     )
+
+    if output_format in {"txt", "text"}:
+        headers = {
+            "Content-Disposition": f"attachment; filename=interview-{interview_id}.txt"
+        }
+        return Response(content=payload_bytes, media_type="text/plain", headers=headers)
 
     headers = {
         "Content-Disposition": f"attachment; filename=interview-{interview_id}.pdf"
     }
-    return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
+    return Response(content=payload_bytes, media_type="application/pdf", headers=headers)

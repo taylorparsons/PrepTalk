@@ -7,13 +7,13 @@ We’ll add session rehydration and export options while improving transcript re
 - Out: auto-start on session select, auth/permissions.
 
 ## Action items
-[ ] Add `updated_at` to session records and update on create/update in `app/services/store.py`; adjust session persistence tests.
-[ ] Add a session list endpoint ordered by `updated_at` and confirm summary payload supports rehydration (`app/api.py`, `app/services/interview_service.py`).
-[ ] Add Session Tools dropdown to load a previous session by id, rehydrate state (questions, question_statuses, transcript, score, session name), and allow rename without auto-start (`app/static/js/ui.js`).
-[ ] Update transcript rendering to newest-first with top pinning; add unit tests for ordering (`app/static/js/ui.js`, `tests/components`).
-[ ] Add safe markdown rendering for transcript + score summary; add tests for markdown formatting (`app/static/js/components/transcript-row.js`, `app/static/js/ui.js`).
-[ ] Add export format selector (PDF default) and TXT export containing full content; update help text and tests.
-[ ] Run `./run.sh test` and `./.venv/bin/python -m pytest`.
+[x] Add `updated_at` to session records and update on create/update in `app/services/store.py`; adjust session persistence tests.
+[x] Add a session list endpoint ordered by `updated_at` and confirm summary payload supports rehydration (`app/api.py`, `app/services/interview_service.py`).
+[x] Add Session Tools dropdown to load a previous session by id, rehydrate state (questions, question_statuses, transcript, score, session name), and allow rename without auto-start (`app/static/js/ui.js`).
+[x] Update transcript rendering to newest-first with top pinning; add unit tests for ordering (`app/static/js/ui.js`, `tests/components`).
+[x] Add safe markdown rendering for transcript + score summary; add tests for markdown formatting (`app/static/js/components/transcript-row.js`, `app/static/js/ui.js`).
+[x] Add export format selector (PDF default) and TXT export containing full content; update help text and tests.
+[x] Run `./run.sh test`, `./.venv/bin/python -m pytest`, and `./run.sh e2e`.
 
 ## Open questions
-- Should TXT export be plain text or markdown-formatted text?
+- TXT export is plain text with section headers and bullet lines.
