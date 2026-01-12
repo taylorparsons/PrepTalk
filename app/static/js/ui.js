@@ -18,6 +18,8 @@ import { LiveTransport } from './transport.js';
 import { createAudioPlayback, decodePcm16Base64, startMicrophoneCapture } from './voice.js';
 
 const STATUS_TONES = ['neutral', 'success', 'warning', 'danger', 'info'];
+const GEMINI_RECONNECT_MAX_ATTEMPTS = 3;
+const GEMINI_RECONNECT_DELAY_MS = 600;
 
 function updateStatusPill(pill, { label, tone }) {
   const toneValue = STATUS_TONES.includes(tone) ? tone : 'neutral';
@@ -38,6 +40,40 @@ function updateButtonLabel(button, label) {
   if (labelSpan) {
     labelSpan.textContent = label;
   }
+}
+
+export function clearGeminiReconnect(state) {
+  if (!state) return;
+  if (state.geminiReconnectTimer) {
+    clearTimeout(state.geminiReconnectTimer);
+  }
+  state.geminiReconnectTimer = null;
+  state.geminiReconnectAttempts = 0;
+}
+
+export function scheduleGeminiReconnect(state, { statusPill } = {}) {
+  if (!state?.sessionActive || !state.transport || !state.interviewId) {
+    return false;
+  }
+  const attempts = state.geminiReconnectAttempts || 0;
+  if (attempts >= GEMINI_RECONNECT_MAX_ATTEMPTS) {
+    return false;
+  }
+  if (state.geminiReconnectTimer) {
+    return true;
+  }
+  state.geminiReconnectAttempts = attempts + 1;
+  if (statusPill) {
+    updateStatusPill(statusPill, { label: 'Reconnecting', tone: 'warning' });
+  }
+  state.geminiReconnectTimer = setTimeout(() => {
+    state.geminiReconnectTimer = null;
+    if (!state.sessionActive || !state.transport || !state.interviewId) {
+      return;
+    }
+    state.transport.start(state.interviewId, state.userId);
+  }, GEMINI_RECONNECT_DELAY_MS);
+  return true;
 }
 
 function createFileField({ id, label, helpText, testId }) {
@@ -373,6 +409,7 @@ function buildControlsPanel(state, ui, config) {
     state.sessionId = null;
     state.liveMode = null;
     state.sessionActive = false;
+    clearGeminiReconnect(state);
     setMuteState(false);
     renderTranscript(ui.transcriptList, state.transcript);
     renderScore(ui, null);
@@ -389,6 +426,7 @@ function buildControlsPanel(state, ui, config) {
     }
 
     state.sessionActive = false;
+    clearGeminiReconnect(state);
 
     if (state.transport) {
       state.transport.stop();
@@ -485,6 +523,7 @@ function buildControlsPanel(state, ui, config) {
             updateStatusPill(statusPill, { label: 'Disconnected', tone: 'warning' });
           }
           if (payload.state === 'gemini-connected') {
+            clearGeminiReconnect(state);
             updateStatusPill(statusPill, { label: 'Live', tone: 'success' });
           }
           if (payload.state === 'gemini-error') {
@@ -494,7 +533,10 @@ function buildControlsPanel(state, ui, config) {
           }
           if (payload.state === 'gemini-disconnected') {
             if (state.sessionActive) {
-              void endLiveSession({ label: 'Live ended', tone: 'warning', allowRestart: true });
+              const scheduled = scheduleGeminiReconnect(state, { statusPill });
+              if (!scheduled) {
+                void endLiveSession({ label: 'Live ended', tone: 'warning', allowRestart: true });
+              }
             }
           }
           if (payload.state === 'stream-complete') {
@@ -602,6 +644,7 @@ function buildControlsPanel(state, ui, config) {
 
   stopButton.addEventListener('click', async () => {
     state.sessionActive = false;
+    clearGeminiReconnect(state);
     stopButton.disabled = true;
     updateStatusPill(statusPill, { label: 'Scoring', tone: 'info' });
 
@@ -963,7 +1006,9 @@ export function buildVoiceLayout() {
     sessionActive: false,
     sessionStarted: false,
     isMuted: false,
-    sessionName: ''
+    sessionName: '',
+    geminiReconnectAttempts: 0,
+    geminiReconnectTimer: null
   };
 
   const ui = {};
