@@ -9,6 +9,7 @@ import {
   createInterview,
   downloadStudyGuide,
   getInterviewSummary,
+  getLogSummary,
   listSessions,
   logClientEvent,
   restartInterview,
@@ -25,6 +26,7 @@ import { renderMarkdownInto } from './markdown.js';
 const STATUS_TONES = ['neutral', 'success', 'warning', 'danger', 'info'];
 const GEMINI_RECONNECT_MAX_ATTEMPTS = 3;
 const GEMINI_RECONNECT_DELAY_MS = 600;
+const LOG_SUMMARY_INTERVAL_MS = 5000;
 const QUESTION_STATUS_OPTIONS = [
   { value: 'not_started', label: 'Not started' },
   { value: 'started', label: 'Started' },
@@ -53,6 +55,10 @@ function updateButtonLabel(button, label) {
   if (labelSpan) {
     labelSpan.textContent = label;
   }
+}
+
+export function formatCount(value) {
+  return typeof value === 'number' ? String(value) : '0';
 }
 
 export function clearGeminiReconnect(state) {
@@ -1101,6 +1107,46 @@ function buildTranscriptPanel(ui) {
   });
 }
 
+function buildLogDashboardPanel(ui) {
+  const grid = document.createElement('div');
+  grid.className = 'ui-metrics-grid';
+
+  function buildCard(label) {
+    const card = document.createElement('div');
+    card.className = 'ui-metric-card';
+
+    const labelEl = document.createElement('div');
+    labelEl.className = 'ui-metric-card__label';
+    labelEl.textContent = label;
+
+    const valueEl = document.createElement('div');
+    valueEl.className = 'ui-metric-card__value';
+    valueEl.textContent = '0';
+
+    card.appendChild(labelEl);
+    card.appendChild(valueEl);
+    return { card, valueEl };
+  }
+
+  const disconnects = buildCard('Disconnects');
+  const errors = buildCard('Errors');
+
+  grid.appendChild(disconnects.card);
+  grid.appendChild(errors.card);
+
+  ui.metricsCards = {
+    disconnects: disconnects.valueEl,
+    errors: errors.valueEl
+  };
+
+  return createPanel({
+    title: 'Live Stats',
+    subtitle: 'Live log summary while the session runs.',
+    content: grid,
+    attrs: { 'data-testid': 'log-dashboard' }
+  });
+}
+
 function buildScorePanel(ui) {
   const scoreValue = document.createElement('div');
   scoreValue.className = 'ui-score__value';
@@ -1171,7 +1217,8 @@ export function buildVoiceLayout() {
     askedQuestionIndex: null,
     sessions: [],
     geminiReconnectAttempts: 0,
-    geminiReconnectTimer: null
+    geminiReconnectTimer: null,
+    logSummaryTimer: null
   };
 
   const ui = {};
@@ -1252,6 +1299,31 @@ export function buildVoiceLayout() {
     }
   }
 
+  async function refreshLogSummary() {
+    if (!ui.metricsCards) {
+      return;
+    }
+    try {
+      const summary = await getLogSummary();
+      const disconnects = summary.disconnect_counts?.ws_disconnect || 0;
+      const errors = summary.error_count || 0;
+      ui.metricsCards.disconnects.textContent = formatCount(disconnects);
+      ui.metricsCards.errors.textContent = formatCount(errors);
+    } catch (error) {
+      // Ignore polling errors to keep the UI responsive.
+    }
+  }
+
+  function startLogSummaryPolling() {
+    if (state.logSummaryTimer) {
+      return;
+    }
+    void refreshLogSummary();
+    state.logSummaryTimer = window.setInterval(() => {
+      void refreshLogSummary();
+    }, LOG_SUMMARY_INTERVAL_MS);
+  }
+
   const leftColumn = document.createElement('div');
   leftColumn.className = 'layout-stack';
   leftColumn.appendChild(buildSetupPanel(state, ui));
@@ -1261,6 +1333,7 @@ export function buildVoiceLayout() {
   rightColumn.className = 'layout-stack';
   rightColumn.appendChild(buildQuestionsPanel(ui));
   rightColumn.appendChild(buildTranscriptPanel(ui));
+  rightColumn.appendChild(buildLogDashboardPanel(ui));
   rightColumn.appendChild(buildScorePanel(ui));
 
   const layout = document.createElement('main');
@@ -1579,6 +1652,7 @@ export function buildVoiceLayout() {
   });
 
   updateSessionToolsState();
+  startLogSummaryPolling();
 
   return layout;
 }
