@@ -41,12 +41,13 @@ fi
 
 usage() {
   cat <<'USAGE'
-Usage: ./run.sh [install|ui|test|e2e]
+Usage: ./run.sh [install|ui|test|e2e|logs]
 
 install  Create venv (if missing), install Python deps (if requirements.txt), and npm install.
 ui       Install deps and serve UI (static server if no backend entrypoint).
 test     Run UI component tests (Vitest).
 e2e      Run Playwright E2E tests.
+logs     Install lnav helpers and open logs/app.log in lnav.
 
 Env vars:
   VENV_DIR           Path to virtualenv directory (default: ./.venv)
@@ -87,6 +88,17 @@ install_ui() {
   if [[ -f "$ROOT_DIR/package.json" ]]; then
     npm install
   fi
+}
+
+open_logs() {
+  if ! command -v lnav >/dev/null 2>&1; then
+    echo "Error: lnav is required. Install it and re-run." >&2
+    exit 1
+  fi
+  if [[ -x "$ROOT_DIR/tools/logs/lnav/setup.sh" ]]; then
+    "$ROOT_DIR/tools/logs/lnav/setup.sh"
+  fi
+  exec lnav "$ROOT_DIR/logs/app.log"
 }
 
 start_backend() {
@@ -133,6 +145,9 @@ case "$MODE" in
       npx playwright install
     fi
     npm run test:e2e
+    ;;
+  logs)
+    open_logs
     ;;
   *)
     usage

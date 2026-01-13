@@ -10,6 +10,7 @@
       }
     },
     "timestamp-format": "%Y-%m-%d %H:%M:%S,%f",
+    "body-field": "body",
     "level-field": "level",
     "value": {
       "level": {
