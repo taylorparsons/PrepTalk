@@ -4,6 +4,7 @@ import asyncio
 import base64
 from dataclasses import dataclass
 from datetime import datetime
+import re
 from typing import Any, Awaitable, Callable
 
 try:
@@ -36,6 +37,43 @@ def _timestamp() -> str:
     return datetime.utcnow().strftime("%H:%M:%S")
 
 
+QUESTION_WORDS = re.compile(
+    r"\b(what|why|how|when|where|tell me|describe|walk me|can you|could you|share|give me|explain)\b",
+    re.IGNORECASE
+)
+
+
+def _normalize_question(text: str) -> str:
+    cleaned = re.sub(r"[^a-zA-Z0-9\s]", " ", text or "")
+    cleaned = re.sub(r"\s+", " ", cleaned).strip().lower()
+    return cleaned
+
+
+def _looks_like_question(text: str) -> bool:
+    if not text:
+        return False
+    if "?" in text:
+        return True
+    return QUESTION_WORDS.search(text) is not None
+
+
+def _match_repeat_question(text: str, questions: list[str], max_index: int | None) -> int | None:
+    if max_index is None or max_index < 0:
+        return None
+    if not _looks_like_question(text):
+        return None
+    normalized_text = _normalize_question(text)
+    if not normalized_text:
+        return None
+    for index, question in enumerate(questions):
+        if index > max_index:
+            break
+        normalized_question = _normalize_question(question)
+        if not normalized_question:
+            continue
+        if normalized_question in normalized_text:
+            return index
+    return None
 
 
 
@@ -243,6 +281,32 @@ class GeminiLiveBridge:
                     await self._emit_audio(audio_bytes, getattr(inline_data, "mime_type", None))
 
     async def _emit_transcript(self, role: str, text: str) -> None:
+        if role == "coach":
+            record = store.get(self._interview_id, self._user_id)
+            if record:
+                matched_index = _match_repeat_question(
+                    text,
+                    list(record.questions),
+                    record.asked_question_index
+                )
+                if matched_index is not None:
+                    logger.info(
+                        "event=question_guard_repeat interview_id=%s user_id=%s index=%s asked_question_index=%s",
+                        short_id(self._interview_id),
+                        short_id(self._user_id),
+                        matched_index,
+                        record.asked_question_index
+                    )
+                    if self._session is not None:
+                        try:
+                            await self._session.send(
+                                input=(
+                                    "You already asked that question. Move to the next "
+                                    "question in the list and do not repeat."
+                                )
+                            )
+                        except Exception:
+                            pass
         entry = {
             "role": role,
             "text": text,
