@@ -186,6 +186,7 @@ def test_question_status_updates_and_history(tmp_path):
         source='auto'
     )
     assert entry is not None
+    assert store.get(record.interview_id, user_id='candidate-1').asked_question_index == 0
 
     store.update_question_status(
         record.interview_id,
@@ -209,6 +210,7 @@ def test_question_status_updates_and_history(tmp_path):
     assert loaded.question_status_history[-1]['status'] == 'answered'
     assert loaded.question_status_history[-1]['source'] == 'user'
     assert loaded.question_status_history[-1]['timestamp']
+    assert loaded.asked_question_index == 0
 
 
 def test_session_store_updates_updated_at(tmp_path):

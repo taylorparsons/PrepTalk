@@ -28,8 +28,9 @@ sequenceDiagram
         LIVE-->>UI: Audio + transcript events
         UI->>S: Append transcript entries
     end
-    LIVE-->>API: Question progression updates (target)
-    API->>S: Update asked_question_index (target)
+    U->>UI: Mark question status (started/answered)
+    UI->>API: POST /api/interviews/{id}/questions/status
+    API->>S: Update question_statuses + asked_question_index
     deactivate U
 
     U->>UI: Stop session
@@ -60,16 +61,17 @@ sequenceDiagram
 11. Backend connects to Gemini Live with the full system prompt (role + resume + job + questions).
 12. Gemini Live emits audio and transcript events during streaming.
 13. UI appends each transcript event to the session store.
-14. Target behavior: Gemini Live emits question progression updates.
-15. Backend updates asked_question_index in the session store.
-16. User stops the session from the UI.
-17. UI posts the transcript to the scoring endpoint.
-18. Backend calls Gemini Text to score the transcript.
-19. Gemini Text returns the overall score and summary.
-20. Backend stores the transcript and score in the session store.
-21. Backend returns the score payload to the UI.
-22. User requests the PDF study guide export.
-23. Backend loads the interview record from session storage.
-24. Backend renders the PDF study guide.
-25. Backend returns the PDF to the UI.
-26. UI triggers the PDF download.
+14. User marks a question as started or answered in the UI.
+15. UI posts the question status update to the backend.
+16. Backend stores the status and advances asked_question_index.
+17. User stops the session from the UI.
+18. UI posts the transcript to the scoring endpoint.
+19. Backend calls Gemini Text to score the transcript.
+20. Gemini Text returns the overall score and summary.
+21. Backend stores the transcript and score in the session store.
+22. Backend returns the score payload to the UI.
+23. User requests the PDF study guide export.
+24. Backend loads the interview record from session storage.
+25. Backend renders the PDF study guide.
+26. Backend returns the PDF to the UI.
+27. UI triggers the PDF download.

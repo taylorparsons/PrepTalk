@@ -16,7 +16,7 @@ from .services.gemini_live import GeminiLiveBridge
 from .services.live_context import build_live_system_prompt
 from .services.store import store
 from .settings import load_settings
-from .logging_config import get_logger
+from .logging_config import get_logger, short_id
 
 logger = get_logger()
 
@@ -87,7 +87,7 @@ class LiveWebSocketSession:
                 try:
                     payload = json.loads(message["text"])
                 except json.JSONDecodeError:
-                    logger.warning("event=ws_message status=invalid_json user_id=%s", self._user_id)
+                    logger.warning("event=ws_message status=invalid_json user_id=%s", short_id(self._user_id))
                     await self._send({"type": "error", "message": "Invalid JSON payload."})
                     continue
 
@@ -116,7 +116,11 @@ class LiveWebSocketSession:
             await self._send({"type": "status", "state": "alive"})
             return
         else:
-            logger.warning("event=ws_message status=unknown_type user_id=%s message_type=%s", self._user_id, message_type)
+            logger.warning(
+                "event=ws_message status=unknown_type user_id=%s message_type=%s",
+                short_id(self._user_id),
+                message_type
+            )
             await self._send({"type": "error", "message": "Unknown message type."})
 
     async def _handle_start(self, payload: dict[str, Any]) -> None:
@@ -129,7 +133,11 @@ class LiveWebSocketSession:
 
         record = store.get(interview_id, self._user_id)
         if not record:
-            logger.warning("event=ws_start status=not_found user_id=%s interview_id=%s", self._user_id, interview_id)
+            logger.warning(
+                "event=ws_start status=not_found user_id=%s interview_id=%s",
+                short_id(self._user_id),
+                short_id(interview_id)
+            )
             await self._send({"type": "error", "message": "Interview not found."})
             return
 
@@ -158,9 +166,9 @@ class LiveWebSocketSession:
 
         logger.info(
             "event=ws_start status=complete user_id=%s interview_id=%s session_id=%s adapter=%s mode=%s",
-            self._user_id,
-            interview_id,
-            self._session_id,
+            short_id(self._user_id),
+            short_id(interview_id),
+            short_id(self._session_id),
             self.adapter.name,
             live_payload.get("mode")
         )
@@ -187,9 +195,9 @@ class LiveWebSocketSession:
             return
 
         logger.info(
-            "event=gemini_live_connect status=start user_id=%s interview_id=%s model=%s",
-            self._user_id,
-            interview_id,
+            "event=gemini_live_connect status=start user_id=%s interview_id=%s requested_model=%s",
+            short_id(self._user_id),
+            short_id(interview_id),
             self.settings.live_model
         )
 
@@ -205,16 +213,18 @@ class LiveWebSocketSession:
         try:
             await self._gemini_bridge.connect()
             logger.info(
-                "event=gemini_live_connect status=complete user_id=%s interview_id=%s model=%s",
-                self._user_id,
-                interview_id,
+                "event=gemini_live_connect status=complete user_id=%s interview_id=%s requested_model=%s effective_model=%s",
+                short_id(self._user_id),
+                short_id(interview_id),
+                self.settings.live_model,
                 self.settings.live_model
             )
         except Exception as exc:
             logger.exception(
-                "event=gemini_live_connect status=error user_id=%s interview_id=%s",
-                self._user_id,
-                interview_id
+                "event=gemini_live_connect status=error user_id=%s interview_id=%s requested_model=%s",
+                short_id(self._user_id),
+                short_id(interview_id),
+                self.settings.live_model
             )
             await self._send({"type": "error", "message": str(exc)})
             await self._stop_gemini_session()
@@ -262,9 +272,9 @@ class LiveWebSocketSession:
             duration_ms = int((time.perf_counter() - self._session_started_at) * 1000)
         logger.info(
             "event=ws_stop status=received user_id=%s interview_id=%s session_id=%s duration_ms=%s audio_frames=%s audio_bytes=%s",
-            self._user_id,
-            self._interview_id,
-            self._session_id,
+            short_id(self._user_id),
+            short_id(self._interview_id),
+            short_id(self._session_id),
             duration_ms if duration_ms is not None else 0,
             self._audio_frames,
             self._audio_bytes
@@ -285,9 +295,9 @@ class LiveWebSocketSession:
         self._active = False
         logger.info(
             "event=ws_disconnect status=closed user_id=%s interview_id=%s session_id=%s",
-            self._user_id,
-            self._interview_id,
-            self._session_id
+            short_id(self._user_id),
+            short_id(self._interview_id),
+            short_id(self._session_id)
         )
         if self._stream_task and not self._stream_task.done():
             self._stream_task.cancel()

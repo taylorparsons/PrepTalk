@@ -137,6 +137,7 @@ def get_interview_summary(interview_id: str, user_id: str | None = None) -> dict
         "adapter": record.adapter,
         "created_at": record.created_at,
         "updated_at": record.updated_at,
+        "asked_question_index": record.asked_question_index,
         "questions": record.questions,
         "focus_areas": record.focus_areas,
         "question_statuses": list(record.question_statuses),
@@ -181,7 +182,8 @@ def set_question_status(
         "question_statuses": list(record.question_statuses),
         "index": index,
         "status": entry.get("status"),
-        "updated_at": entry.get("updated_at")
+        "updated_at": entry.get("updated_at"),
+        "asked_question_index": record.asked_question_index
     }
 
 

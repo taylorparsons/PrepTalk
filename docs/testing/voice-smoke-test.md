@@ -35,4 +35,4 @@ Validate microphone permissions, live audio loop, transcript updates, and latenc
 - Tester:
 - Environment:
 - Notes:
-- Result: PASS / FAIL
+- Result: PENDING (manual run required)

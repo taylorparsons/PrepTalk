@@ -4,7 +4,7 @@ import time
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import Response
-from .logging_config import get_logger
+from .logging_config import get_logger, short_id
 from .schemas import (
     InterviewCreateResponse,
     InterviewSummaryResponse,
@@ -74,11 +74,12 @@ async def create_interview(
         content_type=job_description.content_type
     )
     user_id = _get_user_id(request)
+    log_user_id = short_id(user_id)
     start = time.perf_counter()
 
     logger.info(
         "event=interview_create status=start user_id=%s resume_bytes=%s job_bytes=%s role_title_present=%s",
-        user_id,
+        log_user_id,
         len(resume_bytes),
         len(job_bytes),
         bool(role_title)
@@ -89,15 +90,16 @@ async def create_interview(
     except RuntimeError as exc:
         logger.exception(
             "event=interview_create status=error user_id=%s duration_ms=%s",
-            user_id,
+            log_user_id,
             _duration_ms(start)
         )
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
+    log_interview_id = short_id(payload.get("interview_id"))
     logger.info(
         "event=interview_create status=complete user_id=%s interview_id=%s questions=%s focus_areas=%s duration_ms=%s adapter=%s",
-        user_id,
-        payload.get("interview_id"),
+        log_user_id,
+        log_interview_id,
         len(payload.get("questions", [])),
         len(payload.get("focus_areas", [])),
         _duration_ms(start),
@@ -110,12 +112,14 @@ async def create_interview(
 @router.post("/live/session", response_model=LiveSessionResponse)
 async def create_live_session(request: Request, payload: LiveSessionRequest):
     user_id = _get_user_id(request)
+    log_user_id = short_id(user_id)
+    log_interview_id = short_id(payload.interview_id)
     start = time.perf_counter()
 
     logger.info(
         "event=live_session_create status=start user_id=%s interview_id=%s",
-        user_id,
-        payload.interview_id
+        log_user_id,
+        log_interview_id
     )
 
     try:
@@ -123,25 +127,26 @@ async def create_live_session(request: Request, payload: LiveSessionRequest):
     except KeyError as exc:
         logger.warning(
             "event=live_session_create status=not_found user_id=%s interview_id=%s duration_ms=%s",
-            user_id,
-            payload.interview_id,
+            log_user_id,
+            log_interview_id,
             _duration_ms(start)
         )
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except RuntimeError as exc:
         logger.exception(
             "event=live_session_create status=error user_id=%s interview_id=%s duration_ms=%s",
-            user_id,
-            payload.interview_id,
+            log_user_id,
+            log_interview_id,
             _duration_ms(start)
         )
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
+    log_session_id = short_id(response.get("session_id"))
     logger.info(
         "event=live_session_create status=complete user_id=%s interview_id=%s session_id=%s mode=%s duration_ms=%s",
-        user_id,
-        payload.interview_id,
-        response.get("session_id"),
+        log_user_id,
+        log_interview_id,
+        log_session_id,
         response.get("mode"),
         _duration_ms(start)
     )
@@ -152,13 +157,15 @@ async def create_live_session(request: Request, payload: LiveSessionRequest):
 @router.post("/interviews/{interview_id}/score", response_model=ScoreResponse)
 async def score_interview(interview_id: str, request: Request, payload: ScoreRequest):
     user_id = _get_user_id(request)
+    log_user_id = short_id(user_id)
+    log_interview_id = short_id(interview_id)
     transcript_entries = [_model_dump(item) for item in payload.transcript]
     start = time.perf_counter()
 
     logger.info(
         "event=score_interview status=start user_id=%s interview_id=%s transcript_entries=%s",
-        user_id,
-        interview_id,
+        log_user_id,
+        log_interview_id,
         len(transcript_entries)
     )
 
@@ -171,24 +178,24 @@ async def score_interview(interview_id: str, request: Request, payload: ScoreReq
     except KeyError as exc:
         logger.warning(
             "event=score_interview status=not_found user_id=%s interview_id=%s duration_ms=%s",
-            user_id,
-            interview_id,
+            log_user_id,
+            log_interview_id,
             _duration_ms(start)
         )
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except RuntimeError as exc:
         logger.exception(
             "event=score_interview status=error user_id=%s interview_id=%s duration_ms=%s",
-            user_id,
-            interview_id,
+            log_user_id,
+            log_interview_id,
             _duration_ms(start)
         )
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     logger.info(
         "event=score_interview status=complete user_id=%s interview_id=%s overall_score=%s duration_ms=%s",
-        user_id,
-        interview_id,
+        log_user_id,
+        log_interview_id,
         response.get("overall_score"),
         _duration_ms(start)
     )
@@ -199,12 +206,14 @@ async def score_interview(interview_id: str, request: Request, payload: ScoreReq
 @router.post("/interviews/{interview_id}/name", response_model=SessionNameResponse)
 async def update_session_name(interview_id: str, request: Request, payload: SessionNameRequest):
     user_id = _get_user_id(request)
+    log_user_id = short_id(user_id)
+    log_interview_id = short_id(interview_id)
     start = time.perf_counter()
 
     logger.info(
         "event=session_name_update status=start user_id=%s interview_id=%s",
-        user_id,
-        interview_id
+        log_user_id,
+        log_interview_id
     )
 
     try:
@@ -212,16 +221,16 @@ async def update_session_name(interview_id: str, request: Request, payload: Sess
     except KeyError as exc:
         logger.warning(
             "event=session_name_update status=not_found user_id=%s interview_id=%s duration_ms=%s",
-            user_id,
-            interview_id,
+            log_user_id,
+            log_interview_id,
             _duration_ms(start)
         )
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     logger.info(
         "event=session_name_update status=complete user_id=%s interview_id=%s version=%s duration_ms=%s",
-        user_id,
-        interview_id,
+        log_user_id,
+        log_interview_id,
         response.get("version"),
         _duration_ms(start)
     )
@@ -232,12 +241,14 @@ async def update_session_name(interview_id: str, request: Request, payload: Sess
 @router.post("/interviews/{interview_id}/questions/custom", response_model=CustomQuestionResponse)
 async def add_custom_question(interview_id: str, request: Request, payload: CustomQuestionRequest):
     user_id = _get_user_id(request)
+    log_user_id = short_id(user_id)
+    log_interview_id = short_id(interview_id)
     start = time.perf_counter()
 
     logger.info(
         "event=custom_question_add status=start user_id=%s interview_id=%s position=%s",
-        user_id,
-        interview_id,
+        log_user_id,
+        log_interview_id,
         payload.position
     )
 
@@ -251,16 +262,16 @@ async def add_custom_question(interview_id: str, request: Request, payload: Cust
     except KeyError as exc:
         logger.warning(
             "event=custom_question_add status=not_found user_id=%s interview_id=%s duration_ms=%s",
-            user_id,
-            interview_id,
+            log_user_id,
+            log_interview_id,
             _duration_ms(start)
         )
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     logger.info(
         "event=custom_question_add status=complete user_id=%s interview_id=%s index=%s duration_ms=%s",
-        user_id,
-        interview_id,
+        log_user_id,
+        log_interview_id,
         response.get("index"),
         _duration_ms(start)
     )
@@ -271,12 +282,14 @@ async def add_custom_question(interview_id: str, request: Request, payload: Cust
 @router.post("/interviews/{interview_id}/questions/status", response_model=QuestionStatusResponse)
 async def update_question_status(interview_id: str, request: Request, payload: QuestionStatusRequest):
     user_id = _get_user_id(request)
+    log_user_id = short_id(user_id)
+    log_interview_id = short_id(interview_id)
     start = time.perf_counter()
 
     logger.info(
         "event=question_status_update status=start user_id=%s interview_id=%s index=%s",
-        user_id,
-        interview_id,
+        log_user_id,
+        log_interview_id,
         payload.index
     )
 
@@ -291,24 +304,24 @@ async def update_question_status(interview_id: str, request: Request, payload: Q
     except KeyError as exc:
         logger.warning(
             "event=question_status_update status=not_found user_id=%s interview_id=%s duration_ms=%s",
-            user_id,
-            interview_id,
+            log_user_id,
+            log_interview_id,
             _duration_ms(start)
         )
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except (ValueError, IndexError) as exc:
         logger.warning(
             "event=question_status_update status=invalid user_id=%s interview_id=%s duration_ms=%s",
-            user_id,
-            interview_id,
+            log_user_id,
+            log_interview_id,
             _duration_ms(start)
         )
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     logger.info(
         "event=question_status_update status=complete user_id=%s interview_id=%s duration_ms=%s",
-        user_id,
-        interview_id,
+        log_user_id,
+        log_interview_id,
         _duration_ms(start)
     )
 
@@ -318,12 +331,14 @@ async def update_question_status(interview_id: str, request: Request, payload: Q
 @router.post("/interviews/{interview_id}/restart", response_model=RestartResponse)
 async def restart_interview(interview_id: str, request: Request):
     user_id = _get_user_id(request)
+    log_user_id = short_id(user_id)
+    log_interview_id = short_id(interview_id)
     start = time.perf_counter()
 
     logger.info(
         "event=interview_restart status=start user_id=%s interview_id=%s",
-        user_id,
-        interview_id
+        log_user_id,
+        log_interview_id
     )
 
     try:
@@ -331,16 +346,16 @@ async def restart_interview(interview_id: str, request: Request):
     except KeyError as exc:
         logger.warning(
             "event=interview_restart status=not_found user_id=%s interview_id=%s duration_ms=%s",
-            user_id,
-            interview_id,
+            log_user_id,
+            log_interview_id,
             _duration_ms(start)
         )
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     logger.info(
         "event=interview_restart status=complete user_id=%s interview_id=%s duration_ms=%s",
-        user_id,
-        interview_id,
+        log_user_id,
+        log_interview_id,
         _duration_ms(start)
     )
 
@@ -350,12 +365,14 @@ async def restart_interview(interview_id: str, request: Request):
 @router.get("/interviews/{interview_id}", response_model=InterviewSummaryResponse)
 async def get_interview_summary(interview_id: str, request: Request):
     user_id = _get_user_id(request)
+    log_user_id = short_id(user_id)
+    log_interview_id = short_id(interview_id)
     start = time.perf_counter()
 
     logger.info(
         "event=summary_fetch status=start user_id=%s interview_id=%s",
-        user_id,
-        interview_id
+        log_user_id,
+        log_interview_id
     )
 
     try:
@@ -363,16 +380,16 @@ async def get_interview_summary(interview_id: str, request: Request):
     except KeyError as exc:
         logger.warning(
             "event=summary_fetch status=not_found user_id=%s interview_id=%s duration_ms=%s",
-            user_id,
-            interview_id,
+            log_user_id,
+            log_interview_id,
             _duration_ms(start)
         )
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     logger.info(
         "event=summary_fetch status=complete user_id=%s interview_id=%s duration_ms=%s",
-        user_id,
-        interview_id,
+        log_user_id,
+        log_interview_id,
         _duration_ms(start)
     )
 
@@ -382,18 +399,19 @@ async def get_interview_summary(interview_id: str, request: Request):
 @router.get("/interviews", response_model=SessionListResponse)
 async def list_interviews(request: Request):
     user_id = _get_user_id(request)
+    log_user_id = short_id(user_id)
     start = time.perf_counter()
 
     logger.info(
         "event=session_list status=start user_id=%s",
-        user_id
+        log_user_id
     )
 
     response = interview_service.list_sessions(user_id)
 
     logger.info(
         "event=session_list status=complete user_id=%s sessions=%s duration_ms=%s",
-        user_id,
+        log_user_id,
         len(response),
         _duration_ms(start)
     )
@@ -404,13 +422,15 @@ async def list_interviews(request: Request):
 @router.get("/interviews/{interview_id}/study-guide")
 async def get_study_guide(interview_id: str, request: Request, format: str = "pdf"):
     user_id = _get_user_id(request)
+    log_user_id = short_id(user_id)
+    log_interview_id = short_id(interview_id)
     start = time.perf_counter()
     output_format = (format or "pdf").lower()
 
     logger.info(
         "event=study_guide_export status=start user_id=%s interview_id=%s format=%s",
-        user_id,
-        interview_id,
+        log_user_id,
+        log_interview_id,
         output_format
     )
 
@@ -425,24 +445,24 @@ async def get_study_guide(interview_id: str, request: Request, format: str = "pd
     except KeyError as exc:
         logger.warning(
             "event=study_guide_export status=not_found user_id=%s interview_id=%s duration_ms=%s",
-            user_id,
-            interview_id,
+            log_user_id,
+            log_interview_id,
             _duration_ms(start)
         )
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except RuntimeError as exc:
         logger.exception(
             "event=study_guide_export status=error user_id=%s interview_id=%s duration_ms=%s",
-            user_id,
-            interview_id,
+            log_user_id,
+            log_interview_id,
             _duration_ms(start)
         )
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     logger.info(
         "event=study_guide_export status=complete user_id=%s interview_id=%s bytes=%s duration_ms=%s format=%s",
-        user_id,
-        interview_id,
+        log_user_id,
+        log_interview_id,
         len(payload_bytes),
         _duration_ms(start),
         output_format

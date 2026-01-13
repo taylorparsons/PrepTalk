@@ -208,11 +208,13 @@ def test_question_status_update_endpoint():
     assert response.status_code == 200
     payload = response.json()
     assert payload["question_statuses"][0]["status"] == "started"
+    assert payload["asked_question_index"] == 0
 
     summary_response = client.get(f"/api/interviews/{interview_id}")
     assert summary_response.status_code == 200
     summary = summary_response.json()
     assert summary["question_statuses"][0]["status"] == "started"
+    assert summary["asked_question_index"] == 0
 
 
 def test_session_list_orders_by_updated_at():

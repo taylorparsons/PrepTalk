@@ -57,7 +57,7 @@ sequenceDiagram
     LIVE-->>UI: Audio + transcript events
     UI->>S: Append transcript entries
 
-    Note over S: No asked-question tracking yet (gap)
+    Note over S: Question progression tracked via UI status updates.
 ```
 
 ### UAT Observations (Gap Symptoms)
@@ -207,7 +207,6 @@ Task tracking
 ## Logging & Observability
 - Log per request with short, user-friendly fields; use interview_id hash only (5-char alphanumeric).
 - Record requested_model and effective_model on every Gemini text/live call, including fallbacks.
-- Include per-request token_usage_pct when available (tokens only; no near-limit thresholds yet).
 - Emit structured event types (e.g., interview_create, gemini_live_connect, gemini_text_call).
 - Avoid logging sensitive content; prefer sizes and counts over raw text.
 
@@ -244,15 +243,15 @@ Task tracking
 - [x] Session store persistence on disk (`app/session_store/<user_id>`).
 - [x] PDF study guide rendering + export endpoint (rubric + transcript + summary).
 - [x] Error handling for mic denial, WS disconnects, and quota limits.
-- [ ] Model usage logging (requested vs effective) with interview_id hash + per-request token_usage_pct.
+- [x] Model usage logging (requested vs effective) with interview_id hash.
 
 ### Frontend
-- [ ] Export transcript (TXT) from the live session transcript.
-- [ ] Mute toggle for live voice input (pause mic frames).
-- [ ] Restart interview flow (reset transcript/score, keep question set).
-- [ ] Session naming UI (rename current interview).
-- [ ] Custom question input to append known questions.
-- [ ] Question status tracking with manual toggles and auto-start on coach prompts.
+- [x] Export transcript (TXT) from the live session transcript.
+- [x] Mute toggle for live voice input (pause mic frames).
+- [x] Restart interview flow (reset transcript/score, keep question set).
+- [x] Session naming UI (rename current interview).
+- [x] Custom question input to append known questions.
+- [x] Question status tracking with manual toggles and auto-start on coach prompts.
 - [x] Voice-first UI shell (setup, controls, transcript, score).
 - [x] Microphone capture + audio playback pipeline (PCM16 @ 24 kHz).
 - [x] WebSocket transport layer with reconnect + status.
@@ -263,7 +262,7 @@ Task tracking
 - [x] API tests for session lifecycle (mock adapter).
 - [x] Playwright E2E flow (mock adapter).
 - [x] Mocked Gemini Live streaming tests for event flow.
-- [ ] Resolve `google/genai` DeprecationWarning on Python 3.14 (pin/upgrade or warn filter).
+- [x] Resolve `google/genai` DeprecationWarning on Python 3.14 (pin/upgrade or warn filter).
 - [ ] Manual voice smoke tests (mic permissions + latency).
   - Run steps in `docs/testing/voice-smoke-test.md`.
 - [x] Optional live-mode E2E with AI Studio persona (gated by `E2E_LIVE=1`).

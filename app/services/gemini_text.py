@@ -34,11 +34,22 @@ def _call_gemini(api_key: str, model: str, prompt: str) -> str:
     if genai is None:
         raise RuntimeError("google-genai is required for Gemini text.")
     client = genai.Client(api_key=api_key)
+    logger.info("event=text_model_call status=start requested_model=%s", model)
     try:
         response = client.models.generate_content(model=model, contents=prompt)
+        effective_model = (
+            getattr(response, "model", None)
+            or getattr(response, "model_version", None)
+            or model
+        )
+        logger.info(
+            "event=text_model_call status=complete requested_model=%s effective_model=%s",
+            model,
+            effective_model
+        )
         return getattr(response, "text", "") or ""
     except Exception as exc:
-        logger.exception("event=text_model_error model=%s", model)
+        logger.exception("event=text_model_call status=error requested_model=%s", model)
         raise RuntimeError(_friendly_text_error(model, exc)) from exc
 
 

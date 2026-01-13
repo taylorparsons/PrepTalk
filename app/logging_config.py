@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 from datetime import datetime
@@ -51,3 +52,10 @@ def get_logger() -> logging.Logger:
     if not _CONFIGURED:
         setup_logging()
     return logging.getLogger(_LOGGER_NAME)
+
+
+def short_id(value: str | None, length: int = 5) -> str:
+    if not value:
+        return "unknown"
+    digest = hashlib.sha1(value.encode("utf-8")).hexdigest()
+    return digest[:length]

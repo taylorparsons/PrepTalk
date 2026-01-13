@@ -23,6 +23,8 @@ class InterviewRecord:
     focus_areas: list[str]
     created_at: str = ""
     updated_at: str = ""
+    asked_question_index: int | None = None
+    asked_question_history: list[dict] = field(default_factory=list)
     resume_text: str = ""
     job_text: str = ""
     question_statuses: list[dict] = field(default_factory=list)
@@ -40,6 +42,8 @@ class InterviewRecord:
             "role_title": self.role_title,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
+            "asked_question_index": self.asked_question_index,
+            "asked_question_history": list(self.asked_question_history),
             "questions": list(self.questions),
             "focus_areas": list(self.focus_areas),
             "resume_text": self.resume_text,
@@ -66,6 +70,8 @@ class InterviewRecord:
             role_title=payload.get("role_title"),
             created_at=payload.get("created_at", ""),
             updated_at=payload.get("updated_at", ""),
+            asked_question_index=payload.get("asked_question_index"),
+            asked_question_history=list(payload.get("asked_question_history", [])),
             questions=list(payload.get("questions", [])),
             focus_areas=list(payload.get("focus_areas", [])),
             resume_text=payload.get("resume_text", ""),
@@ -324,6 +330,19 @@ class InterviewStore:
             return current
         updated = _status_entry(status)
         record.question_statuses[index] = updated
+        if status in {"started", "answered"}:
+            current_index = record.asked_question_index
+            if current_index is None or index > current_index:
+                record.asked_question_index = index
+                record.asked_question_history.append(
+                    {
+                        "index": index,
+                        "question": record.questions[index],
+                        "status": status,
+                        "timestamp": updated["updated_at"],
+                        "source": source
+                    }
+                )
         record.question_status_history.append(
             {
                 "index": index,
@@ -342,8 +361,39 @@ class InterviewStore:
         if record:
             record.transcript = []
             record.score = None
+            record.asked_question_index = None
+            record.asked_question_history = []
             _touch(record)
             self._persist(record)
+
+    def update_asked_question_index(
+        self,
+        interview_id: str,
+        index: int,
+        user_id: str | None = None,
+        source: str = "ui"
+    ) -> int | None:
+        record = self.get(interview_id, user_id)
+        if not record:
+            return None
+        if index < 0 or index >= len(record.questions):
+            raise IndexError("Question index out of range.")
+        current_index = record.asked_question_index
+        if current_index is None or index > current_index:
+            timestamp = _now_iso()
+            record.asked_question_index = index
+            record.asked_question_history.append(
+                {
+                    "index": index,
+                    "question": record.questions[index],
+                    "status": "progressed",
+                    "timestamp": timestamp,
+                    "source": source
+                }
+            )
+            _touch(record)
+            self._persist(record)
+        return record.asked_question_index
 
     def list_sessions(self, user_id: str | None = None) -> list[InterviewRecord]:
         normalized = self._normalize_user_id(user_id)

@@ -15,7 +15,7 @@ except ImportError as exc:
     _GENAI_IMPORT_ERROR = exc
 
 from .store import store
-from ..logging_config import get_logger
+from ..logging_config import get_logger, short_id
 
 
 DEFAULT_SYSTEM_PROMPT = (
@@ -89,6 +89,12 @@ class GeminiLiveBridge:
         self._closed = False
 
     async def connect(self) -> None:
+        logger.info(
+            "event=gemini_live_call status=start requested_model=%s interview_id=%s user_id=%s",
+            self._model,
+            short_id(self._interview_id),
+            short_id(self._user_id)
+        )
         config = {
             "response_modalities": ["AUDIO"],
             "input_audio_transcription": {},
@@ -102,6 +108,13 @@ class GeminiLiveBridge:
         self._tasks.append(asyncio.create_task(self._receive_loop()))
 
         await self._send_json({"type": "status", "state": "gemini-connected"})
+        logger.info(
+            "event=gemini_live_call status=complete requested_model=%s effective_model=%s interview_id=%s user_id=%s",
+            self._model,
+            getattr(self._session, "model", None) or self._model,
+            short_id(self._interview_id),
+            short_id(self._user_id)
+        )
 
     async def send_audio(self, audio_bytes: bytes) -> None:
         if self._closed:
@@ -155,7 +168,11 @@ class GeminiLiveBridge:
         except Exception as exc:
             if self._closed:
                 return
-            logger.exception("event=gemini_live_send status=error interview_id=%s user_id=%s", self._interview_id, self._user_id)
+            logger.exception(
+                "event=gemini_live_send status=error interview_id=%s user_id=%s",
+                short_id(self._interview_id),
+                short_id(self._user_id)
+            )
             await self._send_json({"type": "error", "message": _friendly_error(exc)})
             await self._send_json({"type": "status", "state": "gemini-error"})
             self._closed = True
@@ -171,7 +188,11 @@ class GeminiLiveBridge:
         except Exception as exc:
             if self._closed:
                 return
-            logger.exception("event=gemini_live_receive status=error interview_id=%s user_id=%s", self._interview_id, self._user_id)
+            logger.exception(
+                "event=gemini_live_receive status=error interview_id=%s user_id=%s",
+                short_id(self._interview_id),
+                short_id(self._user_id)
+            )
             await self._send_json({"type": "error", "message": _friendly_error(exc)})
             await self._send_json({"type": "status", "state": "gemini-error"})
             self._closed = True
@@ -179,7 +200,11 @@ class GeminiLiveBridge:
         else:
             if self._closed:
                 return
-            logger.info("event=gemini_live_receive status=ended interview_id=%s user_id=%s", self._interview_id, self._user_id)
+            logger.info(
+                "event=gemini_live_receive status=ended interview_id=%s user_id=%s",
+                short_id(self._interview_id),
+                short_id(self._user_id)
+            )
             await self._send_json({"type": "status", "state": "gemini-disconnected"})
             self._closed = True
             await self._close_session(skip_task=asyncio.current_task())

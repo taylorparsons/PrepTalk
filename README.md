@@ -68,3 +68,9 @@ If Playwright browsers are missing:
 ```bash
 PLAYWRIGHT_INSTALL=1 ./run.sh e2e
 ```
+
+## Hackathon Deliverables
+
+- AI Studio demo link: TODO
+- Gemini integration write-up: TODO
+- 3-minute demo video: TODO

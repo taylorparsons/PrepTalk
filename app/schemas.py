@@ -41,6 +41,7 @@ class InterviewSummaryResponse(BaseModel):
     adapter: str | None = None
     created_at: str | None = None
     updated_at: str | None = None
+    asked_question_index: int | None = None
     questions: list[str] = Field(default_factory=list)
     focus_areas: list[str] = Field(default_factory=list)
     question_statuses: list[QuestionStatusEntry] = Field(default_factory=list)
@@ -104,6 +105,7 @@ class QuestionStatusResponse(BaseModel):
     index: int
     status: str
     updated_at: str
+    asked_question_index: int | None = None
 
 
 class SessionListEntry(BaseModel):

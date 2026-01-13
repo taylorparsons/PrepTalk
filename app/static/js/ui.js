@@ -355,6 +355,7 @@ function buildSetupPanel(state, ui) {
     state.questionStatuses = [];
     state.transcript = [];
     state.score = null;
+    state.askedQuestionIndex = null;
     ui.startButton.disabled = true;
     renderQuestions(
       ui.questionList,
@@ -377,6 +378,7 @@ function buildSetupPanel(state, ui) {
       state.questionStatuses = normalizeQuestionStatuses(state.questions, result.question_statuses);
       state.adapter = result.adapter || state.adapter;
       state.sessionName = '';
+      state.askedQuestionIndex = result.asked_question_index ?? null;
       state.sessionStarted = false;
       renderQuestions(
         ui.questionList,
@@ -1146,6 +1148,7 @@ export function buildVoiceLayout() {
     sessionStarted: false,
     isMuted: false,
     sessionName: '',
+    askedQuestionIndex: null,
     sessions: [],
     geminiReconnectAttempts: 0,
     geminiReconnectTimer: null
@@ -1188,6 +1191,9 @@ export function buildVoiceLayout() {
         source
       });
       syncQuestionStatuses(response.question_statuses);
+      if (response.asked_question_index !== undefined) {
+        state.askedQuestionIndex = response.asked_question_index;
+      }
     } catch (error) {
       if (previous) {
         applyLocalQuestionStatus(index, previous.status, previous.updated_at);
@@ -1332,6 +1338,7 @@ export function buildVoiceLayout() {
         : null;
       state.adapter = summary.adapter || state.adapter;
       state.sessionName = summary.session_name || '';
+      state.askedQuestionIndex = summary.asked_question_index ?? null;
       state.sessionStarted = state.transcript.length > 0 || hasScore;
       state.sessionActive = false;
       state.sessionId = null;
@@ -1540,6 +1547,7 @@ export function buildVoiceLayout() {
       await restartInterview({ interviewId: state.interviewId });
       ui.resetSessionState?.();
       state.sessionStarted = false;
+      state.askedQuestionIndex = null;
       ui.startButton.disabled = false;
       ui.stopButton.disabled = true;
       updateStatusPill(ui.statusPill, { label: 'Idle', tone: 'neutral' });
