@@ -9,6 +9,8 @@ Voice-first interview practice app for the Gemini hackathon.
 ./run.sh ui
 ```
 
+Developer guide: `DEVELOPER_GUIDE.md`
+
 ## Run Modes
 
 Script modes (`./run.sh`):
