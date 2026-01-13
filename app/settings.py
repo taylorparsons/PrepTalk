@@ -12,11 +12,13 @@ class AppSettings:
     text_model: str
     api_base: str
     session_store_dir: str
+    log_dir: str
     user_id: str
 
 
 def load_settings() -> AppSettings:
     base_dir = Path(__file__).resolve().parent
+    repo_root = base_dir.parent
     session_store = base_dir / "session_store"
     return AppSettings(
         adapter=os.getenv("INTERVIEW_ADAPTER", "mock"),
@@ -27,5 +29,6 @@ def load_settings() -> AppSettings:
         text_model=os.getenv("GEMINI_TEXT_MODEL", "gemini-3-pro-preview"),
         api_base=os.getenv("APP_API_BASE", "/api"),
         session_store_dir=os.getenv("SESSION_STORE_DIR", str(session_store)),
+        log_dir=os.getenv("LOG_DIR", str(repo_root / "logs")),
         user_id=os.getenv("APP_USER_ID", "local")
     )

@@ -1305,7 +1305,8 @@ export function buildVoiceLayout() {
     }
     try {
       const summary = await getLogSummary();
-      const disconnects = summary.disconnect_counts?.ws_disconnect || 0;
+      const disconnects = (summary.disconnect_counts?.ws_disconnect || 0)
+        + (summary.disconnect_counts?.client_event || 0);
       const errors = summary.error_count || 0;
       ui.metricsCards.disconnects.textContent = formatCount(disconnects);
       ui.metricsCards.errors.textContent = formatCount(errors);
