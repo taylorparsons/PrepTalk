@@ -7,10 +7,12 @@ from pathlib import Path
 import re
 from typing import Optional
 
+from ..logging_config import get_logger, short_id
 from ..settings import load_settings
 
 
 _SAFE_USER_ID = re.compile(r"[^a-zA-Z0-9_-]+")
+logger = get_logger()
 
 
 @dataclass
@@ -151,11 +153,23 @@ class InterviewStore:
     def _persist(self, record: InterviewRecord) -> None:
         path = self._record_path(record.interview_id, record.user_id)
         if path is None:
+            logger.info(
+                "event=store_persist status=skipped reason=disabled interview_id=%s user_id=%s",
+                short_id(record.interview_id),
+                short_id(record.user_id)
+            )
             return
         path.parent.mkdir(parents=True, exist_ok=True)
         tmp_path = path.with_suffix('.json.tmp')
-        tmp_path.write_text(json.dumps(record.to_dict(), indent=2))
+        payload = json.dumps(record.to_dict(), indent=2)
+        tmp_path.write_text(payload)
         tmp_path.replace(path)
+        logger.info(
+            "event=store_persist status=complete interview_id=%s user_id=%s bytes=%s",
+            short_id(record.interview_id),
+            short_id(record.user_id),
+            len(payload)
+        )
 
     def _ensure_question_statuses(self, record: InterviewRecord) -> bool:
         changed = False
@@ -200,12 +214,25 @@ class InterviewStore:
         self._ensure_question_statuses(record)
         self._records[(normalized, interview_id)] = record
         self._persist(record)
+        logger.info(
+            "event=store_create status=complete interview_id=%s user_id=%s adapter=%s questions=%s focus_areas=%s",
+            short_id(interview_id),
+            short_id(normalized),
+            adapter,
+            len(questions),
+            len(focus_areas)
+        )
         return record
 
     def get(self, interview_id: str, user_id: str | None = None) -> Optional[InterviewRecord]:
         key = self._record_key(interview_id, user_id)
         record = self._records.get(key)
         if record:
+            logger.info(
+                "event=store_get status=hit source=memory interview_id=%s user_id=%s",
+                short_id(interview_id),
+                short_id(record.user_id)
+            )
             return record
         path = self._record_path(interview_id, user_id)
         if path and path.exists():
@@ -221,7 +248,17 @@ class InterviewStore:
             if changed:
                 self._persist(record)
             self._records[key] = record
+            logger.info(
+                "event=store_get status=hit source=disk interview_id=%s user_id=%s",
+                short_id(interview_id),
+                short_id(record.user_id)
+            )
             return record
+        logger.info(
+            "event=store_get status=miss interview_id=%s user_id=%s",
+            short_id(interview_id),
+            short_id(self._normalize_user_id(user_id))
+        )
         return None
 
     def update_transcript(
@@ -231,10 +268,23 @@ class InterviewStore:
         user_id: str | None = None
     ) -> None:
         record = self.get(interview_id, user_id)
-        if record:
-            record.transcript = list(transcript)
-            _touch(record)
-            self._persist(record)
+        if not record:
+            logger.info(
+                "event=store_update_transcript status=not_found interview_id=%s user_id=%s entries=%s",
+                short_id(interview_id),
+                short_id(self._normalize_user_id(user_id)),
+                len(transcript)
+            )
+            return
+        record.transcript = list(transcript)
+        _touch(record)
+        self._persist(record)
+        logger.info(
+            "event=store_update_transcript status=complete interview_id=%s user_id=%s entries=%s",
+            short_id(interview_id),
+            short_id(record.user_id),
+            len(record.transcript)
+        )
 
     def append_transcript_entry(
         self,
@@ -244,10 +294,21 @@ class InterviewStore:
     ) -> None:
         record = self.get(interview_id, user_id)
         if not record:
+            logger.info(
+                "event=store_append_transcript status=not_found interview_id=%s user_id=%s",
+                short_id(interview_id),
+                short_id(self._normalize_user_id(user_id))
+            )
             return
         payload = dict(entry)
         text_value = str(payload.get("text") or "").strip()
         if not text_value:
+            logger.info(
+                "event=store_append_transcript status=skipped reason=empty_text interview_id=%s user_id=%s role=%s",
+                short_id(interview_id),
+                short_id(record.user_id),
+                payload.get("role")
+            )
             return
         payload["text"] = text_value
         last = record.transcript[-1] if record.transcript else None
@@ -257,10 +318,24 @@ class InterviewStore:
                 last["timestamp"] = payload.get("timestamp")
             _touch(record)
             self._persist(record)
+            logger.info(
+                "event=store_append_transcript status=merged interview_id=%s user_id=%s role=%s text_len=%s",
+                short_id(interview_id),
+                short_id(record.user_id),
+                payload.get("role"),
+                len(text_value)
+            )
             return
         record.transcript.append(payload)
         _touch(record)
         self._persist(record)
+        logger.info(
+            "event=store_append_transcript status=complete interview_id=%s user_id=%s role=%s text_len=%s",
+            short_id(interview_id),
+            short_id(record.user_id),
+            payload.get("role"),
+            len(text_value)
+        )
 
     def set_score(self, interview_id: str, score: dict, user_id: str | None = None) -> None:
         record = self.get(interview_id, user_id)
@@ -268,10 +343,26 @@ class InterviewStore:
             record.score = dict(score)
             _touch(record)
             self._persist(record)
+            logger.info(
+                "event=store_set_score status=complete interview_id=%s user_id=%s",
+                short_id(interview_id),
+                short_id(record.user_id)
+            )
+        else:
+            logger.info(
+                "event=store_set_score status=not_found interview_id=%s user_id=%s",
+                short_id(interview_id),
+                short_id(self._normalize_user_id(user_id))
+            )
 
     def set_session_name(self, interview_id: str, name: str, user_id: str | None = None) -> dict | None:
         record = self.get(interview_id, user_id)
         if not record:
+            logger.info(
+                "event=store_set_session_name status=not_found interview_id=%s user_id=%s",
+                short_id(interview_id),
+                short_id(self._normalize_user_id(user_id))
+            )
             return None
         cleaned = name.strip()
         entry = {
@@ -282,6 +373,13 @@ class InterviewStore:
         record.session_name_history.append(entry)
         _touch(record)
         self._persist(record)
+        logger.info(
+            "event=store_set_session_name status=complete interview_id=%s user_id=%s version=%s name_len=%s",
+            short_id(interview_id),
+            short_id(record.user_id),
+            entry["version"],
+            len(cleaned)
+        )
         return entry
 
     def add_custom_question(
@@ -293,6 +391,11 @@ class InterviewStore:
     ) -> dict | None:
         record = self.get(interview_id, user_id)
         if not record:
+            logger.info(
+                "event=store_add_custom_question status=not_found interview_id=%s user_id=%s",
+                short_id(interview_id),
+                short_id(self._normalize_user_id(user_id))
+            )
             return None
         cleaned = question.strip()
         safe_position = max(1, int(position)) if position is not None else len(record.questions) + 1
@@ -304,6 +407,14 @@ class InterviewStore:
         record.custom_questions.append(entry)
         _touch(record)
         self._persist(record)
+        logger.info(
+            "event=store_add_custom_question status=complete interview_id=%s user_id=%s index=%s position=%s text_len=%s",
+            short_id(interview_id),
+            short_id(record.user_id),
+            index,
+            safe_position,
+            len(cleaned)
+        )
         return {"record": record, "entry": entry, "index": index}
 
     def update_question_status(
@@ -316,6 +427,13 @@ class InterviewStore:
     ) -> dict | None:
         record = self.get(interview_id, user_id)
         if not record:
+            logger.info(
+                "event=store_update_question_status status=not_found interview_id=%s user_id=%s index=%s status=%s",
+                short_id(interview_id),
+                short_id(self._normalize_user_id(user_id)),
+                index,
+                status
+            )
             return None
         if status not in QUESTION_STATUS_VALUES:
             raise ValueError("Invalid question status.")
@@ -354,6 +472,14 @@ class InterviewStore:
         )
         _touch(record)
         self._persist(record)
+        logger.info(
+            "event=store_update_question_status status=complete interview_id=%s user_id=%s index=%s status=%s source=%s",
+            short_id(interview_id),
+            short_id(record.user_id),
+            index,
+            status,
+            source
+        )
         return updated
 
     def reset_session(self, interview_id: str, user_id: str | None = None) -> None:
@@ -365,6 +491,17 @@ class InterviewStore:
             record.asked_question_history = []
             _touch(record)
             self._persist(record)
+            logger.info(
+                "event=store_reset_session status=complete interview_id=%s user_id=%s",
+                short_id(interview_id),
+                short_id(record.user_id)
+            )
+        else:
+            logger.info(
+                "event=store_reset_session status=not_found interview_id=%s user_id=%s",
+                short_id(interview_id),
+                short_id(self._normalize_user_id(user_id))
+            )
 
     def update_asked_question_index(
         self,
@@ -375,6 +512,13 @@ class InterviewStore:
     ) -> int | None:
         record = self.get(interview_id, user_id)
         if not record:
+            logger.info(
+                "event=store_update_asked_question_index status=not_found interview_id=%s user_id=%s index=%s source=%s",
+                short_id(interview_id),
+                short_id(self._normalize_user_id(user_id)),
+                index,
+                source
+            )
             return None
         if index < 0 or index >= len(record.questions):
             raise IndexError("Question index out of range.")
@@ -393,6 +537,13 @@ class InterviewStore:
             )
             _touch(record)
             self._persist(record)
+            logger.info(
+                "event=store_update_asked_question_index status=complete interview_id=%s user_id=%s index=%s source=%s",
+                short_id(interview_id),
+                short_id(record.user_id),
+                index,
+                source
+            )
         return record.asked_question_index
 
     def list_sessions(self, user_id: str | None = None) -> list[InterviewRecord]:

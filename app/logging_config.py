@@ -3,12 +3,47 @@ from __future__ import annotations
 import hashlib
 import logging
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
 
 
 _LOGGER_NAME = "awesome_interview"
 _CONFIGURED = False
+
+
+_LEVEL_COLORS = {
+    "DEBUG": "\x1b[38;5;245m",
+    "INFO": "\x1b[38;5;39m",
+    "WARNING": "\x1b[38;5;214m",
+    "ERROR": "\x1b[38;5;196m",
+    "CRITICAL": "\x1b[1;38;5;196m",
+}
+_COLOR_RESET = "\x1b[0m"
+
+
+def _color_enabled() -> bool:
+    if os.getenv("NO_COLOR"):
+        return False
+    return sys.stderr.isatty()
+
+
+class _ColorFormatter(logging.Formatter):
+    def __init__(self, fmt: str, use_color: bool) -> None:
+        super().__init__(fmt)
+        self._use_color = use_color
+
+    def format(self, record: logging.LogRecord) -> str:
+        if not self._use_color:
+            return super().format(record)
+        original_levelname = record.levelname
+        color = _LEVEL_COLORS.get(original_levelname, "")
+        if color:
+            record.levelname = f"{color}{original_levelname}{_COLOR_RESET}"
+        try:
+            return super().format(record)
+        finally:
+            record.levelname = original_levelname
 
 
 def setup_logging() -> None:
@@ -38,10 +73,14 @@ def setup_logging() -> None:
 
     if not logger.handlers:
         formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+        stream_formatter = _ColorFormatter(
+            "%(asctime)s %(levelname)s %(message)s",
+            use_color=_color_enabled()
+        )
         file_handler = logging.FileHandler(log_file)
         file_handler.setFormatter(formatter)
         stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(formatter)
+        stream_handler.setFormatter(stream_formatter)
         logger.addHandler(file_handler)
         logger.addHandler(stream_handler)
 
