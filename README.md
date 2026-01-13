@@ -59,6 +59,11 @@ select interview_id, count(*) from awesome_log group by interview_id order by co
 select event, count(*) from awesome_log where upper(log_level) = 'ERROR' or status = 'error' group by event;
 ```
 
+## Live log dashboard
+
+The UI includes a Live Stats panel that polls `/api/logs/summary` for disconnects
+and error counts. Client-side disconnects are logged via `/api/telemetry`.
+
 ## Tests
 
 UI component tests (Vitest):
