@@ -12,6 +12,40 @@ This repo is a voice-first interview practice app built with FastAPI and a vanil
 - Session store: `app/services/store.py` writes per-user JSON under `app/session_store/`.
 - Exports: `app/services/pdf_service.py` builds PDF and TXT study guides.
 
+## Repository Layout
+```
+.
+|-- app/
+|   |-- api.py
+|   |-- logging_config.py
+|   |-- main.py
+|   |-- schemas.py
+|   |-- settings.py
+|   |-- ws.py
+|   |-- services/
+|   |-- static/
+|   |-- templates/
+|   `-- session_store/
+|-- docs/
+|   |-- plans/
+|   |-- testing/
+|   `-- components.md
+|-- tests/
+|   |-- components/
+|   |-- e2e/
+|   `-- test_*.py
+|-- DEVELOPER_GUIDE.md
+|-- README.md
+|-- run.sh
+|-- requirements.txt
+|-- pytest.ini
+|-- package.json
+|-- package-lock.json
+|-- playwright.config.js
+`-- vitest.config.js
+```
+Notes: runtime/build directories like `node_modules/`, `.venv/`, `logs/`, `test-results/`, and `.git/` are omitted.
+
 ## Local Setup
 Prereqs:
 - Python 3.11+
