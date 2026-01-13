@@ -21,7 +21,9 @@ from .schemas import (
     QuestionStatusResponse,
     RestartResponse,
     SessionListResponse,
-    LogSummaryResponse
+    LogSummaryResponse,
+    ClientEventRequest,
+    ClientEventResponse
 )
 from .services import interview_service
 from .services.log_metrics import build_log_summary
@@ -374,6 +376,21 @@ async def get_log_summary() -> LogSummaryResponse:
     lines = log_path.read_text().splitlines()[-2000:]
     summary = build_log_summary(lines)
     return LogSummaryResponse(**summary)
+
+
+@router.post("/telemetry", response_model=ClientEventResponse)
+async def log_client_event(request: Request, payload: ClientEventRequest):
+    user_id = _get_user_id(request)
+    logger.info(
+        "event=client_event status=received user_id=%s interview_id=%s session_id=%s event_type=%s state=%s detail=%s",
+        short_id(user_id),
+        short_id(payload.interview_id),
+        short_id(payload.session_id),
+        payload.event,
+        payload.state,
+        payload.detail
+    )
+    return {"status": "ok"}
 
 
 @router.get("/interviews/{interview_id}", response_model=InterviewSummaryResponse)

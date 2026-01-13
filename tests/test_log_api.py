@@ -14,3 +14,10 @@ def test_log_summary_endpoint_returns_counts(tmp_path, monkeypatch):
     assert response.status_code == 200
     payload = response.json()
     assert payload["event_counts"]["ws_disconnect"] == 1
+
+
+def test_client_telemetry_endpoint():
+    client = TestClient(app)
+    response = client.post("/api/telemetry", json={"event": "ws_close"})
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"

@@ -127,3 +127,15 @@ class LogSummaryResponse(BaseModel):
     disconnect_counts: dict = Field(default_factory=dict)
     error_count: int = 0
     recent_errors: list = Field(default_factory=list)
+
+
+class ClientEventRequest(BaseModel):
+    event: str
+    interview_id: str | None = None
+    session_id: str | None = None
+    state: str | None = None
+    detail: str | None = None
+
+
+class ClientEventResponse(BaseModel):
+    status: str
