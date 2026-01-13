@@ -39,6 +39,26 @@ Adapter modes (set in `.env`):
 - `E2E_BASE_URL`: override Playwright base URL (default `http://localhost:8000`)
 - `E2E_LIVE`: set to `1` to run the optional live Gemini Playwright test
 
+## Log analysis (lnav)
+
+Install the lnav helpers (format + SQL view):
+```bash
+./tools/logs/lnav/setup.sh
+```
+
+Open logs:
+```bash
+lnav logs/app.log
+```
+
+Example queries (run in lnav with `;`):
+```sql
+select event, status, count(*) from awesome_log group by event, status order by count(*) desc;
+select event, percentile(duration_ms, 95) from awesome_log where duration_ms is not null group by event;
+select interview_id, count(*) from awesome_log group by interview_id order by count(*) desc;
+select event, count(*) from awesome_log where upper(log_level) = 'ERROR' or status = 'error' group by event;
+```
+
 ## Tests
 
 UI component tests (Vitest):

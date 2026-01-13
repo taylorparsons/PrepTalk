@@ -1,0 +1,29 @@
+{
+  "$schema": "https://lnav.org/schemas/format-v1.schema.json",
+  "awesome_interview_log": {
+    "title": "Awesome Interview Log",
+    "description": "App log format with logfmt payload.",
+    "file-pattern": ".*\\.log$",
+    "regex": {
+      "main": {
+        "pattern": "^(?<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3}) (?<level>\\w+) (?<body>.*)$"
+      }
+    },
+    "timestamp-format": "%Y-%m-%d %H:%M:%S,%f",
+    "level-field": "level",
+    "value": {
+      "level": {
+        "kind": "string",
+        "identifier": true
+      },
+      "body": {
+        "kind": "string"
+      }
+    },
+    "sample": [
+      {
+        "line": "2026-01-13 14:03:30,123 INFO event=store_get status=hit interview_id=abc user_id=def"
+      }
+    ]
+  }
+}

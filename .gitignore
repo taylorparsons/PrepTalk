@@ -12,5 +12,8 @@ playwright-report/
 test-results/
 app/session_store/
 logs/
+!tools/logs/
+!tools/logs/lnav/
+!tools/logs/lnav/*
 AGENTS.md
 .worktrees/
