@@ -125,6 +125,9 @@ class LogSummaryResponse(BaseModel):
     event_counts: dict = Field(default_factory=dict)
     status_counts: dict = Field(default_factory=dict)
     disconnect_counts: dict = Field(default_factory=dict)
+    client_disconnects: int = 0
+    server_disconnects: int = 0
+    gemini_disconnects: int = 0
     error_count: int = 0
     recent_errors: list = Field(default_factory=list)
 

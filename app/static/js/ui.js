@@ -1128,14 +1128,20 @@ function buildLogDashboardPanel(ui) {
     return { card, valueEl };
   }
 
-  const disconnects = buildCard('Disconnects');
+  const clientDisconnects = buildCard('Client disconnects');
+  const serverDisconnects = buildCard('Server disconnects');
+  const geminiDisconnects = buildCard('Gemini disconnects');
   const errors = buildCard('Errors');
 
-  grid.appendChild(disconnects.card);
+  grid.appendChild(clientDisconnects.card);
+  grid.appendChild(serverDisconnects.card);
+  grid.appendChild(geminiDisconnects.card);
   grid.appendChild(errors.card);
 
   ui.metricsCards = {
-    disconnects: disconnects.valueEl,
+    clientDisconnects: clientDisconnects.valueEl,
+    serverDisconnects: serverDisconnects.valueEl,
+    geminiDisconnects: geminiDisconnects.valueEl,
     errors: errors.valueEl
   };
 
@@ -1305,10 +1311,13 @@ export function buildVoiceLayout() {
     }
     try {
       const summary = await getLogSummary();
-      const disconnects = (summary.disconnect_counts?.ws_disconnect || 0)
-        + (summary.disconnect_counts?.client_event || 0);
+      const clientDisconnects = summary.client_disconnects || 0;
+      const serverDisconnects = summary.server_disconnects || 0;
+      const geminiDisconnects = summary.gemini_disconnects || 0;
       const errors = summary.error_count || 0;
-      ui.metricsCards.disconnects.textContent = formatCount(disconnects);
+      ui.metricsCards.clientDisconnects.textContent = formatCount(clientDisconnects);
+      ui.metricsCards.serverDisconnects.textContent = formatCount(serverDisconnects);
+      ui.metricsCards.geminiDisconnects.textContent = formatCount(geminiDisconnects);
       ui.metricsCards.errors.textContent = formatCount(errors);
     } catch (error) {
       // Ignore polling errors to keep the UI responsive.

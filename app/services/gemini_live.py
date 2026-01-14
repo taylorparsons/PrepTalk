@@ -42,6 +42,9 @@ QUESTION_WORDS = re.compile(
     re.IGNORECASE
 )
 
+REHYDRATE_MAX_TURNS = 8
+REHYDRATE_MAX_TEXT = 240
+
 
 def _normalize_question(text: str) -> str:
     cleaned = re.sub(r"[^a-zA-Z0-9\s]", " ", text or "")
@@ -74,6 +77,52 @@ def _match_repeat_question(text: str, questions: list[str], max_index: int | Non
         if normalized_question in normalized_text:
             return index
     return None
+
+
+def _truncate_text(value: str, limit: int) -> str:
+    if not value:
+        return ""
+    cleaned = value.strip()
+    if len(cleaned) <= limit:
+        return cleaned
+    return f"{cleaned[:limit].rstrip()}..."
+
+
+def _build_rehydrate_prompt(record, transcript_tail: list[dict]) -> str | None:
+    if not record or not transcript_tail:
+        return None
+    lines = []
+    for entry in transcript_tail:
+        role = entry.get("role", "system")
+        text = _truncate_text(entry.get("text", ""), REHYDRATE_MAX_TEXT)
+        if not text:
+            continue
+        lines.append(f"{role}: {text}")
+    if not lines:
+        return None
+    asked_index = record.asked_question_index
+    current_question = ""
+    next_question = ""
+    if asked_index is not None and 0 <= asked_index < len(record.questions):
+        current_question = record.questions[asked_index]
+        next_index = asked_index + 1
+        if 0 <= next_index < len(record.questions):
+            next_question = record.questions[next_index]
+    last_role = transcript_tail[-1].get("role", "system")
+    return (
+        "We got disconnected. Continue the conversation without repeating prior questions.\n"
+        f"Last speaker: {last_role}\n"
+        "Recent transcript:\n"
+        f"{chr(10).join(lines)}\n\n"
+        f"Current question index: {asked_index if asked_index is not None else 'none'}\n"
+        f"Current question: {current_question or 'none'}\n"
+        f"Next question: {next_question or 'none'}\n\n"
+        "Rules:\n"
+        "- If the candidate was mid-answer, let them finish.\n"
+        "- If the candidate's answer was brief or unclear, ask one clarifying follow-up.\n"
+        "- Do not repeat any questions already asked.\n"
+        "- Keep responses concise and friendly."
+    )
 
 
 
@@ -125,6 +174,7 @@ class GeminiLiveBridge:
         self._audio_queue: asyncio.Queue[LiveAudioChunk] = asyncio.Queue(maxsize=12)
         self._tasks: list[asyncio.Task] = []
         self._closed = False
+        self._rehydrating = False
 
     async def connect(self) -> None:
         logger.info(
@@ -146,6 +196,7 @@ class GeminiLiveBridge:
         self._tasks.append(asyncio.create_task(self._receive_loop()))
 
         await self._send_json({"type": "status", "state": "gemini-connected"})
+        self._rehydrating = await self._send_rehydrate_context()
         logger.info(
             "event=gemini_live_call status=complete requested_model=%s effective_model=%s interview_id=%s user_id=%s",
             self._model,
@@ -247,6 +298,32 @@ class GeminiLiveBridge:
             self._closed = True
             await self._close_session(skip_task=asyncio.current_task())
 
+    async def _send_rehydrate_context(self) -> bool:
+        record = store.get(self._interview_id, self._user_id)
+        if not record or not record.transcript:
+            return False
+        transcript_tail = list(record.transcript[-REHYDRATE_MAX_TURNS:])
+        prompt = _build_rehydrate_prompt(record, transcript_tail)
+        if not prompt or self._session is None:
+            return False
+        await self._send_json({"type": "status", "state": "thinking"})
+        try:
+            await self._session.send(input=prompt)
+        except Exception:
+            logger.exception(
+                "event=gemini_live_rehydrate status=error interview_id=%s user_id=%s",
+                short_id(self._interview_id),
+                short_id(self._user_id)
+            )
+            return False
+        logger.info(
+            "event=gemini_live_rehydrate status=complete interview_id=%s user_id=%s turns=%s",
+            short_id(self._interview_id),
+            short_id(self._user_id),
+            len(transcript_tail)
+        )
+        return True
+
     async def _handle_response(self, response: Any) -> None:
         server_content = getattr(response, "server_content", None)
         if not server_content:
@@ -307,6 +384,9 @@ class GeminiLiveBridge:
                             )
                         except Exception:
                             pass
+        if role == "coach" and self._rehydrating:
+            self._rehydrating = False
+            await self._send_json({"type": "status", "state": "gemini-connected"})
         entry = {
             "role": role,
             "text": text,

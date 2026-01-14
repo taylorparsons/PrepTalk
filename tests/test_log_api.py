@@ -5,7 +5,11 @@ from app.main import app
 
 def test_log_summary_endpoint_returns_counts(tmp_path, monkeypatch):
     log_path = tmp_path / "app.log"
-    log_path.write_text("2026-01-13 15:06:23,094 INFO event=ws_disconnect status=closed\n")
+    log_path.write_text(
+        "2026-01-13 15:06:23,094 INFO event=ws_disconnect status=closed\n"
+        "2026-01-13 15:06:23,095 INFO event=client_event event_type=ws_close status=received\n"
+        "2026-01-13 15:06:23,096 INFO event=gemini_live_receive status=ended\n"
+    )
 
     monkeypatch.setenv("LOG_DIR", str(tmp_path))
 
@@ -14,6 +18,9 @@ def test_log_summary_endpoint_returns_counts(tmp_path, monkeypatch):
     assert response.status_code == 200
     payload = response.json()
     assert payload["event_counts"]["ws_disconnect"] == 1
+    assert payload["client_disconnects"] == 1
+    assert payload["server_disconnects"] == 1
+    assert payload["gemini_disconnects"] == 1
 
 
 def test_client_telemetry_endpoint():
