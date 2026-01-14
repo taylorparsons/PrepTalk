@@ -119,3 +119,15 @@ class SessionListEntry(BaseModel):
 
 class SessionListResponse(BaseModel):
     sessions: list[SessionListEntry] = Field(default_factory=list)
+
+
+class ClientEventRequest(BaseModel):
+    event: str
+    interview_id: str | None = None
+    session_id: str | None = None
+    state: str | None = None
+    detail: str | None = None
+
+
+class ClientEventResponse(BaseModel):
+    status: str

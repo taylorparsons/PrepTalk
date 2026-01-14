@@ -121,6 +121,25 @@ export async function getInterviewSummary({ interviewId }) {
   return handleResponse(response);
 }
 
+export async function logClientEvent({ event, interviewId, sessionId, state, detail } = {}) {
+  if (!event) {
+    throw new Error('event is required');
+  }
+  const response = await fetch(`${getApiBase()}/telemetry`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
+    body: JSON.stringify({
+      event,
+      interview_id: interviewId,
+      session_id: sessionId,
+      state,
+      detail
+    })
+  });
+
+  return handleResponse(response);
+}
+
 export async function downloadStudyGuide({ interviewId, format = 'pdf' }) {
   const params = new URLSearchParams();
   if (format) {

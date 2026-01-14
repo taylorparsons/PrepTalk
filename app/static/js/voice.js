@@ -1,5 +1,7 @@
 const DEFAULT_SAMPLE_RATE = 24000;
 const DEFAULT_FRAME_MS = 20;
+const DEFAULT_SPEECH_THRESHOLD = 0.02;
+const DEFAULT_SPEECH_HOLD_FRAMES = 6;
 
 function downsampleBuffer(buffer, inputRate, outputRate) {
   if (outputRate >= inputRate) {
@@ -61,8 +63,12 @@ export function decodePcm16Base64(base64) {
 export async function startMicrophoneCapture({
   onAudioFrame,
   onStatus,
+  onSpeechStart,
+  onSpeechEnd,
   targetSampleRate = DEFAULT_SAMPLE_RATE,
-  frameDurationMs = DEFAULT_FRAME_MS
+  frameDurationMs = DEFAULT_FRAME_MS,
+  speechThreshold = DEFAULT_SPEECH_THRESHOLD,
+  speechHoldFrames = DEFAULT_SPEECH_HOLD_FRAMES
 } = {}) {
   if (!navigator?.mediaDevices?.getUserMedia) {
     throw new Error('Microphone capture not supported.');
@@ -88,6 +94,9 @@ export async function startMicrophoneCapture({
 
   onStatus?.('ready');
 
+  let speaking = false;
+  let silenceFrames = 0;
+
   processor.onaudioprocess = (event) => {
     const inputBuffer = event.inputBuffer.getChannelData(0);
     const downsampled = downsampleBuffer(inputBuffer, inputSampleRate, targetSampleRate);
@@ -96,6 +105,26 @@ export async function startMicrophoneCapture({
     for (let i = 0; i < pcm16.length; i += frameSize) {
       const frame = pcm16.subarray(i, i + frameSize);
       if (frame.length > 0) {
+        let sum = 0;
+        for (let j = 0; j < frame.length; j += 1) {
+          const sample = frame[j] / 0x8000;
+          sum += sample * sample;
+        }
+        const rms = Math.sqrt(sum / frame.length);
+        if (rms >= speechThreshold) {
+          silenceFrames = 0;
+          if (!speaking) {
+            speaking = true;
+            onSpeechStart?.();
+          }
+        } else if (speaking) {
+          silenceFrames += 1;
+          if (silenceFrames >= speechHoldFrames) {
+            speaking = false;
+            silenceFrames = 0;
+            onSpeechEnd?.();
+          }
+        }
         onAudioFrame?.(frame);
       }
     }

@@ -147,6 +147,10 @@ export class LiveTransport {
     this.ws.close();
   }
 
+  bargeIn() {
+    this.send({ type: 'barge_in' });
+  }
+
   _startHeartbeat() {
     if (this.heartbeatTimer || !this.heartbeatIntervalMs) return;
     this.heartbeatTimer = setInterval(() => {

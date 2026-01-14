@@ -42,11 +42,46 @@ QUESTION_WORDS = re.compile(
     re.IGNORECASE
 )
 
+REHYDRATE_MAX_TURNS = 8
+REHYDRATE_MAX_TEXT = 240
+COACH_FLUSH_DELAY = 0.8
+COACH_REPEAT_FALLBACK = "Thanks - what's one concrete example or metric you'd use?"
+QUESTION_OVERLAP_THRESHOLD = 0.45
+QUESTION_OVERLAP_MIN_TOKENS = 8
+
 
 def _normalize_question(text: str) -> str:
     cleaned = re.sub(r"[^a-zA-Z0-9\s]", " ", text or "")
     cleaned = re.sub(r"\s+", " ", cleaned).strip().lower()
     return cleaned
+
+
+def _tokenize(text: str) -> list[str]:
+    return [token for token in re.findall(r"[a-z0-9]+", text.lower()) if len(token) >= 3]
+
+
+def _question_overlap_ratio(text: str, question: str) -> float:
+    tokens = _tokenize(question)
+    if not tokens:
+        return 0.0
+    text_tokens = set(_tokenize(text))
+    if not text_tokens:
+        return 0.0
+    matches = sum(1 for token in tokens if token in text_tokens)
+    return matches / len(tokens)
+
+
+def _question_overlap_match(text: str, question: str) -> bool:
+    tokens = _tokenize(question)
+    if not tokens:
+        return False
+    text_tokens = set(_tokenize(text))
+    if not text_tokens:
+        return False
+    matches = sum(1 for token in tokens if token in text_tokens)
+    if matches >= min(QUESTION_OVERLAP_MIN_TOKENS, len(tokens)):
+        return True
+    return (matches / len(tokens)) >= QUESTION_OVERLAP_THRESHOLD
 
 
 def _looks_like_question(text: str) -> bool:
@@ -73,7 +108,79 @@ def _match_repeat_question(text: str, questions: list[str], max_index: int | Non
             continue
         if normalized_question in normalized_text:
             return index
+        if _question_overlap_match(normalized_text, normalized_question):
+            return index
     return None
+
+
+def _match_question_index(text: str, questions: list[str]) -> int | None:
+    if not questions:
+        return None
+    return _match_repeat_question(text, questions, len(questions) - 1)
+
+
+def _truncate_text(value: str, limit: int) -> str:
+    if not value:
+        return ""
+    cleaned = value.strip()
+    if len(cleaned) <= limit:
+        return cleaned
+    return f"{cleaned[:limit].rstrip()}..."
+
+
+def _merge_text(previous: str, incoming: str) -> str:
+    prev = previous or ""
+    next_text = (incoming or "").strip()
+    if not prev:
+        return next_text
+    if not next_text:
+        return prev
+    last_char = prev[-1]
+    starts_with_punct = next_text[0] in ",.;:!?)"
+    starts_with_quote = next_text[0] in "'’"
+    is_single_char = len(next_text) == 1 and last_char.isalnum()
+    if last_char == "-" or starts_with_punct or starts_with_quote or is_single_char:
+        return f"{prev}{next_text}"
+    if prev.endswith(" "):
+        return f"{prev}{next_text}"
+    return f"{prev} {next_text}"
+
+
+def _build_rehydrate_prompt(record, transcript_tail: list[dict]) -> str | None:
+    if not record or not transcript_tail:
+        return None
+    lines = []
+    for entry in transcript_tail:
+        role = entry.get("role", "system")
+        text = _truncate_text(entry.get("text", ""), REHYDRATE_MAX_TEXT)
+        if not text:
+            continue
+        lines.append(f"{role}: {text}")
+    if not lines:
+        return None
+    asked_index = record.asked_question_index
+    current_question = ""
+    next_question = ""
+    if asked_index is not None and 0 <= asked_index < len(record.questions):
+        current_question = record.questions[asked_index]
+        next_index = asked_index + 1
+        if 0 <= next_index < len(record.questions):
+            next_question = record.questions[next_index]
+    last_role = transcript_tail[-1].get("role", "system")
+    return (
+        "We got disconnected. Continue the conversation without repeating prior questions.\n"
+        f"Last speaker: {last_role}\n"
+        "Recent transcript:\n"
+        f"{chr(10).join(lines)}\n\n"
+        f"Current question index: {asked_index if asked_index is not None else 'none'}\n"
+        f"Current question: {current_question or 'none'}\n"
+        f"Next question: {next_question or 'none'}\n\n"
+        "Rules:\n"
+        "- If the candidate was mid-answer, let them finish.\n"
+        "- If the candidate's answer was brief or unclear, ask one clarifying follow-up.\n"
+        "- Do not repeat any questions already asked.\n"
+        "- Keep responses concise and friendly."
+    )
 
 
 
@@ -125,6 +232,10 @@ class GeminiLiveBridge:
         self._audio_queue: asyncio.Queue[LiveAudioChunk] = asyncio.Queue(maxsize=12)
         self._tasks: list[asyncio.Task] = []
         self._closed = False
+        self._rehydrating = False
+        self._coach_buffer = ""
+        self._coach_flush_task: asyncio.Task | None = None
+        self._coach_lock = asyncio.Lock()
 
     async def connect(self) -> None:
         logger.info(
@@ -146,6 +257,7 @@ class GeminiLiveBridge:
         self._tasks.append(asyncio.create_task(self._receive_loop()))
 
         await self._send_json({"type": "status", "state": "gemini-connected"})
+        self._rehydrating = await self._send_rehydrate_context()
         logger.info(
             "event=gemini_live_call status=complete requested_model=%s effective_model=%s interview_id=%s user_id=%s",
             self._model,
@@ -173,6 +285,30 @@ class GeminiLiveBridge:
         self._closed = True
         await self._close_session()
 
+    async def barge_in(self) -> None:
+        if self._closed or self._session is None:
+            return
+        await self._cancel_coach_flush()
+        try:
+            await self._session.send(
+                input=(
+                    "The candidate is speaking. Stop talking, listen, and let them finish. "
+                    "Acknowledge briefly once they pause."
+                )
+            )
+        except Exception:
+            logger.exception(
+                "event=gemini_live_barge_in status=error interview_id=%s user_id=%s",
+                short_id(self._interview_id),
+                short_id(self._user_id)
+            )
+            return
+        logger.info(
+            "event=gemini_live_barge_in status=complete interview_id=%s user_id=%s",
+            short_id(self._interview_id),
+            short_id(self._user_id)
+        )
+
     async def _close_session(self, *, skip_task: asyncio.Task | None = None) -> None:
         if self._session:
             try:
@@ -191,6 +327,13 @@ class GeminiLiveBridge:
                 await self._session_cm.__aexit__(None, None, None)
             except Exception:
                 pass
+        await self._cancel_coach_flush()
+
+    async def _cancel_coach_flush(self) -> None:
+        if self._coach_flush_task and not self._coach_flush_task.done():
+            self._coach_flush_task.cancel()
+        self._coach_flush_task = None
+        self._coach_buffer = ""
 
     async def _send_loop(self) -> None:
         assert self._session is not None
@@ -247,6 +390,53 @@ class GeminiLiveBridge:
             self._closed = True
             await self._close_session(skip_task=asyncio.current_task())
 
+    async def _send_rehydrate_context(self) -> bool:
+        record = store.get(self._interview_id, self._user_id)
+        if not record or not record.transcript:
+            return False
+        transcript_tail = list(record.transcript[-REHYDRATE_MAX_TURNS:])
+        prompt = _build_rehydrate_prompt(record, transcript_tail)
+        if not prompt or self._session is None:
+            return False
+        await self._send_json({"type": "status", "state": "thinking"})
+        try:
+            await self._session.send(input=prompt)
+        except Exception:
+            logger.exception(
+                "event=gemini_live_rehydrate status=error interview_id=%s user_id=%s",
+                short_id(self._interview_id),
+                short_id(self._user_id)
+            )
+            return False
+        logger.info(
+            "event=gemini_live_rehydrate status=complete interview_id=%s user_id=%s turns=%s",
+            short_id(self._interview_id),
+            short_id(self._user_id),
+            len(transcript_tail)
+        )
+        return True
+
+    async def _queue_coach_text(self, text: str) -> None:
+        if not text:
+            return
+        async with self._coach_lock:
+            self._coach_buffer = _merge_text(self._coach_buffer, text)
+            if self._coach_flush_task and not self._coach_flush_task.done():
+                self._coach_flush_task.cancel()
+            self._coach_flush_task = asyncio.create_task(self._flush_coach_buffer())
+
+    async def _flush_coach_buffer(self) -> None:
+        try:
+            await asyncio.sleep(COACH_FLUSH_DELAY)
+        except asyncio.CancelledError:
+            return
+        async with self._coach_lock:
+            text = self._coach_buffer
+            self._coach_buffer = ""
+            self._coach_flush_task = None
+        if text:
+            await self._emit_transcript_final("coach", text)
+
     async def _handle_response(self, response: Any) -> None:
         server_content = getattr(response, "server_content", None)
         if not server_content:
@@ -282,31 +472,67 @@ class GeminiLiveBridge:
 
     async def _emit_transcript(self, role: str, text: str) -> None:
         if role == "coach":
+            await self._queue_coach_text(text)
+            return
+        await self._emit_transcript_final(role, text)
+
+    async def _emit_transcript_final(self, role: str, text: str, *, skip_guard: bool = False) -> None:
+        if role == "coach" and not skip_guard:
             record = store.get(self._interview_id, self._user_id)
             if record:
-                matched_index = _match_repeat_question(
+                current_index = record.asked_question_index
+                repeat_index = _match_repeat_question(
                     text,
                     list(record.questions),
-                    record.asked_question_index
+                    current_index
                 )
-                if matched_index is not None:
+                if repeat_index is not None and current_index is not None and repeat_index == current_index:
                     logger.info(
-                        "event=question_guard_repeat interview_id=%s user_id=%s index=%s asked_question_index=%s",
+                        "event=question_guard_repeat status=suppressed interview_id=%s user_id=%s index=%s asked_question_index=%s",
                         short_id(self._interview_id),
                         short_id(self._user_id),
-                        matched_index,
-                        record.asked_question_index
+                        repeat_index,
+                        current_index
                     )
                     if self._session is not None:
                         try:
                             await self._session.send(
                                 input=(
-                                    "You already asked that question. Move to the next "
-                                    "question in the list and do not repeat."
+                                    "You already asked that question. Acknowledge the answer "
+                                    "and let the candidate continue without repeating."
                                 )
                             )
                         except Exception:
                             pass
+                    await self._send_json({"type": "status", "state": "thinking"})
+                    await self._emit_transcript_final("coach", COACH_REPEAT_FALLBACK, skip_guard=True)
+                    return
+                matched_index = _match_question_index(text, list(record.questions))
+                if matched_index is not None and (current_index is None or matched_index > current_index):
+                    try:
+                        store.update_question_status(
+                            self._interview_id,
+                            matched_index,
+                            "started",
+                            self._user_id,
+                            source="auto"
+                        )
+                        logger.info(
+                            "event=question_progress_auto status=complete interview_id=%s user_id=%s index=%s",
+                            short_id(self._interview_id),
+                            short_id(self._user_id),
+                            matched_index
+                        )
+                    except Exception:
+                        logger.exception(
+                            "event=question_progress_auto status=error interview_id=%s user_id=%s index=%s",
+                            short_id(self._interview_id),
+                            short_id(self._user_id),
+                            matched_index
+                        )
+        if role == "coach" and self._rehydrating:
+            self._rehydrating = False
+            await self._send_json({"type": "status", "state": "gemini-connected"})
         entry = {
             "role": role,
             "text": text,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import time
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
@@ -19,7 +20,9 @@ from .schemas import (
     QuestionStatusRequest,
     QuestionStatusResponse,
     RestartResponse,
-    SessionListResponse
+    SessionListResponse,
+    ClientEventRequest,
+    ClientEventResponse
 )
 from .services import interview_service
 from .services.document_text import DocumentInput, is_supported_document
@@ -46,6 +49,13 @@ def _get_user_id(request: Request) -> str:
 
 def _duration_ms(start: float) -> int:
     return int((time.perf_counter() - start) * 1000)
+
+
+def _safe_log_value(value: str | None, limit: int = 120) -> str:
+    if not value:
+        return "none"
+    cleaned = re.sub(r"\s+", "_", value.strip())
+    return cleaned[:limit]
 
 
 @router.post("/interviews", response_model=InterviewCreateResponse)
@@ -360,6 +370,21 @@ async def restart_interview(interview_id: str, request: Request):
     )
 
     return response
+
+
+@router.post("/telemetry", response_model=ClientEventResponse)
+async def log_client_event(request: Request, payload: ClientEventRequest):
+    user_id = _get_user_id(request)
+    logger.info(
+        "event=client_event status=received user_id=%s interview_id=%s session_id=%s event_type=%s state=%s detail=%s",
+        short_id(user_id),
+        short_id(payload.interview_id),
+        short_id(payload.session_id),
+        _safe_log_value(payload.event),
+        _safe_log_value(payload.state),
+        _safe_log_value(payload.detail)
+    )
+    return {"status": "ok"}
 
 
 @router.get("/interviews/{interview_id}", response_model=InterviewSummaryResponse)

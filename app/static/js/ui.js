@@ -13,6 +13,7 @@ import {
   restartInterview,
   scoreInterview,
   startLiveSession,
+  logClientEvent,
   updateQuestionStatus,
   updateSessionName
 } from './api/client.js';
@@ -86,6 +87,19 @@ export function scheduleGeminiReconnect(state, { statusPill } = {}) {
     state.transport.start(state.interviewId, state.userId);
   }, GEMINI_RECONNECT_DELAY_MS);
   return true;
+}
+
+function sendClientEvent(state, event, { detail, status } = {}) {
+  if (!state?.interviewId) return;
+  logClientEvent({
+    event,
+    interviewId: state.interviewId,
+    sessionId: state.sessionId,
+    state: status,
+    detail
+  }).catch(() => {
+    // Best-effort telemetry; ignore failures.
+  });
 }
 
 function createFileField({ id, label, helpText, testId }) {
@@ -574,10 +588,12 @@ function buildControlsPanel(state, ui, config) {
           if (state.sessionActive) {
             updateStatusPill(statusPill, { label: 'Disconnected', tone: 'warning' });
           }
+          sendClientEvent(state, 'ws_close', { status: 'disconnected' });
         },
         onError: (payload) => {
           const message = typeof payload === 'string' ? payload : payload?.message;
           const label = message && message.length < 24 ? message : 'Connection error';
+          sendClientEvent(state, 'ws_error', { detail: message, status: 'error' });
           if (state.sessionActive) {
             void endLiveSession({ label, tone: 'danger', allowRestart: true });
             return;
@@ -598,12 +614,14 @@ function buildControlsPanel(state, ui, config) {
           }
           if (payload.state === 'reconnecting') {
             updateStatusPill(statusPill, { label: 'Reconnecting', tone: 'warning' });
+            sendClientEvent(state, 'ws_reconnecting', { status: payload.state });
           }
           if (payload.state === 'reconnected') {
             updateStatusPill(statusPill, { label: 'Reconnected', tone: 'info' });
             if (state.sessionActive && state.interviewId) {
               state.transport.start(state.interviewId, state.userId);
             }
+            sendClientEvent(state, 'ws_reconnected', { status: payload.state });
           }
           if (payload.state === 'disconnected') {
             if (state.sessionActive) {
@@ -611,10 +629,14 @@ function buildControlsPanel(state, ui, config) {
               return;
             }
             updateStatusPill(statusPill, { label: 'Disconnected', tone: 'warning' });
+            sendClientEvent(state, 'ws_disconnected', { status: payload.state });
           }
           if (payload.state === 'gemini-connected') {
             clearGeminiReconnect(state);
             updateStatusPill(statusPill, { label: 'Live', tone: 'success' });
+          }
+          if (payload.state === 'thinking') {
+            updateStatusPill(statusPill, { label: 'Thinking', tone: 'info' });
           }
           if (payload.state === 'gemini-error') {
             if (state.sessionActive) {
@@ -628,6 +650,7 @@ function buildControlsPanel(state, ui, config) {
                 void endLiveSession({ label: 'Live ended', tone: 'warning', allowRestart: true });
               }
             }
+            sendClientEvent(state, 'gemini_disconnected', { status: payload.state });
           }
           if (payload.state === 'stream-complete') {
             updateStatusPill(statusPill, { label: 'Stream complete', tone: 'success' });
@@ -676,6 +699,15 @@ function buildControlsPanel(state, ui, config) {
           if (!state.isMuted) {
             state.transport?.sendAudio(frame);
           }
+        },
+        onSpeechStart: () => {
+          if (state.audioPlayback) {
+            state.audioPlayback.stop();
+            state.audioPlayback = null;
+            state.audioPlaybackSampleRate = null;
+          }
+          state.transport?.bargeIn();
+          sendClientEvent(state, 'barge_in', { status: 'speech_start' });
         },
         onStatus: () => {
           updateStatusPill(statusPill, { label: 'Mic ready', tone: 'info' });

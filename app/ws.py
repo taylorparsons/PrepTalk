@@ -112,6 +112,10 @@ class LiveWebSocketSession:
                 self._audio_bytes += len(audio_bytes)
                 await self._gemini_bridge.send_audio(audio_bytes)
             return
+        elif message_type == "barge_in":
+            if self._gemini_bridge:
+                await self._gemini_bridge.barge_in()
+            return
         elif message_type == "ping":
             await self._send({"type": "status", "state": "alive"})
             return
