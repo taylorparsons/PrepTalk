@@ -187,7 +187,12 @@ class GeminiLiveBridge:
             "response_modalities": ["AUDIO"],
             "input_audio_transcription": {},
             "output_audio_transcription": {},
-            "system_instruction": self._system_prompt
+            "system_instruction": self._system_prompt,
+            "realtime_input_config": {
+                "automatic_activity_detection": {
+                    "disabled": True
+                }
+            }
         }
         self._session_cm = self._client.aio.live.connect(model=self._model, config=config)
         self._session = await self._session_cm.__aenter__()
@@ -217,6 +222,25 @@ class GeminiLiveBridge:
         except asyncio.QueueFull:
             # Drop frames if the queue is full to keep latency low.
             return
+
+    async def send_activity(self, state: str | None) -> None:
+        if self._closed or not self._session or not state:
+            return
+        lowered = state.lower()
+        try:
+            if lowered == "start":
+                payload = types.ActivityStart() if types else {}
+                await self._session.send_realtime_input(activity_start=payload)
+            elif lowered == "end":
+                payload = types.ActivityEnd() if types else {}
+                await self._session.send_realtime_input(activity_end=payload)
+        except Exception:
+            logger.exception(
+                "event=gemini_live_activity status=error interview_id=%s user_id=%s state=%s",
+                short_id(self._interview_id),
+                short_id(self._user_id),
+                lowered
+            )
 
     async def stop(self) -> None:
         if self._closed:

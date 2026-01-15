@@ -20,6 +20,7 @@ import {
 } from './api/client.js';
 import { getAppConfig } from './config.js';
 import { LiveTransport } from './transport.js';
+import { createActivityDetector } from './audio-activity.js';
 import { createAudioFrameBuffer, createAudioFrameFlusher } from './audio-buffer.js';
 import { createAudioPlayback, decodePcm16Base64, startMicrophoneCapture } from './voice.js';
 import { renderMarkdownInto } from './markdown.js';
@@ -30,7 +31,14 @@ const GEMINI_RECONNECT_DELAY_MS = 600;
 const AUDIO_FRAME_INTERVAL_MS = 20;
 const AUDIO_BUFFER_WINDOW_MS = 1200;
 const AUDIO_BUFFER_MAX_FRAMES = Math.ceil(AUDIO_BUFFER_WINDOW_MS / AUDIO_FRAME_INTERVAL_MS);
+const AUDIO_ACTIVITY_SILENCE_MS = 500;
+const AUDIO_ACTIVITY_THRESHOLD = 0.02;
 const LOG_SUMMARY_INTERVAL_MS = 5000;
+const LOG_SUMMARY_HISTORY_LENGTH = 24;
+const LOG_SUMMARY_BUCKET_SECONDS = Math.max(1, Math.round(LOG_SUMMARY_INTERVAL_MS / 1000));
+const LOG_SUMMARY_LINE_EVENTS = 4;
+const LOG_SUMMARY_LINE_COLORS = ['#1f6f5f', '#e0a03b', '#c2453b', '#5f5d58'];
+const CAPTION_MAX_CHARS = 240;
 const QUESTION_STATUS_OPTIONS = [
   { value: 'not_started', label: 'Not started' },
   { value: 'started', label: 'Started' },
@@ -545,6 +553,138 @@ function buildControlsPanel(state, ui, config) {
 
   updateMeta();
 
+  function setCaptionText(text) {
+    if (!ui.captionText) {
+      return;
+    }
+    ui.captionText.textContent = text || 'Captions idle.';
+  }
+
+  function truncateCaption(text) {
+    if (!text) {
+      return '';
+    }
+    if (text.length <= CAPTION_MAX_CHARS) {
+      return text;
+    }
+    return `...${text.slice(-CAPTION_MAX_CHARS)}`;
+  }
+
+  function getSpeechRecognitionClass() {
+    return window.SpeechRecognition || window.webkitSpeechRecognition;
+  }
+
+  function scheduleSpeechRecognitionRestart() {
+    if (state.speechRecognitionRestartTimer) {
+      return;
+    }
+    state.speechRecognitionRestartTimer = window.setTimeout(() => {
+      state.speechRecognitionRestartTimer = null;
+      if (state.speechRecognitionEnabled) {
+        startSpeechRecognition();
+      }
+    }, 250);
+  }
+
+  function ensureSpeechRecognition() {
+    if (state.speechRecognition) {
+      return state.speechRecognition;
+    }
+    const SpeechRecognition = getSpeechRecognitionClass();
+    if (!SpeechRecognition) {
+      setCaptionText('Captions unavailable in this browser.');
+      return null;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event) => {
+      let finalText = '';
+      let interimText = '';
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const result = event.results[i];
+        const text = result?.[0]?.transcript?.trim();
+        if (!text) {
+          continue;
+        }
+        if (result.isFinal) {
+          finalText = mergeTranscriptText(finalText, text);
+        } else {
+          interimText = text;
+        }
+      }
+      if (finalText) {
+        state.captionFinalText = mergeTranscriptText(state.captionFinalText || '', finalText);
+      }
+      const combined = mergeTranscriptText(state.captionFinalText || '', interimText);
+      if (combined) {
+        setCaptionText(truncateCaption(combined));
+      }
+    };
+
+    recognition.onerror = (event) => {
+      if (!state.speechRecognitionEnabled) {
+        return;
+      }
+      const reason = event?.error ? ` (${event.error})` : '';
+      setCaptionText(`Captions error${reason}.`);
+    };
+
+    recognition.onend = () => {
+      state.speechRecognitionActive = false;
+      if (state.speechRecognitionEnabled) {
+        scheduleSpeechRecognitionRestart();
+      }
+    };
+
+    state.speechRecognition = recognition;
+    return recognition;
+  }
+
+  function startSpeechRecognition() {
+    if (config.adapter === 'mock') {
+      return;
+    }
+    const recognition = ensureSpeechRecognition();
+    if (!recognition) {
+      return;
+    }
+    if (state.speechRecognitionActive) {
+      return;
+    }
+    state.speechRecognitionEnabled = true;
+    try {
+      recognition.start();
+      state.speechRecognitionActive = true;
+      if (ui.captionText?.textContent === 'Captions idle.') {
+        setCaptionText('Captions listening...');
+      }
+    } catch (error) {
+      setCaptionText('Captions failed to start.');
+    }
+  }
+
+  function stopSpeechRecognition() {
+    state.speechRecognitionEnabled = false;
+    if (state.speechRecognitionRestartTimer) {
+      clearTimeout(state.speechRecognitionRestartTimer);
+      state.speechRecognitionRestartTimer = null;
+    }
+    if (state.speechRecognition && state.speechRecognitionActive) {
+      try {
+        state.speechRecognition.stop();
+      } catch (error) {
+        // Ignore shutdown errors.
+      }
+    }
+    state.speechRecognitionActive = false;
+    state.captionFinalText = '';
+    setCaptionText('Captions idle.');
+  }
+
   function resetSessionState() {
     state.transcript = [];
     state.score = null;
@@ -552,6 +692,8 @@ function buildControlsPanel(state, ui, config) {
     state.liveMode = null;
     state.sessionActive = false;
     state.geminiReady = false;
+    state.activityDetector = null;
+    stopSpeechRecognition();
     clearGeminiReconnect(state);
     stopAudioBuffer(state);
     setMuteState(false);
@@ -572,6 +714,7 @@ function buildControlsPanel(state, ui, config) {
     state.sessionActive = false;
     state.geminiReady = false;
     clearGeminiReconnect(state);
+    stopSpeechRecognition();
 
     if (state.transport) {
       state.transport.stop();
@@ -584,6 +727,7 @@ function buildControlsPanel(state, ui, config) {
     }
 
     stopAudioBuffer(state);
+    state.activityDetector = null;
 
     if (state.audioPlayback) {
       await state.audioPlayback.stop();
@@ -741,10 +885,19 @@ function buildControlsPanel(state, ui, config) {
     }
 
     try {
+      state.activityDetector = createActivityDetector({
+        frameDurationMs: AUDIO_FRAME_INTERVAL_MS,
+        silenceThreshold: AUDIO_ACTIVITY_THRESHOLD,
+        silenceWindowMs: AUDIO_ACTIVITY_SILENCE_MS
+      });
       state.audioCapture = await startMicrophoneCapture({
         targetSampleRate: 24000,
         onAudioFrame: (frame) => {
           if (state.isMuted) return;
+          const activity = state.activityDetector?.update(frame);
+          if (activity) {
+            state.transport?.send({ type: 'activity', state: activity });
+          }
           ensureAudioBuffer(state);
           if (!state.geminiReady || state.audioFrameFlusher?.isActive()) {
             state.audioFrameBuffer?.push(frame);
@@ -785,6 +938,7 @@ function buildControlsPanel(state, ui, config) {
       await state.audioPlayback.resume();
       state.transport.start(state.interviewId, state.userId);
       await startMicrophoneIfNeeded();
+      startSpeechRecognition();
     } catch (error) {
       if (config.adapter !== 'mock') {
         state.transport?.stop();
@@ -812,6 +966,7 @@ function buildControlsPanel(state, ui, config) {
     state.sessionActive = false;
     state.geminiReady = false;
     clearGeminiReconnect(state);
+    stopSpeechRecognition();
     stopButton.disabled = true;
     updateStatusPill(statusPill, { label: 'Scoring', tone: 'info' });
 
@@ -826,6 +981,7 @@ function buildControlsPanel(state, ui, config) {
     }
 
     stopAudioBuffer(state);
+    state.activityDetector = null;
 
     if (state.audioPlayback) {
       await state.audioPlayback.stop();
@@ -1143,23 +1299,98 @@ function buildQuestionsPanel(ui) {
 }
 
 function buildTranscriptPanel(ui) {
+  const container = document.createElement('div');
+  container.className = 'layout-stack';
+
+  const captions = document.createElement('div');
+  captions.className = 'ui-caption';
+
+  const captionLabel = document.createElement('div');
+  captionLabel.className = 'ui-caption__label';
+  captionLabel.textContent = 'Live captions (local, en-US)';
+
+  const captionText = document.createElement('div');
+  captionText.className = 'ui-caption__text';
+  captionText.textContent = 'Captions idle.';
+
+  captions.appendChild(captionLabel);
+  captions.appendChild(captionText);
+
   const transcriptList = document.createElement('div');
   transcriptList.className = 'layout-stack ui-transcript__list';
   transcriptList.setAttribute('data-testid', 'transcript-list');
 
   renderTranscript(transcriptList, []);
 
+  container.appendChild(captions);
+  container.appendChild(transcriptList);
+
   ui.transcriptList = transcriptList;
+  ui.captionText = captionText;
 
   return createPanel({
     title: 'Live Transcript',
     subtitle: 'Streaming once the session starts.',
-    content: transcriptList,
+    content: container,
     attrs: { 'data-testid': 'transcript-panel' }
   });
 }
 
+function buildLogHistogram(ui) {
+  const container = document.createElement('div');
+  container.className = 'layout-stack';
+
+  const eventCard = document.createElement('div');
+  eventCard.className = 'ui-log-histogram';
+
+  const eventHeader = document.createElement('div');
+  eventHeader.className = 'ui-log-histogram__header';
+
+  const eventLabel = document.createElement('div');
+  eventLabel.className = 'ui-log-histogram__label';
+  eventLabel.textContent = `Event heartbeat (${LOG_SUMMARY_BUCKET_SECONDS}s buckets)`;
+
+  const legend = document.createElement('div');
+  legend.className = 'ui-log-lines__legend';
+
+  eventHeader.appendChild(eventLabel);
+  eventHeader.appendChild(legend);
+
+  const chart = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  chart.classList.add('ui-log-lines__chart');
+  chart.setAttribute('viewBox', '0 0 100 40');
+  chart.setAttribute('preserveAspectRatio', 'none');
+
+  eventCard.appendChild(eventHeader);
+  eventCard.appendChild(chart);
+
+  const errorCard = document.createElement('div');
+  errorCard.className = 'ui-log-histogram';
+
+  const errorLabel = document.createElement('div');
+  errorLabel.className = 'ui-log-histogram__label';
+  errorLabel.textContent = `Error heartbeat (${LOG_SUMMARY_BUCKET_SECONDS}s buckets)`;
+
+  const errorBars = document.createElement('div');
+  errorBars.className = 'ui-log-histogram__bars ui-log-histogram__bars--errors';
+
+  errorCard.appendChild(errorLabel);
+  errorCard.appendChild(errorBars);
+
+  container.appendChild(eventCard);
+  container.appendChild(errorCard);
+
+  ui.logEventChart = chart;
+  ui.logEventLegend = legend;
+  ui.logErrorBars = errorBars;
+
+  return container;
+}
+
 function buildLogDashboardPanel(ui) {
+  const container = document.createElement('div');
+  container.className = 'layout-stack';
+
   const grid = document.createElement('div');
   grid.className = 'ui-metrics-grid';
 
@@ -1184,23 +1415,29 @@ function buildLogDashboardPanel(ui) {
   const serverDisconnects = buildCard('Server disconnects');
   const geminiDisconnects = buildCard('Gemini disconnects');
   const errors = buildCard('Errors');
+  const errorSessions = buildCard('Error sessions');
 
   grid.appendChild(clientDisconnects.card);
   grid.appendChild(serverDisconnects.card);
   grid.appendChild(geminiDisconnects.card);
   grid.appendChild(errors.card);
+  grid.appendChild(errorSessions.card);
 
   ui.metricsCards = {
     clientDisconnects: clientDisconnects.valueEl,
     serverDisconnects: serverDisconnects.valueEl,
     geminiDisconnects: geminiDisconnects.valueEl,
-    errors: errors.valueEl
+    errors: errors.valueEl,
+    errorSessions: errorSessions.valueEl
   };
+
+  container.appendChild(grid);
+  container.appendChild(buildLogHistogram(ui));
 
   return createPanel({
     title: 'Live Stats',
     subtitle: 'Live log summary while the session runs.',
-    content: grid,
+    content: container,
     attrs: { 'data-testid': 'log-dashboard' }
   });
 }
@@ -1270,6 +1507,12 @@ export function buildVoiceLayout() {
     audioPlaybackSampleRate: null,
     audioFrameBuffer: null,
     audioFrameFlusher: null,
+    activityDetector: null,
+    speechRecognition: null,
+    speechRecognitionEnabled: false,
+    speechRecognitionActive: false,
+    speechRecognitionRestartTimer: null,
+    captionFinalText: '',
     geminiReady: false,
     sessionActive: false,
     sessionStarted: false,
@@ -1279,7 +1522,12 @@ export function buildVoiceLayout() {
     sessions: [],
     geminiReconnectAttempts: 0,
     geminiReconnectTimer: null,
-    logSummaryTimer: null
+    logSummaryTimer: null,
+    logSummaryEventTotals: {},
+    logSummaryEventHistory: {},
+    logSummaryLineEvents: [],
+    logSummaryErrorTotal: null,
+    logSummaryErrorHistory: []
   };
 
   const ui = {};
@@ -1360,6 +1608,189 @@ export function buildVoiceLayout() {
     }
   }
 
+  function padSamples(samples) {
+    if (!Array.isArray(samples)) {
+      return Array(LOG_SUMMARY_HISTORY_LENGTH).fill(0);
+    }
+    if (samples.length < LOG_SUMMARY_HISTORY_LENGTH) {
+      return Array(LOG_SUMMARY_HISTORY_LENGTH - samples.length).fill(0).concat(samples);
+    }
+    return samples.slice(-LOG_SUMMARY_HISTORY_LENGTH);
+  }
+
+  function renderBarHistogram(bars, samples, label) {
+    if (!bars) {
+      return;
+    }
+    bars.innerHTML = '';
+    const paddedSamples = padSamples(samples);
+    const maxValue = Math.max(...paddedSamples, 1);
+    paddedSamples.forEach((value) => {
+      const bar = document.createElement('div');
+      bar.className = 'ui-log-histogram__bar';
+      bar.style.height = `${Math.round((value / maxValue) * 100)}%`;
+      bar.title = `${value} ${label}`;
+      bars.appendChild(bar);
+    });
+  }
+
+  function pickLineEvents(eventCounts) {
+    return Object.entries(eventCounts || {})
+      .sort((left, right) => (Number(right[1]) || 0) - (Number(left[1]) || 0))
+      .slice(0, LOG_SUMMARY_LINE_EVENTS)
+      .map(([name]) => name);
+  }
+
+  function renderEventLegend(series) {
+    if (!ui.logEventLegend) {
+      return;
+    }
+    ui.logEventLegend.innerHTML = '';
+    if (!series.length) {
+      const empty = document.createElement('div');
+      empty.className = 'ui-log-lines__empty';
+      empty.textContent = 'No event activity yet.';
+      ui.logEventLegend.appendChild(empty);
+      return;
+    }
+    series.forEach(({ name, color }) => {
+      const item = document.createElement('div');
+      item.className = 'ui-log-lines__item';
+
+      const swatch = document.createElement('span');
+      swatch.className = 'ui-log-lines__swatch';
+      swatch.style.backgroundColor = color;
+
+      const label = document.createElement('span');
+      label.className = 'ui-log-lines__name';
+      label.textContent = name;
+
+      item.appendChild(swatch);
+      item.appendChild(label);
+      ui.logEventLegend.appendChild(item);
+    });
+  }
+
+  function renderEventLines(series) {
+    if (!ui.logEventChart) {
+      return;
+    }
+    const svg = ui.logEventChart;
+    const width = 100;
+    const height = 40;
+    svg.innerHTML = '';
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+    const baseline = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    baseline.setAttribute('x1', '0');
+    baseline.setAttribute('x2', String(width));
+    baseline.setAttribute('y1', String(height));
+    baseline.setAttribute('y2', String(height));
+    baseline.setAttribute('class', 'ui-log-lines__baseline');
+    svg.appendChild(baseline);
+
+    if (!series.length) {
+      return;
+    }
+
+    const paddedSeries = series.map((entry) => ({
+      ...entry,
+      values: padSamples(entry.values)
+    }));
+    const maxValue = Math.max(
+      ...paddedSeries.flatMap((entry) => entry.values),
+      1
+    );
+    paddedSeries.forEach((entry) => {
+      const points = entry.values
+        .map((value, index) => {
+          const x = (index / (LOG_SUMMARY_HISTORY_LENGTH - 1)) * width;
+          const y = height - (value / maxValue) * height;
+          return `${x.toFixed(2)},${y.toFixed(2)}`;
+        })
+        .join(' ');
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      line.setAttribute('points', points);
+      line.setAttribute('fill', 'none');
+      line.setAttribute('stroke', entry.color);
+      line.setAttribute('stroke-width', '2');
+      line.setAttribute('stroke-linejoin', 'round');
+      line.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(line);
+    });
+  }
+
+  function updateEventSeries(eventName, total, totals, histories) {
+    const previous = totals[eventName];
+    if (previous === undefined || total < previous) {
+      totals[eventName] = total;
+      histories[eventName] = [0];
+      return;
+    }
+    const delta = total - previous;
+    totals[eventName] = total;
+    if (!Array.isArray(histories[eventName])) {
+      histories[eventName] = [];
+    }
+    histories[eventName].push(delta);
+    if (histories[eventName].length > LOG_SUMMARY_HISTORY_LENGTH) {
+      histories[eventName].splice(0, histories[eventName].length - LOG_SUMMARY_HISTORY_LENGTH);
+    }
+  }
+
+  function updateErrorSeries(errorCount) {
+    if (state.logSummaryErrorTotal === null || errorCount < state.logSummaryErrorTotal) {
+      state.logSummaryErrorTotal = errorCount;
+      state.logSummaryErrorHistory = [0];
+      return;
+    }
+    const delta = errorCount - state.logSummaryErrorTotal;
+    state.logSummaryErrorTotal = errorCount;
+    if (!Array.isArray(state.logSummaryErrorHistory)) {
+      state.logSummaryErrorHistory = [];
+    }
+    state.logSummaryErrorHistory.push(delta);
+    if (state.logSummaryErrorHistory.length > LOG_SUMMARY_HISTORY_LENGTH) {
+      state.logSummaryErrorHistory.splice(0, state.logSummaryErrorHistory.length - LOG_SUMMARY_HISTORY_LENGTH);
+    }
+  }
+
+  function getErrorEventCount(summary) {
+    if (typeof summary?.error_event_count === 'number') {
+      return summary.error_event_count;
+    }
+    const serverDisconnects = summary?.server_disconnects || 0;
+    const geminiDisconnects = summary?.gemini_disconnects || 0;
+    const errorCount = summary?.error_count || 0;
+    return errorCount + serverDisconnects + geminiDisconnects;
+  }
+
+  function updateLogCharts(summary) {
+    const eventCounts = summary?.event_counts || {};
+    const totals = state.logSummaryEventTotals || {};
+    const histories = state.logSummaryEventHistory || {};
+
+    Object.entries(eventCounts).forEach(([eventName, count]) => {
+      updateEventSeries(eventName, Number(count) || 0, totals, histories);
+    });
+
+    state.logSummaryEventTotals = totals;
+    state.logSummaryEventHistory = histories;
+
+    const lineEvents = pickLineEvents(eventCounts);
+    state.logSummaryLineEvents = lineEvents;
+    const series = lineEvents.map((eventName, index) => ({
+      name: eventName,
+      color: LOG_SUMMARY_LINE_COLORS[index % LOG_SUMMARY_LINE_COLORS.length],
+      values: histories[eventName] || []
+    }));
+    renderEventLegend(series);
+    renderEventLines(series);
+
+    updateErrorSeries(getErrorEventCount(summary));
+    renderBarHistogram(ui.logErrorBars, state.logSummaryErrorHistory, 'errors');
+  }
+
   async function refreshLogSummary() {
     if (!ui.metricsCards) {
       return;
@@ -1369,11 +1800,14 @@ export function buildVoiceLayout() {
       const clientDisconnects = summary.client_disconnects || 0;
       const serverDisconnects = summary.server_disconnects || 0;
       const geminiDisconnects = summary.gemini_disconnects || 0;
-      const errors = summary.error_count || 0;
+      const errors = getErrorEventCount(summary);
+      const errorSessions = summary.error_session_count || 0;
       ui.metricsCards.clientDisconnects.textContent = formatCount(clientDisconnects);
       ui.metricsCards.serverDisconnects.textContent = formatCount(serverDisconnects);
       ui.metricsCards.geminiDisconnects.textContent = formatCount(geminiDisconnects);
       ui.metricsCards.errors.textContent = formatCount(errors);
+      ui.metricsCards.errorSessions.textContent = formatCount(errorSessions);
+      updateLogCharts(summary);
     } catch (error) {
       // Ignore polling errors to keep the UI responsive.
     }

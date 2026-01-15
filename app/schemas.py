@@ -129,6 +129,8 @@ class LogSummaryResponse(BaseModel):
     server_disconnects: int = 0
     gemini_disconnects: int = 0
     error_count: int = 0
+    error_event_count: int = 0
+    error_session_count: int = 0
     recent_errors: list = Field(default_factory=list)
 
 
