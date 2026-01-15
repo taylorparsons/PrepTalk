@@ -20,12 +20,16 @@ import {
 } from './api/client.js';
 import { getAppConfig } from './config.js';
 import { LiveTransport } from './transport.js';
+import { createAudioFrameBuffer, createAudioFrameFlusher } from './audio-buffer.js';
 import { createAudioPlayback, decodePcm16Base64, startMicrophoneCapture } from './voice.js';
 import { renderMarkdownInto } from './markdown.js';
 
 const STATUS_TONES = ['neutral', 'success', 'warning', 'danger', 'info'];
 const GEMINI_RECONNECT_MAX_ATTEMPTS = 3;
 const GEMINI_RECONNECT_DELAY_MS = 600;
+const AUDIO_FRAME_INTERVAL_MS = 20;
+const AUDIO_BUFFER_WINDOW_MS = 1200;
+const AUDIO_BUFFER_MAX_FRAMES = Math.ceil(AUDIO_BUFFER_WINDOW_MS / AUDIO_FRAME_INTERVAL_MS);
 const LOG_SUMMARY_INTERVAL_MS = 5000;
 const QUESTION_STATUS_OPTIONS = [
   { value: 'not_started', label: 'Not started' },
@@ -93,6 +97,35 @@ export function scheduleGeminiReconnect(state, { statusPill } = {}) {
     state.transport.start(state.interviewId, state.userId);
   }, GEMINI_RECONNECT_DELAY_MS);
   return true;
+}
+
+function ensureAudioBuffer(state) {
+  if (!state) return;
+  if (!state.audioFrameBuffer) {
+    state.audioFrameBuffer = createAudioFrameBuffer({ maxFrames: AUDIO_BUFFER_MAX_FRAMES });
+  }
+  if (!state.audioFrameFlusher) {
+    state.audioFrameFlusher = createAudioFrameFlusher({
+      buffer: state.audioFrameBuffer,
+      sendFrame: (frame) => {
+        state.transport?.sendAudio(frame);
+      },
+      frameIntervalMs: AUDIO_FRAME_INTERVAL_MS,
+      shouldSend: () => Boolean(state.transport) && state.geminiReady && !state.isMuted
+    });
+  }
+}
+
+function flushAudioBuffer(state) {
+  if (!state?.audioFrameBuffer || !state?.audioFrameFlusher) return;
+  if (state.audioFrameBuffer.size() === 0) return;
+  state.audioFrameFlusher.start();
+}
+
+function stopAudioBuffer(state) {
+  if (!state) return;
+  state.audioFrameFlusher?.stop();
+  state.audioFrameBuffer?.clear();
 }
 
 function sendClientEvent(state, event, { detail, status } = {}) {
@@ -518,7 +551,9 @@ function buildControlsPanel(state, ui, config) {
     state.sessionId = null;
     state.liveMode = null;
     state.sessionActive = false;
+    state.geminiReady = false;
     clearGeminiReconnect(state);
+    stopAudioBuffer(state);
     setMuteState(false);
     renderTranscript(ui.transcriptList, state.transcript);
     renderScore(ui, null);
@@ -535,6 +570,7 @@ function buildControlsPanel(state, ui, config) {
     }
 
     state.sessionActive = false;
+    state.geminiReady = false;
     clearGeminiReconnect(state);
 
     if (state.transport) {
@@ -546,6 +582,8 @@ function buildControlsPanel(state, ui, config) {
       await state.audioCapture.stop();
       state.audioCapture = null;
     }
+
+    stopAudioBuffer(state);
 
     if (state.audioPlayback) {
       await state.audioPlayback.stop();
@@ -638,15 +676,22 @@ function buildControlsPanel(state, ui, config) {
             sendClientEvent(state, 'ws_disconnected', { status: payload.state });
           }
           if (payload.state === 'gemini-connected') {
+            state.geminiReady = true;
+            ensureAudioBuffer(state);
+            flushAudioBuffer(state);
             clearGeminiReconnect(state);
             updateStatusPill(statusPill, { label: 'Live', tone: 'success' });
           }
           if (payload.state === 'gemini-error') {
+            state.geminiReady = false;
+            stopAudioBuffer(state);
             if (state.sessionActive) {
               void endLiveSession({ label: 'Live error', tone: 'danger', allowRestart: true });
             }
           }
           if (payload.state === 'gemini-disconnected') {
+            state.geminiReady = false;
+            stopAudioBuffer(state);
             if (state.sessionActive) {
               const scheduled = scheduleGeminiReconnect(state, { statusPill });
               if (!scheduled) {
@@ -699,9 +744,13 @@ function buildControlsPanel(state, ui, config) {
       state.audioCapture = await startMicrophoneCapture({
         targetSampleRate: 24000,
         onAudioFrame: (frame) => {
-          if (!state.isMuted) {
-            state.transport?.sendAudio(frame);
+          if (state.isMuted) return;
+          ensureAudioBuffer(state);
+          if (!state.geminiReady || state.audioFrameFlusher?.isActive()) {
+            state.audioFrameBuffer?.push(frame);
+            return;
           }
+          state.transport?.sendAudio(frame);
         },
         onStatus: () => {
           updateStatusPill(statusPill, { label: 'Mic ready', tone: 'info' });
@@ -761,6 +810,7 @@ function buildControlsPanel(state, ui, config) {
 
   stopButton.addEventListener('click', async () => {
     state.sessionActive = false;
+    state.geminiReady = false;
     clearGeminiReconnect(state);
     stopButton.disabled = true;
     updateStatusPill(statusPill, { label: 'Scoring', tone: 'info' });
@@ -774,6 +824,8 @@ function buildControlsPanel(state, ui, config) {
       await state.audioCapture.stop();
       state.audioCapture = null;
     }
+
+    stopAudioBuffer(state);
 
     if (state.audioPlayback) {
       await state.audioPlayback.stop();
@@ -1216,6 +1268,9 @@ export function buildVoiceLayout() {
     audioCapture: null,
     audioPlayback: null,
     audioPlaybackSampleRate: null,
+    audioFrameBuffer: null,
+    audioFrameFlusher: null,
+    geminiReady: false,
     sessionActive: false,
     sessionStarted: false,
     isMuted: false,
