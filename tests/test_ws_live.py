@@ -91,3 +91,21 @@ def test_websocket_ping_returns_alive(monkeypatch):
         alive = _receive_until(websocket, "status")
         assert alive["state"] == "alive"
 
+
+def test_websocket_activity_message_does_not_error(monkeypatch):
+    monkeypatch.setenv("INTERVIEW_ADAPTER", "mock")
+    os.environ.pop("GEMINI_API_KEY", None)
+
+    client = TestClient(app)
+
+    with client.websocket_connect("/ws/live") as websocket:
+        status = websocket.receive_json()
+        assert status["type"] == "status"
+        assert status["state"] == "connected"
+
+        websocket.send_json({"type": "activity", "state": "start"})
+        websocket.send_json({"type": "ping"})
+
+        response = websocket.receive_json()
+        assert response["type"] == "status"
+        assert response["state"] == "alive"

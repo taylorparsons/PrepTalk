@@ -458,6 +458,143 @@ body {
   scrollbar-gutter: stable;
 }
 
+.ui-caption {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8f6f2;
+  border: 1px dashed #e5e7eb;
+  display: grid;
+  gap: 6px;
+}
+
+.ui-caption__label {
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ui-caption__text {
+  font-size: 14px;
+  color: #111827;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.ui-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.ui-metric-card {
+  padding: 12px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+}
+
+.ui-metric-card__label {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ui-metric-card__value {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 4px;
+  color: #111827;
+}
+
+.ui-log-histogram {
+  padding: 12px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  display: grid;
+  gap: 8px;
+}
+
+.ui-log-histogram__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ui-log-histogram__label {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ui-log-lines__chart {
+  width: 100%;
+  height: 72px;
+  display: block;
+}
+
+.ui-log-lines__baseline {
+  stroke: #e5e7eb;
+  stroke-width: 1;
+}
+
+.ui-log-lines__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: center;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.ui-log-lines__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ui-log-lines__swatch {
+  width: 10px;
+  height: 2px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.ui-log-lines__name {
+  font-size: 12px;
+}
+
+.ui-log-lines__empty {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.ui-log-histogram__bars {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(4px, 1fr);
+  align-items: end;
+  gap: 4px;
+  height: 64px;
+}
+
+.ui-log-histogram__bar {
+  background: var(--ui-color-primary);
+  border-radius: 4px 4px 2px 2px;
+  min-height: 3px;
+  opacity: 0.82;
+  transition: height 0.2s ease;
+}
+
+.ui-log-histogram__bars--errors .ui-log-histogram__bar {
+  background: var(--ui-color-danger);
+}
+
 
 .ui-controls__row {
   display: flex;

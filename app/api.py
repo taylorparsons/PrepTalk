@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 import time
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
@@ -21,10 +22,12 @@ from .schemas import (
     QuestionStatusResponse,
     RestartResponse,
     SessionListResponse,
+    LogSummaryResponse,
     ClientEventRequest,
     ClientEventResponse
 )
 from .services import interview_service
+from .services.log_metrics import build_log_summary
 from .services.document_text import DocumentInput, is_supported_document
 from .settings import load_settings
 
@@ -370,6 +373,17 @@ async def restart_interview(interview_id: str, request: Request):
     )
 
     return response
+
+
+@router.get("/logs/summary", response_model=LogSummaryResponse)
+async def get_log_summary() -> LogSummaryResponse:
+    log_dir = Path(load_settings().log_dir)
+    log_path = log_dir / "app.log"
+    if not log_path.exists():
+        return LogSummaryResponse()
+    lines = log_path.read_text().splitlines()[-2000:]
+    summary = build_log_summary(lines)
+    return LogSummaryResponse(**summary)
 
 
 @router.post("/telemetry", response_model=ClientEventResponse)

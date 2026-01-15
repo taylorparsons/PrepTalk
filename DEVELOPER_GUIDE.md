@@ -87,6 +87,8 @@ Add values to `.env` as needed:
 - Logs are written to `logs/app.log` and archived on startup.
 - IDs are short hashes for readability.
 - Key events include interview create, live connect, and model calls.
+- The UI includes a Live Stats panel that polls `/api/logs/summary` and sends
+  client disconnect telemetry to `/api/telemetry`.
 
 ## Tests
 UI (Vitest):

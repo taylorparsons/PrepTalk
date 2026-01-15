@@ -140,6 +140,14 @@ export async function logClientEvent({ event, interviewId, sessionId, state, det
   return handleResponse(response);
 }
 
+export async function getLogSummary() {
+  const response = await fetch(`${getApiBase()}/logs/summary`, {
+    headers: { 'X-User-Id': getUserId() }
+  });
+
+  return handleResponse(response);
+}
+
 export async function downloadStudyGuide({ interviewId, format = 'pdf' }) {
   const params = new URLSearchParams();
   if (format) {
