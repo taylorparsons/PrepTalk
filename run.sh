@@ -68,8 +68,8 @@ ensure_venv() {
   source "$VENV_DIR/bin/activate"
 
   if [[ -f "$ROOT_DIR/requirements.txt" ]]; then
-    python -m pip install --upgrade pip
-    pip install -r "$ROOT_DIR/requirements.txt"
+    "$VENV_DIR/bin/python" -m pip install --upgrade pip
+    "$VENV_DIR/bin/python" -m pip install -r "$ROOT_DIR/requirements.txt"
   fi
 }
 
@@ -108,7 +108,7 @@ start_backend() {
   fi
 
   echo "Starting backend server on ${PORT:-8000}"
-  exec "$VENV_DIR/bin/uvicorn" app.main:app --host 0.0.0.0 --port "${PORT:-8000}" $reload_flag
+  exec "$VENV_DIR/bin/python" -m uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}" $reload_flag
 }
 
 case "$MODE" in
