@@ -1,7 +1,7 @@
 # Gemini Live Interview Practice Design
 
 ## Context
-- New repo in /Volumes/T9/awesome_interview for the Gemini 3 Hackathon.
+- New repo in `./` (this repo) for the Gemini 3 Hackathon.
 - Gemini 3 Live full-duplex voice is the primary interface via AI Studio; no text input.
 - Multi-model Gemini 3 usage: questions, live coaching, summaries.
 - Demo likely delivered via an AI Studio app.
