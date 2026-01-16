@@ -29,6 +29,7 @@ Adapter modes (set in `.env`):
 - `GEMINI_API_KEY`: required when `INTERVIEW_ADAPTER=gemini`
 - `GEMINI_LIVE_MODEL`: override live audio model (default `gemini-2.5-flash-native-audio-preview-12-2025`)
 - `GEMINI_TEXT_MODEL`: override text model for questions/scoring (default `gemini-3-pro-preview`)
+- `GEMINI_LIVE_RESUME`: enable auth-token session resumption for transient drops (default `1`)
 - `APP_API_BASE`: API base path for the UI (default `/api`)
 - `SESSION_STORE_DIR`: session storage directory (default `app/session_store`)
 - `APP_USER_ID`: default user id for session storage (default `local`)
@@ -38,6 +39,12 @@ Adapter modes (set in `.env`):
 - `RELOAD`: set to `0` to disable uvicorn reload in `./run.sh ui`
 - `E2E_BASE_URL`: override Playwright base URL (default `http://localhost:8000`)
 - `E2E_LIVE`: set to `1` to run the optional live Gemini Playwright test
+
+## FastAPI URLs
+
+- Base: `http://localhost:8000` (or `PORT` if overridden)
+- Health: `http://localhost:8000/health`
+- Docs: `http://localhost:8000/docs`
 
 ## Log analysis (lnav)
 

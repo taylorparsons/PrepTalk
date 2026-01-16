@@ -134,6 +134,7 @@ class LiveWebSocketSession:
     async def _handle_start(self, payload: dict[str, Any]) -> None:
         interview_id = payload.get("interview_id")
         user_id = payload.get("user_id") or self.settings.user_id
+        resume_requested = bool(payload.get("resume"))
         self._user_id = user_id
         if not interview_id:
             await self._send({"type": "error", "message": "interview_id is required."})
@@ -173,16 +174,17 @@ class LiveWebSocketSession:
         self._audio_bytes = 0
 
         logger.info(
-            "event=ws_start status=complete user_id=%s interview_id=%s session_id=%s adapter=%s mode=%s",
+            "event=ws_start status=complete user_id=%s interview_id=%s session_id=%s adapter=%s mode=%s resume=%s",
             short_id(self._user_id),
             short_id(interview_id),
             short_id(self._session_id),
             self.adapter.name,
-            live_payload.get("mode")
+            live_payload.get("mode"),
+            resume_requested
         )
 
         if self.adapter.name == "gemini":
-            await self._start_gemini_session(interview_id, record)
+            await self._start_gemini_session(interview_id, record, resume_requested)
 
         mock_transcript = live_payload.get("mock_transcript")
         if mock_transcript:
@@ -192,7 +194,7 @@ class LiveWebSocketSession:
                 self._stream_mock_transcript(interview_id, self._user_id, mock_transcript)
             )
 
-    async def _start_gemini_session(self, interview_id: str, record) -> None:
+    async def _start_gemini_session(self, interview_id: str, record, resume_requested: bool) -> None:
         if self._gemini_bridge is not None:
             await self._stop_gemini_session()
 
@@ -216,7 +218,9 @@ class LiveWebSocketSession:
             interview_id=interview_id,
             user_id=self._user_id,
             send_json=self._send,
-            system_prompt=system_prompt
+            system_prompt=system_prompt,
+            resume_enabled=self.settings.live_resume_enabled,
+            resume_requested=resume_requested
         )
         try:
             await self._gemini_bridge.connect()

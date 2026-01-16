@@ -14,6 +14,14 @@ class AppSettings:
     session_store_dir: str
     log_dir: str
     user_id: str
+    live_resume_enabled: bool
+
+
+def _env_flag(name: str, default: str = "0") -> bool:
+    value = os.getenv(name, default)
+    if value is None:
+        return False
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def load_settings() -> AppSettings:
@@ -30,5 +38,6 @@ def load_settings() -> AppSettings:
         api_base=os.getenv("APP_API_BASE", "/api"),
         session_store_dir=os.getenv("SESSION_STORE_DIR", str(session_store)),
         log_dir=os.getenv("LOG_DIR", str(repo_root / "logs")),
-        user_id=os.getenv("APP_USER_ID", "local")
+        user_id=os.getenv("APP_USER_ID", "local"),
+        live_resume_enabled=_env_flag("GEMINI_LIVE_RESUME", "1")
     )

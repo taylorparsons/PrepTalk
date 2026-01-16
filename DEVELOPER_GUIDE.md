@@ -67,6 +67,7 @@ Add values to `.env` as needed:
 - `GEMINI_API_KEY`
 - `GEMINI_LIVE_MODEL`
 - `GEMINI_TEXT_MODEL`
+- `GEMINI_LIVE_RESUME`
 - `SESSION_STORE_DIR`
 - `APP_USER_ID`
 

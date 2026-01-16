@@ -26,7 +26,7 @@ describe('gemini reconnect', () => {
 
     vi.runAllTimers();
 
-    expect(start).toHaveBeenCalledWith('interview-1', 'user-1');
+    expect(start).toHaveBeenCalledWith('interview-1', 'user-1', { resume: true });
   });
 
   it('does not schedule when the session is inactive', () => {

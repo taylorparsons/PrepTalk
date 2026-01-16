@@ -32,6 +32,12 @@ class InterviewRecord:
     question_statuses: list[dict] = field(default_factory=list)
     question_status_history: list[dict] = field(default_factory=list)
     transcript: list[dict] = field(default_factory=list)
+    live_memory: str = ""
+    live_model: str | None = None
+    live_resume_token: str | None = None
+    live_resume_handle: str | None = None
+    live_resume_resumable: bool | None = None
+    live_resume_updated_at: str | None = None
     score: Optional[dict] = None
     session_name_history: list[dict] = field(default_factory=list)
     custom_questions: list[dict] = field(default_factory=list)
@@ -53,6 +59,12 @@ class InterviewRecord:
             "question_statuses": list(self.question_statuses),
             "question_status_history": list(self.question_status_history),
             "transcript": list(self.transcript),
+            "live_memory": self.live_memory,
+            "live_model": self.live_model,
+            "live_resume_token": self.live_resume_token,
+            "live_resume_handle": self.live_resume_handle,
+            "live_resume_resumable": self.live_resume_resumable,
+            "live_resume_updated_at": self.live_resume_updated_at,
             "score": dict(self.score) if self.score else None,
             "session_name_history": list(self.session_name_history),
             "custom_questions": list(self.custom_questions)
@@ -81,6 +93,12 @@ class InterviewRecord:
             question_statuses=list(payload.get("question_statuses", [])),
             question_status_history=list(payload.get("question_status_history", [])),
             transcript=list(payload.get("transcript", [])),
+            live_memory=payload.get("live_memory", ""),
+            live_model=payload.get("live_model"),
+            live_resume_token=payload.get("live_resume_token"),
+            live_resume_handle=payload.get("live_resume_handle"),
+            live_resume_resumable=payload.get("live_resume_resumable"),
+            live_resume_updated_at=payload.get("live_resume_updated_at"),
             score=payload.get("score"),
             session_name_history=list(payload.get("session_name_history", [])),
             custom_questions=list(payload.get("custom_questions", []))
@@ -103,6 +121,65 @@ def _merge_transcript_text(previous: str, incoming: str) -> str:
     if prev.endswith(' '):
         return f"{prev}{next_text}"
     return f"{prev} {next_text}"
+
+
+def _label_role(role: str) -> str:
+    if role == "coach":
+        return "Coach"
+    if role == "candidate":
+        return "Candidate"
+    if not role:
+        return "Unknown"
+    return role.capitalize()
+
+
+def _truncate_text(value: str, limit: int) -> str:
+    if not value:
+        return ""
+    cleaned = value.strip()
+    if len(cleaned) <= limit:
+        return cleaned
+    return f"{cleaned[:limit].rstrip()}..."
+
+
+def _last_role_text(transcript: list[dict], role: str) -> str:
+    for entry in reversed(transcript or []):
+        if entry.get("role") == role and entry.get("text"):
+            return str(entry.get("text") or "").strip()
+    return ""
+
+
+def _build_live_memory(
+    transcript: list[dict],
+    max_entries: int | None = None,
+    max_chars: int | None = None
+) -> str:
+    if not transcript:
+        return ""
+    header_lines: list[str] = []
+    last_coach = _truncate_text(_last_role_text(transcript, "coach"), 240)
+    last_candidate = _truncate_text(_last_role_text(transcript, "candidate"), 240)
+    if last_coach:
+        header_lines.append(f"Last coach prompt: {last_coach}")
+    if last_candidate:
+        header_lines.append(f"Last candidate response: {last_candidate}")
+    entries = transcript if max_entries is None else transcript[-max_entries:]
+    lines: list[str] = []
+    for entry in entries:
+        text_value = str(entry.get("text") or "").strip()
+        if not text_value:
+            continue
+        role = _label_role(str(entry.get("role") or "system"))
+        lines.append(f"{role}: {text_value}")
+    memory = "\n".join(lines)
+    if header_lines:
+        memory = f"{chr(10).join(header_lines)}\n\nTranscript:\n{memory}"
+    if max_chars is not None and len(memory) > max_chars:
+        memory = memory[-max_chars:]
+        newline = memory.find("\n")
+        if newline != -1:
+            memory = memory[newline + 1:].lstrip()
+    return memory
 
 
 QUESTION_STATUS_DEFAULT = "not_started"
@@ -185,6 +262,11 @@ class InterviewStore:
             record.question_statuses = record.question_statuses[:len(record.questions)]
             changed = True
         return changed
+
+    def _refresh_live_memory(self, record: InterviewRecord) -> None:
+        memory = _build_live_memory(record.transcript)
+        if memory != record.live_memory:
+            record.live_memory = memory
 
     def create(
         self,
@@ -277,6 +359,7 @@ class InterviewStore:
             )
             return
         record.transcript = list(transcript)
+        self._refresh_live_memory(record)
         _touch(record)
         self._persist(record)
         logger.info(
@@ -284,6 +367,106 @@ class InterviewStore:
             short_id(interview_id),
             short_id(record.user_id),
             len(record.transcript)
+        )
+
+    def set_live_resume_token(
+        self,
+        interview_id: str,
+        token: str | None,
+        model: str | None,
+        user_id: str | None = None
+    ) -> None:
+        record = self.get(interview_id, user_id)
+        if not record:
+            logger.info(
+                "event=store_live_resume_token status=not_found interview_id=%s user_id=%s",
+                short_id(interview_id),
+                short_id(self._normalize_user_id(user_id))
+            )
+            return
+        changed = False
+        if token and token != record.live_resume_token:
+            record.live_resume_token = token
+            changed = True
+        if model and model != record.live_model:
+            record.live_model = model
+            changed = True
+        if not changed:
+            return
+        record.live_resume_updated_at = _now_iso()
+        _touch(record)
+        self._persist(record)
+        logger.info(
+            "event=store_live_resume_token status=complete interview_id=%s user_id=%s model=%s token_present=%s",
+            short_id(interview_id),
+            short_id(record.user_id),
+            record.live_model or "none",
+            bool(record.live_resume_token)
+        )
+
+    def set_live_resume_handle(
+        self,
+        interview_id: str,
+        handle: str | None,
+        resumable: bool | None,
+        user_id: str | None = None
+    ) -> None:
+        record = self.get(interview_id, user_id)
+        if not record:
+            logger.info(
+                "event=store_live_resume_handle status=not_found interview_id=%s user_id=%s",
+                short_id(interview_id),
+                short_id(self._normalize_user_id(user_id))
+            )
+            return
+        changed = False
+        if handle and handle != record.live_resume_handle:
+            record.live_resume_handle = handle
+            changed = True
+        if resumable is not None and resumable != record.live_resume_resumable:
+            record.live_resume_resumable = resumable
+            changed = True
+        if not changed:
+            return
+        record.live_resume_updated_at = _now_iso()
+        _touch(record)
+        self._persist(record)
+        logger.info(
+            "event=store_live_resume_handle status=complete interview_id=%s user_id=%s resumable=%s handle_present=%s",
+            short_id(interview_id),
+            short_id(record.user_id),
+            record.live_resume_resumable,
+            bool(record.live_resume_handle)
+        )
+
+    def clear_live_resume(self, interview_id: str, user_id: str | None = None) -> None:
+        record = self.get(interview_id, user_id)
+        if not record:
+            logger.info(
+                "event=store_live_resume_clear status=not_found interview_id=%s user_id=%s",
+                short_id(interview_id),
+                short_id(self._normalize_user_id(user_id))
+            )
+            return
+        if (
+            record.live_model is None
+            and record.live_resume_token is None
+            and record.live_resume_handle is None
+            and record.live_resume_resumable is None
+            and record.live_resume_updated_at is None
+        ):
+            return
+        record.live_model = None
+        record.live_resume_token = None
+        record.live_resume_handle = None
+        record.live_resume_resumable = None
+        record.live_resume_updated_at = None
+        _touch(record)
+        self._persist(record)
+        logger.info(
+            "event=store_live_resume_clear status=complete interview_id=%s user_id=%s",
+            short_id(interview_id),
+            short_id(record.user_id)
         )
 
     def append_transcript_entry(
@@ -316,6 +499,7 @@ class InterviewStore:
             last["text"] = _merge_transcript_text(last.get("text", ""), text_value)
             if not last.get("timestamp") and payload.get("timestamp"):
                 last["timestamp"] = payload.get("timestamp")
+            self._refresh_live_memory(record)
             _touch(record)
             self._persist(record)
             logger.info(
@@ -327,6 +511,7 @@ class InterviewStore:
             )
             return
         record.transcript.append(payload)
+        self._refresh_live_memory(record)
         _touch(record)
         self._persist(record)
         logger.info(
@@ -486,9 +671,15 @@ class InterviewStore:
         record = self.get(interview_id, user_id)
         if record:
             record.transcript = []
+            record.live_memory = ""
             record.score = None
             record.asked_question_index = None
             record.asked_question_history = []
+            record.live_model = None
+            record.live_resume_token = None
+            record.live_resume_handle = None
+            record.live_resume_resumable = None
+            record.live_resume_updated_at = None
             _touch(record)
             self._persist(record)
             logger.info(

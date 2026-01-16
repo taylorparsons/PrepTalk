@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import re
 from typing import Any, Awaitable, Callable
+import os
 
 try:
     from google import genai
@@ -23,6 +24,7 @@ DEFAULT_SYSTEM_PROMPT = (
     "You are an interview coach. Keep responses concise, friendly, and aligned "
     "to the candidate's target role. Ask one question at a time."
 )
+LIVE_AUDIO_QUEUE_MAXSIZE = 32
 
 logger = get_logger()
 
@@ -45,7 +47,6 @@ QUESTION_WORDS = re.compile(
 REHYDRATE_MAX_TURNS = 8
 REHYDRATE_MAX_TEXT = 240
 COACH_FLUSH_DELAY = 0.8
-COACH_REPEAT_FALLBACK = "Thanks - what's one concrete example or metric you'd use?"
 QUESTION_OVERLAP_THRESHOLD = 0.45
 QUESTION_OVERLAP_MIN_TOKENS = 8
 
@@ -214,11 +215,15 @@ class GeminiLiveBridge:
         send_json: Callable[[dict[str, Any]], Awaitable[None]],
         input_sample_rate: int = 24000,
         output_sample_rate: int = 24000,
-        system_prompt: str | None = None
+        system_prompt: str | None = None,
+        resume_enabled: bool = False,
+        resume_requested: bool = False
     ) -> None:
         if genai is None:
             raise RuntimeError("google-genai is required for Gemini Live.")
+        self._api_key = api_key
         self._client = genai.Client(api_key=api_key)
+        self._token_client = None
         self._model = model
         self._interview_id = interview_id
         self._send_json = send_json
@@ -226,10 +231,12 @@ class GeminiLiveBridge:
         self._input_sample_rate = input_sample_rate
         self._output_sample_rate = output_sample_rate
         self._system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
+        self._resume_enabled = resume_enabled
+        self._resume_requested = resume_requested
 
         self._session_cm = None
         self._session = None
-        self._audio_queue: asyncio.Queue[LiveAudioChunk] = asyncio.Queue(maxsize=12)
+        self._audio_queue: asyncio.Queue[LiveAudioChunk] = asyncio.Queue(maxsize=LIVE_AUDIO_QUEUE_MAXSIZE)
         self._tasks: list[asyncio.Task] = []
         self._closed = False
         self._rehydrating = False
@@ -244,25 +251,81 @@ class GeminiLiveBridge:
             short_id(self._interview_id),
             short_id(self._user_id)
         )
-        config = {
-            "response_modalities": ["AUDIO"],
-            "input_audio_transcription": {},
-            "output_audio_transcription": {},
-            "system_instruction": self._system_prompt,
-            "realtime_input_config": {
-                "automatic_activity_detection": {
-                    "disabled": True
-                }
-            }
-        }
-        self._session_cm = self._client.aio.live.connect(model=self._model, config=config)
-        self._session = await self._session_cm.__aenter__()
+        input_language = os.getenv("GEMINI_LIVE_INPUT_LANGUAGE", "en-US").strip()
+        output_language = os.getenv("GEMINI_LIVE_OUTPUT_LANGUAGE", "en-US").strip()
+        record = store.get(self._interview_id, self._user_id)
+        resume_handle = None
+        resume_token = None
+        requested_model = self._model
+        if self._resume_enabled and record:
+            if self._resume_requested:
+                resume_handle = record.live_resume_handle
+                resume_token = record.live_resume_token
+                if record.live_model:
+                    requested_model = record.live_model
+            else:
+                store.clear_live_resume(self._interview_id, self._user_id)
 
+        if self._resume_enabled and not resume_token:
+            resume_token = self._create_auth_token(requested_model)
+        if self._resume_enabled and resume_token:
+            store.set_live_resume_token(self._interview_id, resume_token, requested_model, self._user_id)
+
+        resume_attempted = bool(self._resume_requested and resume_handle and resume_token)
+        if self._resume_requested and not resume_handle:
+            logger.info(
+                "event=gemini_live_resume status=skipped reason=missing_handle interview_id=%s user_id=%s",
+                short_id(self._interview_id),
+                short_id(self._user_id)
+            )
+        if self._resume_requested and resume_handle and not resume_token:
+            logger.info(
+                "event=gemini_live_resume status=skipped reason=missing_token interview_id=%s user_id=%s",
+                short_id(self._interview_id),
+                short_id(self._user_id)
+            )
+
+        config = self._build_live_config(input_language, output_language, resume_handle if resume_attempted else None)
+        connect_client = self._build_connect_client(resume_token) if resume_token else self._client
+        should_rehydrate = not resume_attempted
+        if resume_attempted:
+            logger.info(
+                "event=gemini_live_resume status=start interview_id=%s user_id=%s",
+                short_id(self._interview_id),
+                short_id(self._user_id)
+            )
+        try:
+            self._session_cm = connect_client.aio.live.connect(model=requested_model, config=config)
+            self._session = await self._session_cm.__aenter__()
+            if resume_attempted:
+                logger.info(
+                    "event=gemini_live_resume status=complete interview_id=%s user_id=%s",
+                    short_id(self._interview_id),
+                    short_id(self._user_id)
+                )
+        except Exception:
+            if resume_attempted:
+                logger.exception(
+                    "event=gemini_live_resume status=error interview_id=%s user_id=%s",
+                    short_id(self._interview_id),
+                    short_id(self._user_id)
+                )
+                store.clear_live_resume(self._interview_id, self._user_id)
+                resume_token = self._create_auth_token(requested_model)
+                config = self._build_live_config(input_language, output_language, None)
+                connect_client = self._build_connect_client(resume_token) if resume_token else self._client
+                self._session_cm = connect_client.aio.live.connect(model=requested_model, config=config)
+                self._session = await self._session_cm.__aenter__()
+                should_rehydrate = True
+            else:
+                raise
+
+        self._model = requested_model
         self._tasks.append(asyncio.create_task(self._send_loop()))
         self._tasks.append(asyncio.create_task(self._receive_loop()))
 
         await self._send_json({"type": "status", "state": "gemini-connected"})
-        self._rehydrating = await self._send_rehydrate_context()
+        self._rehydrating = await self._send_rehydrate_context() if should_rehydrate else False
         logger.info(
             "event=gemini_live_call status=complete requested_model=%s effective_model=%s interview_id=%s user_id=%s",
             self._model,
@@ -270,6 +333,85 @@ class GeminiLiveBridge:
             short_id(self._interview_id),
             short_id(self._user_id)
         )
+
+    def _build_live_config(
+        self,
+        input_language: str,
+        output_language: str,
+        resume_handle: str | None
+    ) -> dict:
+        config = {
+            "response_modalities": ["AUDIO", "TEXT"],
+            "input_audio_transcription": (
+                {"language_code": input_language} if input_language else {}
+            ),
+            "output_audio_transcription": (
+                {"language_code": output_language} if output_language else {}
+            ),
+            "system_instruction": self._system_prompt,
+            "realtime_input_config": {
+                "automatic_activity_detection": {
+                    "disabled": True
+                }
+            }
+        }
+        if self._resume_enabled:
+            resumption = {}
+            if resume_handle:
+                resumption["handle"] = resume_handle
+            config["session_resumption"] = resumption
+        return config
+
+    def _build_connect_client(self, token: str | None):
+        if not token or types is None:
+            return self._client
+        return genai.Client(
+            api_key=token,
+            http_options=types.HttpOptions(api_version="v1alpha")
+        )
+
+    def _create_auth_token(self, model: str) -> str | None:
+        if not self._resume_enabled or types is None:
+            return None
+        if self._token_client is None:
+            try:
+                self._token_client = genai.Client(
+                    api_key=self._api_key,
+                    http_options=types.HttpOptions(api_version="v1alpha")
+                )
+            except Exception:
+                logger.exception(
+                    "event=gemini_live_token status=error interview_id=%s user_id=%s",
+                    short_id(self._interview_id),
+                    short_id(self._user_id)
+                )
+                return None
+        try:
+            token = self._token_client.auth_tokens.create(
+                config=types.CreateAuthTokenConfig(uses=1)
+            )
+        except Exception:
+            logger.exception(
+                "event=gemini_live_token status=error interview_id=%s user_id=%s",
+                short_id(self._interview_id),
+                short_id(self._user_id)
+            )
+            return None
+        token_name = getattr(token, "name", None)
+        if not token_name:
+            logger.warning(
+                "event=gemini_live_token status=missing_name interview_id=%s user_id=%s",
+                short_id(self._interview_id),
+                short_id(self._user_id)
+            )
+            return None
+        logger.info(
+            "event=gemini_live_token status=complete interview_id=%s user_id=%s model=%s",
+            short_id(self._interview_id),
+            short_id(self._user_id),
+            model
+        )
+        return token_name
 
     async def send_audio(self, audio_bytes: bytes) -> None:
         if self._closed:
@@ -351,13 +493,26 @@ class GeminiLiveBridge:
                 await self._session_cm.__aexit__(None, None, None)
             except Exception:
                 pass
-        await self._cancel_coach_flush()
+        await self._flush_coach_buffer_now()
 
     async def _cancel_coach_flush(self) -> None:
         if self._coach_flush_task and not self._coach_flush_task.done():
             self._coach_flush_task.cancel()
         self._coach_flush_task = None
         self._coach_buffer = ""
+
+    async def _flush_coach_buffer_now(self) -> None:
+        if not self._coach_buffer:
+            await self._cancel_coach_flush()
+            return
+        async with self._coach_lock:
+            text = self._coach_buffer
+            self._coach_buffer = ""
+            if self._coach_flush_task and not self._coach_flush_task.done():
+                self._coach_flush_task.cancel()
+            self._coach_flush_task = None
+        if text:
+            await self._emit_transcript_final("coach", text)
 
     async def _send_loop(self) -> None:
         assert self._session is not None
@@ -466,19 +621,38 @@ class GeminiLiveBridge:
         if not server_content:
             return
 
+        if self._resume_enabled:
+            resume_update = getattr(server_content, "session_resumption_update", None)
+            if resume_update:
+                if isinstance(resume_update, dict):
+                    handle = resume_update.get("new_handle") or resume_update.get("newHandle")
+                    resumable = resume_update.get("resumable")
+                else:
+                    handle = getattr(resume_update, "new_handle", None)
+                    resumable = getattr(resume_update, "resumable", None)
+                if handle or resumable is not None:
+                    store.set_live_resume_handle(
+                        self._interview_id,
+                        handle,
+                        resumable,
+                        self._user_id
+                    )
+
         output_transcription = getattr(server_content, "output_transcription", None)
+        coach_text = None
         if output_transcription and getattr(output_transcription, "text", None):
-            await self._emit_transcript("coach", output_transcription.text)
+            coach_text = output_transcription.text
 
         input_transcription = getattr(server_content, "input_transcription", None)
         if input_transcription and getattr(input_transcription, "text", None):
             await self._emit_transcript("candidate", input_transcription.text)
 
         model_turn = getattr(server_content, "model_turn", None)
+        model_text = ""
         if model_turn and getattr(model_turn, "parts", None):
             for part in model_turn.parts:
                 if getattr(part, "text", None):
-                    await self._emit_transcript("coach", part.text)
+                    model_text = _merge_text(model_text, part.text)
                 inline_data = getattr(part, "inline_data", None)
                 if not inline_data:
                     continue
@@ -493,6 +667,11 @@ class GeminiLiveBridge:
                         audio_bytes = None
                 if audio_bytes:
                     await self._emit_audio(audio_bytes, getattr(inline_data, "mime_type", None))
+
+        if coach_text:
+            await self._emit_transcript("coach", coach_text)
+        elif model_text:
+            await self._emit_transcript("coach", model_text)
 
     async def _emit_transcript(self, role: str, text: str) -> None:
         if role == "coach":
@@ -529,7 +708,7 @@ class GeminiLiveBridge:
                         except Exception:
                             pass
                     await self._send_json({"type": "status", "state": "thinking"})
-                    await self._emit_transcript_final("coach", COACH_REPEAT_FALLBACK, skip_guard=True)
+                    await self._emit_transcript_final("coach", text, skip_guard=True)
                     return
                 matched_index = _match_question_index(text, list(record.questions))
                 if matched_index is not None and (current_index is None or matched_index > current_index):

@@ -31,10 +31,26 @@ def _next_question_index(record: InterviewRecord) -> int | None:
     return None
 
 
+def _question_status_summary(record: InterviewRecord) -> str:
+    statuses = list(record.question_statuses or [])
+    if not statuses:
+        return ""
+    lines = []
+    for index, entry in enumerate(statuses, start=1):
+        status = entry.get("status") or "unknown"
+        lines.append(f"{index}. {status}")
+    return "\n".join(lines)
+
+
 def _progress_instruction(record: InterviewRecord) -> str:
     asked_index = record.asked_question_index
     next_index = _next_question_index(record)
     if asked_index is None:
+        if record.transcript or getattr(record, "live_memory", ""):
+            return (
+                "Resume from the most recent exchange. "
+                "Do not restart at question 1."
+            )
         return "Start with question 1."
     if next_index is None:
         return "All questions appear answered. Offer a brief closing and ask if they want to continue."
@@ -52,6 +68,15 @@ def build_live_system_prompt(record: InterviewRecord) -> str:
     questions = _question_list(list(record.questions or []))
     focus = _bullet_list(list(record.focus_areas or []))
     progress = _progress_instruction(record)
+    memory = _clean_text(getattr(record, "live_memory", "")) if getattr(record, "live_memory", "") else ""
+    memory_block = f"Recent conversation memory:\n{memory}\n\n" if memory else ""
+    status_summary = _question_status_summary(record)
+    status_block = f"Question status (1-based):\n{status_summary}\n\n" if status_summary else ""
+    continuity_block = (
+        "Continuity rules:\n"
+        "- Use the conversation memory to continue; do not restart or repeat earlier questions.\n"
+        "- If the last speaker was the candidate, let them finish before moving on.\n\n"
+    )
 
     return (
         "You are an interview coach. Keep responses concise, friendly, and aligned "
@@ -63,8 +88,11 @@ def build_live_system_prompt(record: InterviewRecord) -> str:
         f"{resume_text}\n\n"
         "Interview questions (ask in order and do not ask for the role again):\n"
         f"{questions}\n\n"
+        f"{status_block}"
         "Focus areas (use for feedback and follow-ups):\n"
         f"{focus}\n\n"
+        f"{memory_block}"
+        f"{continuity_block}"
         "Coach help mode:\n"
         "- If the candidate asks for help (e.g., \"answer for me\", \"give me a draft\", "
         "\"what's a good response\"), provide a concise sample answer.\n"
