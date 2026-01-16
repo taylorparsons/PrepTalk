@@ -101,8 +101,12 @@ export class LiveTransport {
     return this.openPromise;
   }
 
-  start(interviewId, userId) {
-    this.send({ type: 'start', interview_id: interviewId, user_id: userId });
+  start(interviewId, userId, { resume = false } = {}) {
+    const payload = { type: 'start', interview_id: interviewId, user_id: userId };
+    if (resume) {
+      payload.resume = true;
+    }
+    this.send(payload);
   }
 
   stop() {

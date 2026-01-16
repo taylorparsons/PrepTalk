@@ -11,7 +11,8 @@ def test_build_live_system_prompt_includes_context():
         questions=["Q1", "Q2"],
         focus_areas=["Focus A"],
         resume_text="Resume line",
-        job_text="Job line"
+        job_text="Job line",
+        live_memory="Coach: Welcome back."
     )
 
     prompt = build_live_system_prompt(record)
@@ -22,6 +23,8 @@ def test_build_live_system_prompt_includes_context():
     assert "1. Q1" in prompt
     assert "2. Q2" in prompt
     assert "- Focus A" in prompt
+    assert "Recent conversation memory:" in prompt
+    assert "Coach: Welcome back." in prompt
     assert "answer for me" in prompt
     assert "STAR" in prompt
     assert "60-90 second" in prompt

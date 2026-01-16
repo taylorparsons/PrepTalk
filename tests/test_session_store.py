@@ -36,11 +36,56 @@ def test_session_store_persists(tmp_path):
     loaded = reloaded.get(record.interview_id, user_id='candidate-1')
     assert loaded is not None
     assert loaded.transcript[0]['text'] == 'Welcome'
+    assert 'Last coach prompt: Welcome' in loaded.live_memory
+    assert 'Transcript:' in loaded.live_memory
+    assert 'Coach: Welcome' in loaded.live_memory
     assert loaded.score['overall_score'] == 90
     assert loaded.resume_text == 'Resume text'
     assert loaded.job_text == 'Job text'
     assert loaded.question_statuses[0]['status'] == 'not_started'
 
+
+
+def test_session_store_persists_live_resume_metadata(tmp_path):
+    store = InterviewStore(base_dir=tmp_path, default_user_id='tester')
+    record = store.create(
+        interview_id='resume123',
+        adapter='mock',
+        role_title='Engineer',
+        questions=['Q1'],
+        focus_areas=['Focus'],
+        user_id='candidate-1'
+    )
+
+    store.set_live_resume_token(
+        record.interview_id,
+        token='auth_tokens/test-token',
+        model='gemini-2.5-flash-live',
+        user_id='candidate-1'
+    )
+    store.set_live_resume_handle(
+        record.interview_id,
+        handle='resume-handle-1',
+        resumable=True,
+        user_id='candidate-1'
+    )
+
+    reloaded = InterviewStore(base_dir=tmp_path, default_user_id='tester')
+    loaded = reloaded.get(record.interview_id, user_id='candidate-1')
+    assert loaded is not None
+    assert loaded.live_resume_token == 'auth_tokens/test-token'
+    assert loaded.live_resume_handle == 'resume-handle-1'
+    assert loaded.live_resume_resumable is True
+    assert loaded.live_model == 'gemini-2.5-flash-live'
+
+    store.reset_session(record.interview_id, user_id='candidate-1')
+    reloaded = InterviewStore(base_dir=tmp_path, default_user_id='tester')
+    loaded = reloaded.get(record.interview_id, user_id='candidate-1')
+    assert loaded is not None
+    assert loaded.live_resume_token is None
+    assert loaded.live_resume_handle is None
+    assert loaded.live_resume_resumable is None
+    assert loaded.live_model is None
 
 
 def test_session_store_tracks_session_name_versions(tmp_path):
@@ -123,6 +168,7 @@ def test_session_store_reset_clears_transcript_and_score(tmp_path):
     loaded = reloaded.get(record.interview_id, user_id='candidate-1')
     assert loaded is not None
     assert loaded.transcript == []
+    assert loaded.live_memory == ''
     assert loaded.score is None
 
 

@@ -22,6 +22,7 @@
 - Text generation uses `gemini-3-pro-preview` for question generation and scoring; live audio uses `gemini-2.5-flash-native-audio-preview-12-2025` for streaming.
 - Study guide includes rubric, transcript, and summary.
 - Session persistence is per user, stored under app/session_store/<user_id>.
+- Live session resumption uses local transcript memory (full transcript) injected into the Gemini Live system prompt on reconnect.
 - Logs are user-facing; keep IDs short and readable (5-char alphanumeric hash).
 - Coach help mode: if the candidate asks for help, provide a concise draft answer, then prompt them to answer in their own words (STAR for behavioral; 60-90 seconds for situational) and offer frameworks.
 
@@ -202,6 +203,7 @@ Task tracking
 ## Live Voice Streaming Fallback (Current)
 - Transport-level reconnect: the WebSocket client retries if the connection drops.
 - Gemini session reconnect: on `gemini-disconnected`, the UI retries `start` up to 3 times.
+- On reconnect, the server rebuilds the system prompt using the locally stored transcript memory to preserve context.
 - No model fallback: if Gemini Live returns a policy error (e.g., 1008), the session ends and the user must restart. Set `GEMINI_LIVE_MODEL` to a supported model to stabilize Live sessions.
 
 ## Logging & Observability
@@ -219,6 +221,16 @@ Task tracking
 - Mocked Gemini Live streaming tests to validate message flow.
 - API tests for session lifecycle endpoints.
 - Manual voice smoke tests for mic permissions and playback latency.
+- Manual test: live memory resumption (main branch).
+  - Checkout `main`.
+  - Set `INTERVIEW_ADAPTER=gemini` and `GEMINI_API_KEY` in `.env`.
+  - Run `./run.sh ui`, start a live session, and speak 2-3 turns.
+  - Force a drop (disable network or stop the server), then allow the UI to reconnect.
+  - Confirm the coach continues the conversation without repeating earlier context.
+  - Inspect `app/session_store/<user_id>/<interview_id>.json` and verify `live_memory` contains the transcript so far.
+- Playwright artifacts (screenshots/video) are enabled; use separate runs to capture mock vs live.
+  - Mock: `PLAYWRIGHT_HTML_REPORT=playwright-report-mock npx playwright test --reporter=html --output test-results-mock`
+  - Live: `set -a; source .env; set +a; E2E_LIVE=1 PLAYWRIGHT_HTML_REPORT=playwright-report-live npx playwright test --reporter=html --output test-results-live`
 
 ## Integration Test Plan
 - Playwright E2E script that drives the UI like a user: upload resume/JD, start session, stream audio, verify transcript, score, and PDF export.

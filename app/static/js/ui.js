@@ -15,7 +15,6 @@ import {
   restartInterview,
   scoreInterview,
   startLiveSession,
-  logClientEvent,
   updateQuestionStatus,
   updateSessionName
 } from './api/client.js';
@@ -103,7 +102,7 @@ export function scheduleGeminiReconnect(state, { statusPill } = {}) {
     if (!state.sessionActive || !state.transport || !state.interviewId) {
       return;
     }
-    state.transport.start(state.interviewId, state.userId);
+    state.transport.start(state.interviewId, state.userId, { resume: true });
   }, GEMINI_RECONNECT_DELAY_MS);
   return true;
 }
@@ -808,7 +807,7 @@ function buildControlsPanel(state, ui, config) {
           if (payload.state === 'reconnected') {
             updateStatusPill(statusPill, { label: 'Reconnected', tone: 'info' });
             if (state.sessionActive && state.interviewId) {
-              state.transport.start(state.interviewId, state.userId);
+              state.transport.start(state.interviewId, state.userId, { resume: true });
             }
             sendClientEvent(state, 'ws_reconnected', { status: payload.state });
           }
@@ -949,7 +948,7 @@ function buildControlsPanel(state, ui, config) {
         state.audioPlaybackSampleRate = 24000;
       }
       await state.audioPlayback.resume();
-      state.transport.start(state.interviewId, state.userId);
+      state.transport.start(state.interviewId, state.userId, { resume: false });
       await startMicrophoneIfNeeded();
       startSpeechRecognition();
     } catch (error) {
