@@ -177,6 +177,7 @@ Task tracking
 - [ ] Verify each test fails for the expected reason (RED).
 - [ ] Implement minimal UI logic to pass each test (GREEN).
 - [ ] Refactor only after green; keep tests passing.
+- [ ] Remove `.codex/` from the remote repo.
 - [ ] Add the Session Tools launcher near Session Controls and a left slide-in drawer shell.
 - [ ] Wire session naming (save and display) with the current interview id.
 - [ ] Add custom question input with add-and-jump and add-only flows.
@@ -280,6 +281,7 @@ Task tracking
 - [x] Optional live-mode E2E with AI Studio persona (gated by `E2E_LIVE=1`).
 
 ### Hackathon Deliverables
+- [ ] add .codex to .gitignore  
 - [ ] AI Studio demo link.
 - [ ] Gemini integration write-up.
 - [ ] 3-minute demo video.
