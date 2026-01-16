@@ -1,0 +1,80 @@
+# Pre-commit Hook Configuration
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+#
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+
+  # Secret scanning (local)
+  - repo: local
+    hooks:
+      - id: scan-secrets
+        name: Scan for secrets
+        entry: python git-workflow-automation/scripts/scan_for_secrets.py
+        language: python
+        stages: [commit]
+        pass_filenames: false
+
+      - id: check-absolute-paths
+        name: Check for absolute paths
+        entry: bash -c 'git diff --cached | grep -qE "/Users/|/home/" && echo "❌ Found absolute paths in staged files!" && exit 1 || exit 0'
+        language: system
+        stages: [commit]
+        pass_filenames: false
+
+      - id: check-build-artifacts
+        name: Check for build artifacts
+        entry: bash -c 'git diff --cached --name-only | grep -qE "__pycache__|\.pyc$|\.DS_Store$" && echo "❌ Found build artifacts in staged files!" && exit 1 || exit 0'
+        language: system
+        stages: [commit]
+        pass_filenames: false
+
+  # Python-specific hooks (if using Python)
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        language_version: python3
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        args: ['--max-line-length=100', '--ignore=E203,W503']
+
+  # Commit message validation
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.0.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert]
+
+  # Optional: Python import sorting
+  # - repo: https://github.com/pycqa/isort
+  #   rev: 5.13.2
+  #   hooks:
+  #     - id: isort
+
+  # Optional: Security scanning with bandit
+  # - repo: https://github.com/PyCQA/bandit
+  #   rev: 1.7.5
+  #   hooks:
+  #     - id: bandit
+  #       args: ['-c', 'pyproject.toml']
