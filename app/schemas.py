@@ -144,3 +144,25 @@ class ClientEventRequest(BaseModel):
 
 class ClientEventResponse(BaseModel):
     status: str
+
+
+class AgentParameterSet(BaseModel):
+    model: str
+    temperature: float = Field(default=0.7, ge=0.0, le=2.0)
+    max_tokens: int | None = Field(default=None, ge=1)
+    top_p: float | None = Field(default=None, ge=0.0, le=1.0)
+    tools: list[str] = Field(default_factory=list)
+    system_prompt: str | None = None
+
+
+class AgentTeamProfile(BaseModel):
+    team_id: str
+    display_name: str
+    description: str
+    schema_version: int = Field(default=1, ge=1)
+    parameters: AgentParameterSet
+    feature_flags: dict[str, bool] = Field(default_factory=dict)
+
+
+class AgentTeamListResponse(BaseModel):
+    teams: list[AgentTeamProfile] = Field(default_factory=list)

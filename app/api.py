@@ -24,9 +24,12 @@ from .schemas import (
     SessionListResponse,
     LogSummaryResponse,
     ClientEventRequest,
-    ClientEventResponse
+    ClientEventResponse,
+    AgentTeamListResponse,
+    AgentTeamProfile
 )
 from .services import interview_service
+from .services.agent_registry import get_agent_registry
 from .services.log_metrics import build_log_summary
 from .services.document_text import DocumentInput, is_supported_document
 from .settings import load_settings
@@ -120,6 +123,21 @@ async def create_interview(
     )
 
     return payload
+
+
+@router.get("/agent-teams", response_model=AgentTeamListResponse)
+def list_agent_teams():
+    registry = get_agent_registry()
+    return {"teams": registry.list_profiles()}
+
+
+@router.get("/agent-teams/{team_id}", response_model=AgentTeamProfile)
+def get_agent_team(team_id: str):
+    registry = get_agent_registry()
+    profile = registry.get_profile(team_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Agent team not found")
+    return profile
 
 
 @router.post("/live/session", response_model=LiveSessionResponse)

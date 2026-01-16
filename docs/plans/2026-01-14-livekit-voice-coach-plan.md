@@ -173,10 +173,10 @@ Behavior tests
 
 ---
 
-# Veneo Inc. app compartmentalization plan (general chat + new agent teams)
+# App compartmentalization plan (general chat + new agent teams)
 
 ## Goals
-- Keep the current general chat feature stable while enabling new agent teams with their own parameter sets at Veneo Inc.
+- Keep the current general chat feature stable while enabling new agent teams with their own parameter sets.
 - Make features independently deployable and testable.
 - Centralize agent configuration while avoiding cross-feature coupling.
 
@@ -202,7 +202,7 @@ Behavior tests
 ## Example API shape
 ```json
 {
-  "team_id": "veneolabs-coach",
+  "team_id": "voice-coach",
   "session_id": "abc123",
   "message": "Help me practice a pitch",
   "params": {
