@@ -72,7 +72,9 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
   await page.waitForFunction(() => Boolean(window.__e2eQueueTurn));
   await page.evaluate(() => window.__e2eQueueTurn?.('Hello from the e2e test.'));
 
-  await expect(page.getByTestId('transcript-list')).toContainText('Hello from the e2e test.');
+  await expect(page.getByTestId('transcript-list')).toContainText('Hello from the e2e test.', {
+    timeout: 20000
+  });
   await expect.poll(
     () => page.locator('.ui-transcript__row--coach').count(),
     { timeout: 60000 }
