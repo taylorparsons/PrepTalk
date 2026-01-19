@@ -63,6 +63,7 @@ def test_live_session_returns_mock_transcript():
 def test_voice_turn_appends_transcript_entries(monkeypatch):
     monkeypatch.setenv("INTERVIEW_ADAPTER", "mock")
     monkeypatch.setenv("VOICE_TTS_ENABLED", "1")
+    monkeypatch.setenv("VOICE_OUTPUT_MODE", "server")
 
     client = TestClient(app)
     interview_id = _create_interview(client)

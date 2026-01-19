@@ -128,7 +128,7 @@ def run_voice_turn(
     audio_payload = None
     audio_mime = None
     settings = getattr(adapter, "settings", None) or load_settings()
-    if settings.voice_tts_enabled:
+    if settings.voice_tts_enabled and settings.voice_output_mode != "browser":
         try:
             if adapter.name == "gemini":
                 if not getattr(adapter, "api_key", None):
