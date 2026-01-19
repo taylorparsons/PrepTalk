@@ -55,6 +55,21 @@ export async function startLiveSession({ interviewId }) {
   return handleResponse(response);
 }
 
+export async function sendVoiceTurn({ interviewId, text, textModel, ttsModel }) {
+  const response = await fetch(`${getApiBase()}/voice/turn`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
+    body: JSON.stringify({
+      interview_id: interviewId,
+      text,
+      text_model: textModel,
+      tts_model: ttsModel
+    })
+  });
+
+  return handleResponse(response);
+}
+
 export async function scoreInterview({ interviewId, transcript }) {
   const response = await fetch(`${getApiBase()}/interviews/${interviewId}/score`, {
     method: 'POST',

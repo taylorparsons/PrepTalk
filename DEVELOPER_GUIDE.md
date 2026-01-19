@@ -68,6 +68,16 @@ Add values to `.env` as needed:
 - `GEMINI_LIVE_MODEL`
 - `GEMINI_TEXT_MODEL`
 - `GEMINI_LIVE_RESUME`
+- `VOICE_MODE`
+- `VOICE_TTS_ENABLED`
+- `GEMINI_TTS_MODEL`
+- `GEMINI_TTS_MODEL_FALLBACKS`
+- `GEMINI_TTS_VOICE`
+- `GEMINI_TTS_LANGUAGE`
+- `VOICE_TTS_TIMEOUT_MS`
+- `VOICE_TTS_WAIT_MS`
+- `VOICE_TURN_END_DELAY_MS`
+- `VOICE_OUTPUT_MODE`
 - `SESSION_STORE_DIR`
 - `APP_USER_ID`
 
@@ -111,6 +121,12 @@ Live E2E (optional):
 ```bash
 E2E_LIVE=1 ./run.sh e2e
 ```
+
+Long live E2E with full trace (optional):
+```bash
+E2E_LIVE=1 E2E_LIVE_LONG=1 ./run.sh e2e
+```
+Trace output: `test-results/live-interview-long-*/trace.zip` (open with `npx playwright show-trace ...`).
 
 Manual voice smoke test:
 - Follow `docs/testing/voice-smoke-test.md`.

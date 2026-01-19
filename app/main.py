@@ -30,6 +30,11 @@ def read_root(request: Request):
         "adapter": settings.adapter,
         "liveModel": settings.live_model,
         "textModel": settings.text_model,
+        "ttsModel": settings.voice_tts_model,
+        "voiceMode": settings.voice_mode,
+        "voiceOutputMode": settings.voice_output_mode,
+        "voiceTtsLanguage": settings.voice_tts_language,
+        "voiceTurnEndDelayMs": settings.voice_turn_end_delay_ms,
         "userId": settings.user_id
     }
     return templates.TemplateResponse(

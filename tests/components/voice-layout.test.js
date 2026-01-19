@@ -26,5 +26,6 @@ describe('voice layout', () => {
 
     expect(root.children.length).toBeGreaterThan(0);
     expect(root.querySelector('[data-testid="transcript-list"]')).toBeTruthy();
+    expect(root.querySelector('[data-testid="voice-mode-select"]')).toBeTruthy();
   });
 });

@@ -53,6 +53,7 @@ class LiveWebSocketSession:
         self._session_started_at: float | None = None
         self._audio_frames = 0
         self._audio_bytes = 0
+        self._live_model_override: str | None = None
 
     async def run(self) -> None:
         await self.websocket.accept()
@@ -135,10 +136,16 @@ class LiveWebSocketSession:
         interview_id = payload.get("interview_id")
         user_id = payload.get("user_id") or self.settings.user_id
         resume_requested = bool(payload.get("resume"))
+        live_model = payload.get("live_model")
         self._user_id = user_id
         if not interview_id:
             await self._send({"type": "error", "message": "interview_id is required."})
             return
+        if isinstance(live_model, str):
+            live_model = live_model.strip() or None
+        else:
+            live_model = None
+        self._live_model_override = live_model
 
         record = store.get(interview_id, self._user_id)
         if not record:
@@ -162,7 +169,7 @@ class LiveWebSocketSession:
                 "interview_id": interview_id,
                 "session_id": live_payload["session_id"],
                 "adapter": self.adapter.name,
-                "live_model": self.settings.live_model,
+                "live_model": self._live_model_override or self.settings.live_model,
                 "mode": live_payload["mode"]
             }
         )
@@ -204,17 +211,18 @@ class LiveWebSocketSession:
             await self._send({"type": "error", "message": "GEMINI_API_KEY is required."})
             return
 
+        requested_model = self._live_model_override or self.settings.live_model
         logger.info(
             "event=gemini_live_connect status=start user_id=%s interview_id=%s requested_model=%s",
             short_id(self._user_id),
             short_id(interview_id),
-            self.settings.live_model
+            requested_model
         )
 
         system_prompt = build_live_system_prompt(record)
         self._gemini_bridge = GeminiLiveBridge(
             api_key=api_key,
-            model=self.settings.live_model,
+            model=requested_model,
             interview_id=interview_id,
             user_id=self._user_id,
             send_json=self._send,
@@ -228,15 +236,15 @@ class LiveWebSocketSession:
                 "event=gemini_live_connect status=complete user_id=%s interview_id=%s requested_model=%s effective_model=%s",
                 short_id(self._user_id),
                 short_id(interview_id),
-                self.settings.live_model,
-                self.settings.live_model
+                requested_model,
+                requested_model
             )
         except Exception as exc:
             logger.exception(
                 "event=gemini_live_connect status=error user_id=%s interview_id=%s requested_model=%s",
                 short_id(self._user_id),
                 short_id(interview_id),
-                self.settings.live_model
+                requested_model
             )
             await self._send({"type": "error", "message": str(exc)})
             await self._stop_gemini_session()

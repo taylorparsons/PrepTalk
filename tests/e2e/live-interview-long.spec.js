@@ -2,8 +2,14 @@ import { test, expect } from '@playwright/test';
 
 const isLive = Boolean(process.env.E2E_LIVE);
 const hasKey = Boolean(process.env.GEMINI_API_KEY);
-const liveDurationMs = Number.parseInt(process.env.E2E_LIVE_DURATION_MS || '45000', 10);
+const isLong = Boolean(process.env.E2E_LIVE_LONG);
+const liveDurationMs = Number.parseInt(process.env.E2E_LIVE_DURATION_MS || '180000', 10);
 const livePollIntervalMs = Number.parseInt(process.env.E2E_LIVE_POLL_MS || '1000', 10);
+const audioBurstFrames = Number.parseInt(process.env.E2E_LIVE_AUDIO_BURST_FRAMES || '6', 10);
+const audioFrequencyHz = Number.parseFloat(process.env.E2E_LIVE_AUDIO_FREQUENCY_HZ || '440');
+const audioAmplitude = Number.parseFloat(process.env.E2E_LIVE_AUDIO_AMPLITUDE || '0.2');
+
+test.use({ trace: 'on' });
 
 function buildPdfBuffer(label) {
   const content = `%PDF-1.4
@@ -38,9 +44,38 @@ startxref
   return Buffer.from(content, 'utf-8');
 }
 
-test('candidate interview flow (gemini live)', async ({ page }) => {
-  test.skip(!isLive || !hasKey, 'Requires E2E_LIVE=1 and GEMINI_API_KEY.');
-  test.setTimeout(Math.max(120000, liveDurationMs + 60000));
+async function sendAudioBurst(page, { frames, frequencyHz, amplitude }) {
+  await page.evaluate(({ frames: burstFrames, frequencyHz: burstFrequencyHz, amplitude: burstAmplitude }) => {
+    const sendAudio = window.__e2eSendAudio;
+    if (!sendAudio) return;
+    const sendActivity = window.__e2eSendActivity;
+    const sampleRate = 24000;
+    const frameSize = Math.round(sampleRate * 0.02);
+    const maxAmplitude = 0x7fff;
+    const safeAmplitude = Math.min(Math.max(burstAmplitude, 0), 1);
+    sendActivity?.('start');
+    for (let frameIndex = 0; frameIndex < burstFrames; frameIndex += 1) {
+      const pcm = new Int16Array(frameSize);
+      for (let i = 0; i < frameSize; i += 1) {
+        const sample = Math.sin(2 * Math.PI * burstFrequencyHz * (i / sampleRate));
+        pcm[i] = Math.round(sample * safeAmplitude * maxAmplitude);
+      }
+      sendAudio(pcm);
+    }
+    sendActivity?.('end');
+  }, { frames, frequencyHz, amplitude });
+}
+
+test('candidate interview flow (gemini live long)', async ({ page }) => {
+  test.skip(
+    !isLive || !hasKey || !isLong,
+    'Requires E2E_LIVE=1, E2E_LIVE_LONG=1, and GEMINI_API_KEY.'
+  );
+  test.setTimeout(Math.max(240000, liveDurationMs + 60000));
+
+  await page.addInitScript(() => {
+    window.__E2E__ = true;
+  });
 
   await page.goto('/');
   const voiceMode = await page.evaluate(() => window.__APP_CONFIG__?.voiceMode || 'live');
@@ -67,9 +102,15 @@ test('candidate interview flow (gemini live)', async ({ page }) => {
   await page.getByTestId('start-interview').click();
   await expect(page.getByTestId('session-status')).toHaveText('Live', { timeout: 60000 });
   await expect(page.getByTestId('stop-interview')).toBeEnabled();
+  await page.waitForFunction(() => Boolean(window.__e2eSendAudio));
 
   const start = Date.now();
   while (Date.now() - start < liveDurationMs) {
+    await sendAudioBurst(page, {
+      frames: audioBurstFrames,
+      frequencyHz: audioFrequencyHz,
+      amplitude: audioAmplitude
+    });
     const status = (await page.getByTestId('session-status').innerText()).trim();
     const stopEnabled = await page.getByTestId('stop-interview').isEnabled();
     if (!stopEnabled) {
@@ -80,6 +121,11 @@ test('candidate interview flow (gemini live)', async ({ page }) => {
     }
     await page.waitForTimeout(livePollIntervalMs);
   }
+
+  await expect.poll(
+    () => page.evaluate(() => window.__e2eAudioChunks || 0),
+    { timeout: 60000 }
+  ).toBeGreaterThan(0);
 
   await page.getByTestId('stop-interview').click();
   await expect(page.getByTestId('score-value')).not.toHaveText('--');

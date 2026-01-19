@@ -285,7 +285,11 @@ class GeminiLiveBridge:
                 short_id(self._user_id)
             )
 
-        config = self._build_live_config(input_language, output_language, resume_handle if resume_attempted else None)
+        config = self._build_live_config(
+            input_language,
+            output_language,
+            resume_handle if resume_attempted else None
+        )
         connect_client = self._build_connect_client(resume_token) if resume_token else self._client
         should_rehydrate = not resume_attempted
         if resume_attempted:
@@ -317,6 +321,24 @@ class GeminiLiveBridge:
                 self._session_cm = connect_client.aio.live.connect(model=requested_model, config=config)
                 self._session = await self._session_cm.__aenter__()
                 should_rehydrate = True
+            elif self._resume_enabled:
+                logger.exception(
+                    "event=gemini_live_call status=retry interview_id=%s user_id=%s",
+                    short_id(self._interview_id),
+                    short_id(self._user_id)
+                )
+                store.clear_live_resume(self._interview_id, self._user_id)
+                resume_token = None
+                config = self._build_live_config(
+                    input_language,
+                    output_language,
+                    None,
+                    include_resumption=False
+                )
+                connect_client = self._client
+                self._session_cm = connect_client.aio.live.connect(model=requested_model, config=config)
+                self._session = await self._session_cm.__aenter__()
+                should_rehydrate = True
             else:
                 raise
 
@@ -338,16 +360,17 @@ class GeminiLiveBridge:
         self,
         input_language: str,
         output_language: str,
-        resume_handle: str | None
+        resume_handle: str | None,
+        *,
+        include_resumption: bool = True
     ) -> dict:
+        input_transcription = self._audio_transcription_config(input_language)
+        output_transcription = self._audio_transcription_config(output_language)
+        modalities = ["AUDIO"]
+        if output_transcription is not None:
+            modalities.append("TEXT")
         config = {
-            "response_modalities": ["AUDIO", "TEXT"],
-            "input_audio_transcription": (
-                {"language_code": input_language} if input_language else {}
-            ),
-            "output_audio_transcription": (
-                {"language_code": output_language} if output_language else {}
-            ),
+            "response_modalities": modalities,
             "system_instruction": self._system_prompt,
             "realtime_input_config": {
                 "automatic_activity_detection": {
@@ -355,12 +378,37 @@ class GeminiLiveBridge:
                 }
             }
         }
-        if self._resume_enabled:
+        if input_transcription is not None:
+            config["input_audio_transcription"] = input_transcription
+        if output_transcription is not None:
+            config["output_audio_transcription"] = output_transcription
+        if include_resumption and self._resume_enabled:
             resumption = {}
             if resume_handle:
                 resumption["handle"] = resume_handle
             config["session_resumption"] = resumption
         return config
+
+    def _audio_transcription_config(self, language_code: str | None) -> dict | None:
+        if types is None:
+            if not language_code:
+                return {}
+            return {"language_code": language_code}
+        config_type = getattr(types, "AudioTranscriptionConfig", None)
+        if config_type is None:
+            if not language_code:
+                return {}
+            return {"language_code": language_code}
+        fields = getattr(config_type, "model_fields", None) or {}
+        if not fields:
+            return None
+        if not language_code:
+            return None
+        if "language_code" in fields:
+            return {"language_code": language_code}
+        if "languageCode" in fields:
+            return {"languageCode": language_code}
+        return None
 
     def _build_connect_client(self, token: str | None):
         if not token or types is None:
@@ -388,7 +436,7 @@ class GeminiLiveBridge:
                 return None
         try:
             token = self._token_client.auth_tokens.create(
-                config=types.CreateAuthTokenConfig(uses=1)
+                config=types.CreateAuthTokenConfig(uses=0)
             )
         except Exception:
             logger.exception(

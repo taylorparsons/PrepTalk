@@ -47,3 +47,18 @@ MOCK_SCORE = {
         "Close with role alignment"
     ]
 }
+
+MOCK_VOICE_REPLY = "Thanks for that. Let's move to the next question."
+
+
+def build_mock_tts_audio() -> tuple[bytes, str]:
+    import io
+    import wave
+
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as wav_file:
+        wav_file.setnchannels(1)
+        wav_file.setsampwidth(2)
+        wav_file.setframerate(8000)
+        wav_file.writeframes(b"\x00" * 800)
+    return buffer.getvalue(), "audio/wav"
