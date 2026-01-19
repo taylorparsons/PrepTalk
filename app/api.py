@@ -12,6 +12,8 @@ from .schemas import (
     InterviewSummaryResponse,
     LiveSessionRequest,
     LiveSessionResponse,
+    VoiceTurnRequest,
+    VoiceTurnResponse,
     ScoreRequest,
     ScoreResponse,
     SessionNameRequest,
@@ -162,6 +164,57 @@ async def create_live_session(request: Request, payload: LiveSessionRequest):
         log_session_id,
         response.get("mode"),
         _duration_ms(start)
+    )
+
+    return response
+
+
+@router.post("/voice/turn", response_model=VoiceTurnResponse)
+async def voice_turn(request: Request, payload: VoiceTurnRequest):
+    user_id = _get_user_id(request)
+    log_user_id = short_id(user_id)
+    log_interview_id = short_id(payload.interview_id)
+    start = time.perf_counter()
+
+    logger.info(
+        "event=voice_turn status=start user_id=%s interview_id=%s text_len=%s",
+        log_user_id,
+        log_interview_id,
+        len(payload.text)
+    )
+
+    try:
+        response = interview_service.run_voice_turn(
+            payload.interview_id,
+            payload.text,
+            user_id,
+            text_model=payload.text_model,
+            tts_model=payload.tts_model
+        )
+    except KeyError as exc:
+        logger.warning(
+            "event=voice_turn status=not_found user_id=%s interview_id=%s duration_ms=%s",
+            log_user_id,
+            log_interview_id,
+            _duration_ms(start)
+        )
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (RuntimeError, ValueError) as exc:
+        logger.exception(
+            "event=voice_turn status=error user_id=%s interview_id=%s duration_ms=%s",
+            log_user_id,
+            log_interview_id,
+            _duration_ms(start)
+        )
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    coach_text = response.get("coach", {}).get("text", "")
+    logger.info(
+        "event=voice_turn status=complete user_id=%s interview_id=%s duration_ms=%s response_len=%s",
+        log_user_id,
+        log_interview_id,
+        _duration_ms(start),
+        len(coach_text)
     )
 
     return response

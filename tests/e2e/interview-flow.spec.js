@@ -10,6 +10,7 @@ function buildPdfBuffer(label) {
 test('candidate interview flow (mock adapter)', async ({ page }) => {
   test.skip(isLive, 'Skip mock flow when running live adapter.');
   await page.goto('/');
+  const voiceMode = await page.evaluate(() => window.__APP_CONFIG__?.voiceMode || 'live');
 
   const resumeBuffer = buildPdfBuffer('Resume');
   const jobBuffer = buildPdfBuffer('Job');
@@ -34,7 +35,12 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
   await expect(page.getByTestId('start-interview')).toBeEnabled();
 
   await page.getByTestId('start-interview').click();
-  await expect(page.getByTestId('transcript-list')).toContainText('Welcome');
+  if (voiceMode === 'turn') {
+    await expect(page.getByTestId('session-status')).toHaveText('Listening');
+    await expect(page.getByTestId('transcript-list')).toContainText('Waiting for live session to start.');
+  } else {
+    await expect(page.getByTestId('transcript-list')).toContainText('Welcome');
+  }
 
   await page.getByTestId('stop-interview').click();
   await expect(page.getByTestId('score-value')).toHaveText('84');

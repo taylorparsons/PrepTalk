@@ -53,6 +53,17 @@ def _call_gemini(api_key: str, model: str, prompt: str) -> str:
         raise RuntimeError(_friendly_text_error(model, exc)) from exc
 
 
+def generate_coach_reply(
+    *,
+    api_key: str,
+    model: str,
+    system_prompt: str,
+    candidate_text: str
+) -> str:
+    prompt = f"{system_prompt}\n\nCandidate: {candidate_text}\nCoach:"
+    return _call_gemini(api_key, model, prompt)
+
+
 def _extract_json(text: str) -> dict | None:
     if not text:
         return None

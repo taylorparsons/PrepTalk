@@ -2,8 +2,6 @@ import { test, expect } from '@playwright/test';
 
 const isLive = Boolean(process.env.E2E_LIVE);
 const hasKey = Boolean(process.env.GEMINI_API_KEY);
-const liveDurationMs = Number.parseInt(process.env.E2E_LIVE_DURATION_MS || '45000', 10);
-const livePollIntervalMs = Number.parseInt(process.env.E2E_LIVE_POLL_MS || '1000', 10);
 
 function buildPdfBuffer(label) {
   const content = `%PDF-1.4
@@ -38,13 +36,17 @@ startxref
   return Buffer.from(content, 'utf-8');
 }
 
-test('candidate interview flow (gemini live)', async ({ page }) => {
+test('candidate interview flow (gemini turn voice)', async ({ page }) => {
   test.skip(!isLive || !hasKey, 'Requires E2E_LIVE=1 and GEMINI_API_KEY.');
-  test.setTimeout(Math.max(120000, liveDurationMs + 60000));
+  test.setTimeout(120000);
+
+  await page.addInitScript(() => {
+    window.__E2E__ = true;
+  });
 
   await page.goto('/');
   const voiceMode = await page.evaluate(() => window.__APP_CONFIG__?.voiceMode || 'live');
-  test.skip(voiceMode === 'turn', 'Turn-based voice mode does not run live sessions.');
+  test.skip(voiceMode !== 'turn', 'Requires VOICE_MODE=turn for turn-based voice.');
 
   const resumeBuffer = buildPdfBuffer('Resume');
   const jobBuffer = buildPdfBuffer('Job');
@@ -65,21 +67,16 @@ test('candidate interview flow (gemini live)', async ({ page }) => {
   await expect(page.getByTestId('start-interview')).toBeEnabled();
 
   await page.getByTestId('start-interview').click();
-  await expect(page.getByTestId('session-status')).toHaveText('Live', { timeout: 60000 });
-  await expect(page.getByTestId('stop-interview')).toBeEnabled();
+  await expect(page.getByTestId('session-status')).toHaveText('Listening');
 
-  const start = Date.now();
-  while (Date.now() - start < liveDurationMs) {
-    const status = (await page.getByTestId('session-status').innerText()).trim();
-    const stopEnabled = await page.getByTestId('stop-interview').isEnabled();
-    if (!stopEnabled) {
-      throw new Error(`Stop button disabled during live run (status: ${status}).`);
-    }
-    if (status === 'Live error' || status === 'Live ended' || status === 'Disconnected') {
-      throw new Error(`Live session ended early (status: ${status}).`);
-    }
-    await page.waitForTimeout(livePollIntervalMs);
-  }
+  await page.waitForFunction(() => Boolean(window.__e2eQueueTurn));
+  await page.evaluate(() => window.__e2eQueueTurn?.('Hello from the e2e test.'));
+
+  await expect(page.getByTestId('transcript-list')).toContainText('Hello from the e2e test.');
+  await expect.poll(
+    () => page.locator('.ui-transcript__row--coach').count(),
+    { timeout: 60000 }
+  ).toBeGreaterThan(0);
 
   await page.getByTestId('stop-interview').click();
   await expect(page.getByTestId('score-value')).not.toHaveText('--');

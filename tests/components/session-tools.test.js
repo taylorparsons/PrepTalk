@@ -42,6 +42,17 @@ describe('session tools drawer', () => {
     expect(mute.textContent).toContain('Unmute');
   });
 
+  it('toggles barge-in state label', () => {
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const toggle = layout.querySelector('[data-testid="barge-in-toggle"]');
+    expect(toggle.textContent).toContain('Barge In On');
+
+    toggle.click();
+    expect(toggle.textContent).toContain('Barge In Off');
+  });
+
   it('disables transcript export and restart by default', () => {
     const layout = buildVoiceLayout();
     document.body.appendChild(layout);
@@ -54,5 +65,32 @@ describe('session tools drawer', () => {
     expect(exportButton.textContent).toContain('Export PDF');
     expect(exportFormat.value).toBe('pdf');
     expect(restartButton.disabled).toBe(true);
+  });
+
+  it('resets model inputs to defaults', () => {
+    window.__APP_CONFIG__ = {
+      liveModel: 'live-default',
+      textModel: 'text-default',
+      ttsModel: 'tts-default'
+    };
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const liveInput = layout.querySelector('[data-testid="live-model-input"]');
+    const textInput = layout.querySelector('[data-testid="text-model-input"]');
+    const ttsInput = layout.querySelector('[data-testid="tts-model-input"]');
+    const resetButton = layout.querySelector('[data-testid="reset-models"]');
+
+    liveInput.value = 'live-custom';
+    textInput.value = 'text-custom';
+    ttsInput.value = 'tts-custom';
+
+    resetButton.click();
+
+    expect(liveInput.value).toBe('live-default');
+    expect(textInput.value).toBe('text-default');
+    expect(ttsInput.value).toBe('tts-default');
+
+    delete window.__APP_CONFIG__;
   });
 });

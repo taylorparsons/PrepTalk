@@ -101,10 +101,13 @@ export class LiveTransport {
     return this.openPromise;
   }
 
-  start(interviewId, userId, { resume = false } = {}) {
+  start(interviewId, userId, { resume = false, liveModel } = {}) {
     const payload = { type: 'start', interview_id: interviewId, user_id: userId };
     if (resume) {
       payload.resume = true;
+    }
+    if (liveModel) {
+      payload.live_model = liveModel;
     }
     this.send(payload);
   }

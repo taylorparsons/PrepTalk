@@ -60,6 +60,41 @@ def test_live_session_returns_mock_transcript():
     assert payload["mock_transcript"]
 
 
+def test_voice_turn_appends_transcript_entries(monkeypatch):
+    monkeypatch.setenv("INTERVIEW_ADAPTER", "mock")
+    monkeypatch.setenv("VOICE_TTS_ENABLED", "1")
+
+    client = TestClient(app)
+    interview_id = _create_interview(client)
+
+    response = client.post(
+        "/api/voice/turn",
+        json={
+            "interview_id": interview_id,
+            "text": "Hello there",
+            "text_model": "gemini-3-flash-preview",
+            "tts_model": "gemini-3-flash-preview"
+        }
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["candidate"]["role"] == "candidate"
+    assert payload["candidate"]["text"] == "Hello there"
+    assert payload["coach"]["role"] == "coach"
+    assert payload["coach"]["text"]
+    assert payload["coach_audio"]
+    assert payload["coach_audio_mime"].startswith("audio/")
+
+    summary_response = client.get(f"/api/interviews/{interview_id}")
+    assert summary_response.status_code == 200
+    transcript = summary_response.json()["transcript"]
+    assert len(transcript) == 2
+    assert transcript[0]["role"] == "candidate"
+    assert transcript[1]["role"] == "coach"
+
+
+
 def test_score_returns_summary_and_transcript():
     client = TestClient(app)
     interview_id = _create_interview(client)

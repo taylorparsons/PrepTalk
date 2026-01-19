@@ -34,6 +34,21 @@ class LiveSessionResponse(BaseModel):
     mock_transcript: list[TranscriptEntry] | None = None
 
 
+class VoiceTurnRequest(BaseModel):
+    interview_id: str
+    text: str = Field(min_length=1)
+    text_model: str | None = None
+    tts_model: str | None = None
+
+
+class VoiceTurnResponse(BaseModel):
+    interview_id: str
+    candidate: TranscriptEntry
+    coach: TranscriptEntry
+    coach_audio: str | None = None
+    coach_audio_mime: str | None = None
+
+
 class InterviewSummaryResponse(BaseModel):
     interview_id: str
     role_title: str | None = None
