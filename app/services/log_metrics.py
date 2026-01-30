@@ -13,6 +13,7 @@ def build_log_summary(lines: List[str]) -> Dict[str, object]:
     client_disconnects = 0
     server_disconnects = 0
     gemini_disconnects = 0
+    turn_completion_checks = 0
     errors = []
     error_session_ids = set()
 
@@ -26,26 +27,24 @@ def build_log_summary(lines: List[str]) -> Dict[str, object]:
             event_counts[event] += 1
         if event and status:
             status_counts[event][status] += 1
+        if event == "voice_turn_completion" and status == "complete":
+            turn_completion_checks += 1
         if event in {"ws_disconnect", "gemini_live_receive", "client_event"}:
             disconnect_counts[event] += 1
         if event == "ws_disconnect":
             server_disconnects += 1
-            if session_id:
-                error_session_ids.add(session_id)
         if event == "gemini_live_receive" and status == "ended":
             gemini_disconnects += 1
         if event == "client_event":
             event_type = parsed.get("event_type")
             if event_type in {"ws_close", "ws_disconnected", "ws_error"}:
                 client_disconnects += 1
-            if event_type == "gemini_disconnected" and session_id:
-                error_session_ids.add(session_id)
         if level in {"ERROR", "CRITICAL"} or status == "error":
             errors.append(parsed)
             if session_id:
                 error_session_ids.add(session_id)
 
-    error_event_count = len(errors) + server_disconnects + gemini_disconnects
+    error_event_count = len(errors)
 
     return {
         "event_counts": dict(event_counts),
@@ -54,6 +53,7 @@ def build_log_summary(lines: List[str]) -> Dict[str, object]:
         "client_disconnects": client_disconnects,
         "server_disconnects": server_disconnects,
         "gemini_disconnects": gemini_disconnects,
+        "turn_completion_checks": turn_completion_checks,
         "error_count": len(errors),
         "error_event_count": error_event_count,
         "error_session_count": len(error_session_ids),

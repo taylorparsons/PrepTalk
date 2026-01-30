@@ -14,6 +14,9 @@ import {
   logClientEvent,
   restartInterview,
   scoreInterview,
+  sendVoiceFeedback,
+  sendVoiceIntro,
+  sendVoiceTurnCompletion,
   sendVoiceTurn,
   startLiveSession,
   updateQuestionStatus,
@@ -41,6 +44,8 @@ const LOG_SUMMARY_LINE_EVENTS = 4;
 const LOG_SUMMARY_LINE_COLORS = ['#1f6f5f', '#e0a03b', '#c2453b', '#5f5d58'];
 const CAPTION_MAX_CHARS = 240;
 const LIVE_COACH_SPEAK_DELAY_MS = 700;
+const TURN_SUBMIT_COMMAND_PHRASES = ['submit my answer', 'how did i do'];
+const COACH_QUESTION_PATTERN = /\b(what|why|how|tell me|can you|could you|describe|walk me|give me|share|would you)\b/i;
 const QUESTION_STATUS_OPTIONS = [
   { value: 'not_started', label: 'Not started' },
   { value: 'started', label: 'Started' },
@@ -73,6 +78,17 @@ function updateButtonLabel(button, label) {
 
 export function formatCount(value) {
   return typeof value === 'number' ? String(value) : '0';
+}
+
+function coachHasQuestion(text) {
+  const cleaned = String(text || '').trim();
+  if (!cleaned) {
+    return false;
+  }
+  if (cleaned.includes('?')) {
+    return true;
+  }
+  return COACH_QUESTION_PATTERN.test(cleaned);
 }
 
 export function clearGeminiReconnect(state) {
@@ -140,15 +156,18 @@ function stopAudioBuffer(state) {
 
 function sendClientEvent(state, event, { detail, status } = {}) {
   if (!state?.interviewId) return;
-  logClientEvent({
+  const result = logClientEvent({
     event,
     interviewId: state.interviewId,
     sessionId: state.sessionId,
     state: status,
     detail
-  }).catch(() => {
-    // Best-effort telemetry; ignore failures.
   });
+  if (result && typeof result.catch === 'function') {
+    result.catch(() => {
+      // Best-effort telemetry; ignore failures.
+    });
+  }
 }
 
 function createFileField({ id, label, helpText, testId }) {
@@ -493,11 +512,13 @@ function buildSetupPanel(state, ui) {
 }
 
 function buildControlsPanel(state, ui, config) {
+  const showAdvancedControls = Boolean(config?.uiDevMode);
   const statusPill = createStatusPill({
     label: 'Idle',
     tone: 'neutral',
     attrs: { 'data-testid': 'session-status' }
   });
+  let modeSelect = null;
 
   const startButton = createButton({
     label: 'Start Interview',
@@ -529,7 +550,7 @@ function buildControlsPanel(state, ui, config) {
   });
 
   const bargeInButton = createButton({
-    label: 'Barge In On',
+    label: 'Interrupt On',
     variant: 'ghost',
     size: 'md',
     attrs: {
@@ -541,8 +562,21 @@ function buildControlsPanel(state, ui, config) {
     }
   });
 
+  const submitTurnButton = createButton({
+    label: 'Submit Answer',
+    variant: 'primary',
+    size: 'md',
+    disabled: true,
+    attrs: {
+      'data-testid': 'submit-turn'
+    },
+    onClick: () => {
+      submitTurnAnswer();
+    }
+  });
+
   const sessionToolsButton = createButton({
-    label: 'Session Tools',
+    label: 'More',
     variant: 'ghost',
     size: 'sm',
     attrs: {
@@ -567,7 +601,7 @@ function buildControlsPanel(state, ui, config) {
 
   function setBargeInState(enabled) {
     state.bargeInEnabled = enabled;
-    updateButtonLabel(bargeInButton, enabled ? 'Barge In On' : 'Barge In Off');
+    updateButtonLabel(bargeInButton, enabled ? 'Interrupt On' : 'Interrupt Off');
     bargeInButton.setAttribute('aria-pressed', String(enabled));
   }
 
@@ -575,6 +609,7 @@ function buildControlsPanel(state, ui, config) {
 
   const meta = document.createElement('p');
   meta.className = 'ui-meta';
+  meta.setAttribute('data-testid', 'adapter-meta');
 
   function voiceModeLabel() {
     return state.voiceMode === 'turn' ? 'Turn-based' : 'Live';
@@ -596,25 +631,28 @@ function buildControlsPanel(state, ui, config) {
   }
 
   function applyVoiceMode(value) {
-    const nextMode = value === 'turn' ? 'turn' : 'live';
+    const allowLiveMode = Boolean(config?.uiDevMode);
+    const requestedMode = value === 'turn' ? 'turn' : 'live';
+    const nextMode = allowLiveMode ? requestedMode : 'turn';
     state.voiceMode = nextMode;
+    if (!allowLiveMode && modeSelect && modeSelect.value !== 'turn') {
+      modeSelect.value = 'turn';
+    }
     if (nextMode === 'turn') {
       bargeInButton.disabled = true;
       bargeInButton.setAttribute('aria-disabled', 'true');
-      if (state.voiceOutputMode === 'auto') {
-        applyVoiceOutputMode('browser');
-        if (ui.voiceOutputSelect) {
-          ui.voiceOutputSelect.value = 'browser';
-        }
-      }
     } else {
       bargeInButton.disabled = false;
       bargeInButton.removeAttribute('aria-disabled');
       state.liveAudioSeen = false;
       state.lastSpokenCoachText = '';
       cancelLiveCoachSpeech();
+      resetTurnCompletionTracking();
+      state.captionFinalText = '';
+      state.captionDraftText = '';
     }
     updateMeta();
+    updateTurnSubmitUI();
   }
 
   function applyVoiceOutputMode(value) {
@@ -632,7 +670,8 @@ function buildControlsPanel(state, ui, config) {
     const modelLabel = isTurnMode()
       ? `Text: ${state.textModel || 'unknown'} | TTS: ${state.ttsModel || 'unknown'}`
       : `Live: ${state.liveModel || 'unknown'}`;
-    meta.textContent = `Adapter: ${state.adapter} | Voice: ${voiceModeLabel()} | ${modelLabel} | ${outputLabel}${sessionLabel}`;
+    const devModeLabel = config?.uiDevMode ? ' | mode: Develop mode' : '';
+    meta.textContent = `Adapter: ${state.adapter} | Voice: ${voiceModeLabel()} | ${modelLabel} | ${outputLabel}${sessionLabel}${devModeLabel}`;
   }
 
   updateMeta();
@@ -677,8 +716,8 @@ function buildControlsPanel(state, ui, config) {
     }, 250);
   }
 
-  function resolveTurnEndDelayMs() {
-    const fallback = 1500;
+  function resolveTurnCompletionMinMs() {
+    const fallback = 10000;
     const raw = Number(state.turnEndDelayMs);
     if (!Number.isFinite(raw) || raw < 0) {
       return fallback;
@@ -686,32 +725,187 @@ function buildControlsPanel(state, ui, config) {
     return raw;
   }
 
-  function clearTurnEndTimer() {
+  function resolveTurnCompletionConfidence() {
+    const fallback = 0.9;
+    const raw = Number(state.turnCompletionConfidence);
+    if (!Number.isFinite(raw) || raw <= 0) {
+      return fallback;
+    }
+    return raw;
+  }
+
+  function resolveTurnCompletionCooldownMs() {
+    const fallback = 0;
+    const raw = Number(state.turnCompletionCooldownMs);
+    if (!Number.isFinite(raw) || raw < 0) {
+      return fallback;
+    }
+    return raw;
+  }
+
+  function clearTurnCompletionTimer() {
     if (state.turnEndTimer) {
       clearTimeout(state.turnEndTimer);
       state.turnEndTimer = null;
     }
   }
 
-  function scheduleTurnEnd() {
+  function normalizeTurnText(value) {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[“”]/g, '"')
+      .replace(/[’]/g, "'")
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function stripSubmitCommandSuffix(value) {
+    const original = String(value || '').trim();
+    if (!original) {
+      return { text: '', command: null };
+    }
+    const lowered = normalizeTurnText(original);
+    for (const phrase of TURN_SUBMIT_COMMAND_PHRASES) {
+      const normalizedPhrase = normalizeTurnText(phrase);
+      if (!normalizedPhrase) continue;
+      if (!lowered.endsWith(normalizedPhrase)) continue;
+      const tokens = normalizedPhrase.split(' ').filter(Boolean).map((token) => token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+      const phrasePattern = tokens.join('\\s+');
+      const suffix = new RegExp(`(?:^|\\s)${phrasePattern}[?.!\\s]*$`, 'i');
+      const cleaned = original.replace(suffix, '').trim();
+      return { text: cleaned, command: phrase };
+    }
+    return { text: original, command: null };
+  }
+
+  function updateTurnSubmitUI() {
+    const showRow = isTurnMode() && state.sessionActive;
+    if (ui.turnActionsRow) {
+      ui.turnActionsRow.hidden = !showRow;
+    }
+    if (!ui.submitTurnButton) {
+      return;
+    }
+    if (!showRow) {
+      ui.submitTurnButton.disabled = true;
+      return;
+    }
+    const hasAnswer = String(state.captionDraftText || state.captionFinalText || '').trim().length > 0;
+    ui.submitTurnButton.disabled = !(state.turnAwaitingAnswer && hasAnswer && state.turnReadyToSubmit);
+  }
+
+  function submitTurnAnswer({ source = 'manual' } = {}) {
+    if (!isTurnMode() || !state.sessionActive || !state.turnAwaitingAnswer) {
+      return;
+    }
+    const stripped = stripSubmitCommandSuffix(state.captionDraftText || state.captionFinalText || '');
+    const text = (stripped.text || '').trim();
+    if (!text) {
+      return;
+    }
+    sendClientEvent(state, 'turn_submit', { status: source });
+    updateStatusPill(statusPill, { label: 'Thinking', tone: 'info' });
+    state.turnAwaitingAnswer = false;
+    state.turnReadyToSubmit = false;
+    resetTurnCompletionTracking();
+    stopSpeechRecognition();
+    state.captionFinalText = '';
+    state.captionDraftText = '';
+    setCaptionText('Captions idle.');
+    updateTurnSubmitUI();
+    queueVoiceTurn(text);
+  }
+
+  function resetTurnCompletionTracking() {
+    state.turnAnswerStartedAt = null;
+    state.turnCompletionLastCheckAt = 0;
+    state.turnCompletionPending = false;
+    state.turnReadyToSubmit = false;
+    state.captionDraftText = '';
+    clearTurnCompletionTimer();
+  }
+
+  async function requestTurnCompletionCheck() {
     if (!isTurnMode() || !state.sessionActive || state.isMuted) {
       return;
     }
-    clearTurnEndTimer();
-    const delayMs = resolveTurnEndDelayMs();
-    state.turnEndTimer = window.setTimeout(() => {
-      state.turnEndTimer = null;
-      if (!isTurnMode() || !state.sessionActive || state.isMuted) {
-        return;
+    if (state.turnCompletionPending) {
+      return;
+    }
+    const question = (state.lastCoachQuestion || '').trim();
+    const answer = String(state.captionDraftText || state.captionFinalText || '').trim();
+    if (!question || !answer) {
+      return;
+    }
+    state.turnCompletionPending = true;
+    try {
+      const response = await sendVoiceTurnCompletion({
+        interviewId: state.interviewId,
+        question,
+        answer,
+        textModel: state.textModel
+      });
+      state.turnCompletionLastCheckAt = Date.now();
+      const confidence = Number(response?.confidence ?? 0);
+      const attempted = Boolean(response?.attempted);
+      if (attempted && confidence >= resolveTurnCompletionConfidence()) {
+        state.turnReadyToSubmit = true;
+        updateTurnSubmitUI();
+        if (state.sessionActive && state.turnAwaitingAnswer) {
+          updateStatusPill(statusPill, { label: 'Ready to submit', tone: 'warning' });
+        }
       }
-      const finalText = (state.captionFinalText || '').trim();
-      if (!finalText) {
-        return;
+    } catch (error) {
+      state.turnCompletionLastCheckAt = Date.now();
+    } finally {
+      state.turnCompletionPending = false;
+    }
+  }
+
+  function scheduleTurnCompletionCheck() {
+    if (!isTurnMode() || !state.sessionActive || state.isMuted || !state.turnAwaitingAnswer) {
+      return;
+    }
+    const answer = String(state.captionDraftText || state.captionFinalText || '').trim();
+    const question = (state.lastCoachQuestion || '').trim();
+    if (!answer || !question) {
+      return;
+    }
+    if (!state.turnAnswerStartedAt) {
+      state.turnAnswerStartedAt = Date.now();
+    }
+    const now = Date.now();
+    const minMs = resolveTurnCompletionMinMs();
+    const elapsed = now - state.turnAnswerStartedAt;
+    if (elapsed < minMs) {
+      if (!state.turnEndTimer) {
+        state.turnEndTimer = window.setTimeout(() => {
+          state.turnEndTimer = null;
+          scheduleTurnCompletionCheck();
+        }, minMs - elapsed);
       }
-      queueVoiceTurn(finalText);
-      state.captionFinalText = '';
-      setCaptionText('Captions idle.');
-    }, delayMs);
+      updateTurnSubmitUI();
+      return;
+    }
+
+    if (!state.turnReadyToSubmit) {
+      state.turnReadyToSubmit = true;
+      updateTurnSubmitUI();
+      if (state.sessionActive && state.turnAwaitingAnswer) {
+        updateStatusPill(statusPill, { label: 'Ready to submit', tone: 'warning' });
+      }
+    }
+
+    const cooldownMs = resolveTurnCompletionCooldownMs();
+    if (state.turnCompletionPending) {
+      return;
+    }
+    if (state.turnCompletionLastCheckAt && now - state.turnCompletionLastCheckAt < cooldownMs) {
+      return;
+    }
+    void requestTurnCompletionCheck();
   }
 
   function ensureSpeechRecognition() {
@@ -745,11 +939,22 @@ function buildControlsPanel(state, ui, config) {
         }
       }
       if (finalText) {
-        state.captionFinalText = mergeTranscriptText(state.captionFinalText || '', finalText);
-        scheduleTurnEnd();
+        const merged = mergeTranscriptText(state.captionFinalText || '', finalText);
+        const stripped = stripSubmitCommandSuffix(merged);
+        state.captionFinalText = stripped.text;
+        if (stripped.command) {
+          state.turnReadyToSubmit = true;
+          updateTurnSubmitUI();
+          if ((stripped.text || '').trim().length > 0) {
+            submitTurnAnswer({ source: `voice_command:${normalizeTurnText(stripped.command).replace(/\s+/g, '_')}` });
+            return;
+          }
+        }
+        scheduleTurnCompletionCheck();
       }
       const combined = mergeTranscriptText(state.captionFinalText || '', interimText);
       if (combined) {
+        state.captionDraftText = combined;
         setCaptionText(truncateCaption(combined));
       }
     };
@@ -798,7 +1003,7 @@ function buildControlsPanel(state, ui, config) {
 
   function stopSpeechRecognition() {
     state.speechRecognitionEnabled = false;
-    clearTurnEndTimer();
+    clearTurnCompletionTimer();
     if (state.speechRecognitionRestartTimer) {
       clearTimeout(state.speechRecognitionRestartTimer);
       state.speechRecognitionRestartTimer = null;
@@ -812,6 +1017,7 @@ function buildControlsPanel(state, ui, config) {
     }
     state.speechRecognitionActive = false;
     state.captionFinalText = '';
+    state.captionDraftText = '';
     setCaptionText('Captions idle.');
   }
 
@@ -881,7 +1087,7 @@ function buildControlsPanel(state, ui, config) {
     });
   }
 
-  async function speakCoachReply(text) {
+  async function speakCoachReply(text, options = {}) {
     const reply = (text || '').trim();
     if (!reply) {
       return;
@@ -889,22 +1095,25 @@ function buildControlsPanel(state, ui, config) {
     if (typeof window === 'undefined' || !window.speechSynthesis || !window.SpeechSynthesisUtterance) {
       return;
     }
+    const { restartRecognition = true, preserveCaptions = false } = options || {};
     return new Promise((resolve) => {
       cancelSpeechSynthesis();
       state.turnSpeaking = true;
-      stopSpeechRecognition();
+      if (!preserveCaptions) {
+        stopSpeechRecognition();
+      }
       const utterance = new SpeechSynthesisUtterance(reply);
       utterance.lang = state.voiceTtsLanguage || 'en-US';
       utterance.onend = () => {
         state.turnSpeaking = false;
-        if (state.sessionActive && !state.isMuted) {
+        if (restartRecognition && state.sessionActive && !state.isMuted) {
           startSpeechRecognition();
         }
         resolve();
       };
       utterance.onerror = () => {
         state.turnSpeaking = false;
-        if (state.sessionActive && !state.isMuted) {
+        if (restartRecognition && state.sessionActive && !state.isMuted) {
           startSpeechRecognition();
         }
         resolve();
@@ -916,13 +1125,11 @@ function buildControlsPanel(state, ui, config) {
   async function playCoachReply({ text, audio, audioMime } = {}) {
     const reply = (text || '').trim();
     const outputMode = normalizeVoiceOutputMode(state.voiceOutputMode);
+    let played = false;
     if (audio && outputMode !== 'browser') {
-      const played = await playCoachAudio(audio, audioMime);
-      if (played) {
-        return;
-      }
+      played = await playCoachAudio(audio, audioMime);
     }
-    if (outputMode !== 'server') {
+    if (!played && reply) {
       await speakCoachReply(reply);
     }
   }
@@ -944,13 +1151,7 @@ function buildControlsPanel(state, ui, config) {
       return false;
     }
     const outputMode = normalizeVoiceOutputMode(state.voiceOutputMode);
-    if (outputMode === 'server') {
-      return false;
-    }
-    if (outputMode === 'auto' && state.liveAudioSeen) {
-      return false;
-    }
-    return true;
+    return outputMode === 'browser';
   }
 
   function scheduleLiveCoachSpeech(text) {
@@ -997,7 +1198,15 @@ function buildControlsPanel(state, ui, config) {
     if (!pcm16 || pcm16.length === 0) {
       return;
     }
+    const outputMode = normalizeVoiceOutputMode(state.voiceOutputMode);
+    if (outputMode === 'browser') {
+      if (typeof window !== 'undefined' && window.__E2E__) {
+        window.__e2eAudioChunks = (window.__e2eAudioChunks || 0) + 1;
+      }
+      return;
+    }
     state.liveAudioSeen = true;
+    cancelLiveCoachSpeech();
     if (typeof window !== 'undefined' && window.__E2E__) {
       window.__e2eAudioChunks = (window.__e2eAudioChunks || 0) + 1;
     }
@@ -1009,6 +1218,22 @@ function buildControlsPanel(state, ui, config) {
       state.audioPlayback.resume();
     }
     state.audioPlayback.play(pcm16);
+  }
+
+  function ensureE2eCandidatePlayback(sampleRate = 24000) {
+    if (!state.e2eCandidatePlayback || state.e2eCandidatePlaybackSampleRate !== sampleRate) {
+      state.e2eCandidatePlayback?.stop();
+      state.e2eCandidatePlayback = createAudioPlayback({ sampleRate });
+      state.e2eCandidatePlaybackSampleRate = sampleRate;
+      state.e2eCandidatePlayback.resume();
+    }
+    return state.e2eCandidatePlayback;
+  }
+
+  function stopE2eCandidatePlayback() {
+    state.e2eCandidatePlayback?.stop();
+    state.e2eCandidatePlayback = null;
+    state.e2eCandidatePlaybackSampleRate = null;
   }
 
   ui.handleTranscript = handleTranscript;
@@ -1033,6 +1258,32 @@ function buildControlsPanel(state, ui, config) {
     window.__e2eQueueTurn = (text) => queueVoiceTurn(text);
   }
 
+  async function requestCoachFeedback({ question, answer } = {}) {
+    if (!isTurnMode() || !state.sessionActive || !state.interviewId) {
+      return;
+    }
+    const cleanedAnswer = (answer || '').trim();
+    const cleanedQuestion = (question || '').trim();
+    if (!cleanedAnswer || !cleanedQuestion) {
+      return;
+    }
+    try {
+      const response = await sendVoiceFeedback({
+        interviewId: state.interviewId,
+        question: cleanedQuestion,
+        answer: cleanedAnswer,
+        textModel: state.textModel
+      });
+      if (response?.feedback) {
+        appendTranscriptEntry(state, response.feedback);
+        renderTranscript(ui.transcriptList, state.transcript);
+        ui.updateSessionToolsState?.();
+      }
+    } catch (error) {
+      // Feedback is optional and should not disrupt the flow.
+    }
+  }
+
   async function processVoiceTurnQueue() {
     if (!state.sessionActive || state.turnRequestActive || state.turnSpeaking) {
       return;
@@ -1042,6 +1293,7 @@ function buildControlsPanel(state, ui, config) {
       return;
     }
     state.turnRequestActive = true;
+    const questionForFeedback = state.lastCoachQuestion;
     updateStatusPill(statusPill, { label: 'Thinking', tone: 'info' });
     try {
       const response = await sendVoiceTurn({
@@ -1055,11 +1307,16 @@ function buildControlsPanel(state, ui, config) {
       renderTranscript(ui.transcriptList, state.transcript);
       ui.autoStartNextQuestion?.(response.coach.role);
       ui.updateSessionToolsState?.();
+      state.turnAwaitingAnswer = coachHasQuestion(response.coach.text);
+      state.lastCoachQuestion = state.turnAwaitingAnswer ? response.coach.text : '';
+      resetTurnCompletionTracking();
+      updateTurnSubmitUI();
       await playCoachReply({
         text: response.coach.text,
         audio: response.coach_audio,
         audioMime: response.coach_audio_mime
       });
+      void requestCoachFeedback({ question: questionForFeedback, answer: nextTurn });
     } catch (error) {
       updateStatusPill(statusPill, { label: 'Turn error', tone: 'danger' });
       state.turnQueue = [];
@@ -1074,6 +1331,43 @@ function buildControlsPanel(state, ui, config) {
     }
   }
 
+  async function startTurnIntro() {
+    if (!state.sessionActive || !state.interviewId) {
+      return;
+    }
+    updateStatusPill(statusPill, { label: 'Welcoming', tone: 'info' });
+    state.turnAwaitingAnswer = false;
+    try {
+      const response = await sendVoiceIntro({
+        interviewId: state.interviewId,
+        textModel: state.textModel,
+        ttsModel: state.ttsModel
+      });
+      appendTranscriptEntry(state, response.coach);
+      renderTranscript(ui.transcriptList, state.transcript);
+      ui.autoStartNextQuestion?.(response.coach.role);
+      ui.updateSessionToolsState?.();
+      state.turnAwaitingAnswer = coachHasQuestion(response.coach.text);
+      state.lastCoachQuestion = state.turnAwaitingAnswer ? response.coach.text : '';
+      resetTurnCompletionTracking();
+      updateTurnSubmitUI();
+      await playCoachReply({
+        text: response.coach.text,
+        audio: response.coach_audio,
+        audioMime: response.coach_audio_mime
+      });
+    } catch (error) {
+      updateStatusPill(statusPill, { label: 'Intro error', tone: 'danger' });
+    } finally {
+      if (state.sessionActive && !state.turnSpeaking) {
+        updateStatusPill(statusPill, { label: 'Listening', tone: 'info' });
+      }
+      if (state.sessionActive && !state.speechRecognitionActive && !state.isMuted) {
+        startSpeechRecognition();
+      }
+    }
+  }
+
   function resetSessionState() {
     state.transcript = [];
     state.score = null;
@@ -1084,6 +1378,11 @@ function buildControlsPanel(state, ui, config) {
     state.activityDetector = null;
     stopSpeechRecognition();
     cancelSpeechSynthesis();
+    state.captionFinalText = '';
+    state.captionDraftText = '';
+    state.turnReadyToSubmit = false;
+    state.turnAwaitingAnswer = false;
+    resetTurnCompletionTracking();
     cancelLiveCoachSpeech();
     state.turnQueue = [];
     state.turnRequestActive = false;
@@ -1091,11 +1390,14 @@ function buildControlsPanel(state, ui, config) {
     cancelLiveCoachSpeech();
     state.liveAudioSeen = false;
     state.lastSpokenCoachText = '';
+    state.lastCoachQuestion = '';
     clearGeminiReconnect(state);
     stopAudioBuffer(state);
+    stopE2eCandidatePlayback();
     setMuteState(false);
     renderTranscript(ui.transcriptList, state.transcript);
     renderScore(ui, null);
+    updateTurnSubmitUI();
     ui.updateSessionToolsState?.();
   }
 
@@ -1165,6 +1467,11 @@ function buildControlsPanel(state, ui, config) {
     clearGeminiReconnect(state);
     stopSpeechRecognition();
     cancelSpeechSynthesis();
+    state.captionFinalText = '';
+    state.captionDraftText = '';
+    state.turnReadyToSubmit = false;
+    state.turnAwaitingAnswer = false;
+    resetTurnCompletionTracking();
     state.turnQueue = [];
     state.turnRequestActive = false;
     state.turnSpeaking = false;
@@ -1326,7 +1633,23 @@ function buildControlsPanel(state, ui, config) {
         window.__liveTransport = state.transport;
         window.__e2eAudioChunks = 0;
         window.__e2eBargeIn = () => state.transport?.bargeIn();
-        window.__e2eSendAudio = (pcm16) => state.transport?.sendAudio(pcm16);
+        state.e2eCandidatePlaybackEnabled = true;
+        window.__e2eSetCandidatePlayback = (enabled) => {
+          state.e2eCandidatePlaybackEnabled = Boolean(enabled);
+          if (!state.e2eCandidatePlaybackEnabled) {
+            stopE2eCandidatePlayback();
+          }
+        };
+        window.__e2eSendAudio = (pcm16) => {
+          const payload = coercePcm16(pcm16);
+          if (!payload || payload.length === 0) {
+            return;
+          }
+          state.transport?.sendAudio(payload);
+          if (state.e2eCandidatePlaybackEnabled) {
+            ensureE2eCandidatePlayback(24000).play(payload);
+          }
+        };
         window.__e2eSendActivity = (activityState) => state.transport?.send({
           type: 'activity',
           state: activityState
@@ -1399,12 +1722,16 @@ function buildControlsPanel(state, ui, config) {
     resetSessionState();
     state.sessionActive = true;
     state.sessionStarted = true;
+    state.captionFinalText = '';
+    state.captionDraftText = '';
+    state.turnReadyToSubmit = false;
+    updateTurnSubmitUI();
 
     if (turnMode) {
       state.sessionId = `turn-${Date.now()}`;
       state.liveMode = 'turn';
       ui.updateSessionToolsState?.();
-      startSpeechRecognition();
+      await startTurnIntro();
       return;
     }
 
@@ -1449,11 +1776,24 @@ function buildControlsPanel(state, ui, config) {
     clearGeminiReconnect(state);
     stopSpeechRecognition();
     cancelSpeechSynthesis();
+    state.captionFinalText = '';
+    state.captionDraftText = '';
+    state.turnReadyToSubmit = false;
+    state.turnAwaitingAnswer = false;
+    resetTurnCompletionTracking();
     state.turnQueue = [];
     state.turnRequestActive = false;
     state.turnSpeaking = false;
     stopButton.disabled = true;
     updateStatusPill(statusPill, { label: 'Scoring', tone: 'info' });
+    renderScore(ui, {
+      overall_score: '--',
+      summary: 'Scoring… This can take ~20 seconds.',
+      strengths: [],
+      improvements: []
+    });
+    ui.scorePanel?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+    ui.scorePanel?.focus?.({ preventScroll: true });
 
     if (state.transport) {
       state.transport.stop();
@@ -1482,10 +1822,14 @@ function buildControlsPanel(state, ui, config) {
       state.score = score;
       renderScore(ui, score);
       updateStatusPill(statusPill, { label: 'Complete', tone: 'success' });
+      ui.scorePanel?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+      ui.scorePanel?.focus?.({ preventScroll: true });
     } catch (error) {
       updateStatusPill(statusPill, { label: 'Score Error', tone: 'danger' });
+      ui.scoreValue.textContent = '--';
+      ui.scoreSummary.textContent = error?.message || 'Scoring failed.';
     } finally {
-      startButton.disabled = true;
+      startButton.disabled = !state.interviewId;
       setMuteState(false);
       ui.updateSessionToolsState?.();
     }
@@ -1496,42 +1840,61 @@ function buildControlsPanel(state, ui, config) {
   actionsRow.appendChild(startButton);
   actionsRow.appendChild(stopButton);
   actionsRow.appendChild(muteButton);
-  actionsRow.appendChild(bargeInButton);
+  if (showAdvancedControls) {
+    actionsRow.appendChild(bargeInButton);
+  }
+
+  const turnActionsRow = document.createElement('div');
+  turnActionsRow.className = 'ui-controls__row';
+  turnActionsRow.appendChild(submitTurnButton);
 
   const modeRow = document.createElement('div');
   modeRow.className = 'ui-controls__row';
 
+  const allowLiveMode = Boolean(config?.uiDevMode);
   const modeLabel = document.createElement('label');
   modeLabel.className = 'ui-field__label';
   modeLabel.textContent = 'Voice mode';
-  modeLabel.setAttribute('for', 'voice-mode-select');
-
-  const modeSelect = document.createElement('select');
-  modeSelect.className = 'ui-field__input';
-  modeSelect.id = 'voice-mode-select';
-  modeSelect.setAttribute('data-testid', 'voice-mode-select');
-
-  [
-    { value: 'turn', label: 'Turn-based (TTS)' },
-    { value: 'live', label: 'Live (streaming)' }
-  ].forEach((option) => {
-    const opt = document.createElement('option');
-    opt.value = option.value;
-    opt.textContent = option.label;
-    modeSelect.appendChild(opt);
-  });
-  modeSelect.value = state.voiceMode;
-  modeSelect.addEventListener('change', async () => {
-    const nextMode = modeSelect.value;
-    if (state.sessionActive) {
-      await endLiveSession({ label: 'Mode changed', tone: 'warning', allowRestart: true });
-      resetSessionState();
-    }
-    applyVoiceMode(nextMode);
-  });
+  if (allowLiveMode) {
+    modeLabel.setAttribute('for', 'voice-mode-select');
+  }
 
   modeRow.appendChild(modeLabel);
-  modeRow.appendChild(modeSelect);
+
+  if (allowLiveMode) {
+    modeSelect = document.createElement('select');
+    modeSelect.className = 'ui-field__input';
+    modeSelect.id = 'voice-mode-select';
+    modeSelect.setAttribute('data-testid', 'voice-mode-select');
+
+    const modeOptions = [
+      { value: 'turn', label: 'Turn-based (TTS)' },
+      { value: 'live', label: 'Live (streaming)' }
+    ];
+    modeOptions.forEach((option) => {
+      const opt = document.createElement('option');
+      opt.value = option.value;
+      opt.textContent = option.label;
+      modeSelect.appendChild(opt);
+    });
+    modeSelect.value = state.voiceMode;
+    modeSelect.addEventListener('change', async () => {
+      const nextMode = modeSelect.value;
+      if (state.sessionActive) {
+        await endLiveSession({ label: 'Mode changed', tone: 'warning', allowRestart: true });
+        resetSessionState();
+      }
+      applyVoiceMode(nextMode);
+    });
+    modeRow.appendChild(modeSelect);
+  } else {
+    modeSelect = null;
+    const modeValue = document.createElement('div');
+    modeValue.className = 'ui-field__input';
+    modeValue.setAttribute('data-testid', 'voice-mode-value');
+    modeValue.textContent = 'Turn-based (TTS)';
+    modeRow.appendChild(modeValue);
+  }
 
   const toolsRow = document.createElement('div');
   toolsRow.className = 'ui-controls__row ui-controls__row--tools';
@@ -1541,6 +1904,7 @@ function buildControlsPanel(state, ui, config) {
   content.className = 'layout-stack';
   content.appendChild(statusPill);
   content.appendChild(actionsRow);
+  content.appendChild(turnActionsRow);
   content.appendChild(modeRow);
   content.appendChild(toolsRow);
   content.appendChild(meta);
@@ -1550,6 +1914,8 @@ function buildControlsPanel(state, ui, config) {
   ui.stopButton = stopButton;
   ui.muteButton = muteButton;
   ui.bargeInToggle = bargeInButton;
+  ui.submitTurnButton = submitTurnButton;
+  ui.turnActionsRow = turnActionsRow;
   ui.sessionToolsToggle = sessionToolsButton;
   ui.adapterMeta = meta;
   ui.updateMeta = updateMeta;
@@ -1557,6 +1923,7 @@ function buildControlsPanel(state, ui, config) {
   ui.resetModelOverrides = resetModelOverrides;
   ui.applyVoiceOutputMode = applyVoiceOutputMode;
   ui.resetSessionState = resetSessionState;
+  updateTurnSubmitUI();
 
   return createPanel({
     title: 'Session Controls',
@@ -1566,7 +1933,8 @@ function buildControlsPanel(state, ui, config) {
   });
 }
 
-function buildSessionToolsDrawer(state, ui) {
+function buildSessionToolsDrawer(state, ui, config) {
+  const showAdvancedControls = Boolean(config?.uiDevMode);
   const drawer = document.createElement('aside');
   drawer.className = 'ui-drawer ui-drawer--left';
   drawer.id = 'session-tools-drawer';
@@ -1583,7 +1951,7 @@ function buildSessionToolsDrawer(state, ui) {
 
   const title = document.createElement('h3');
   title.className = 'ui-drawer__title';
-  title.textContent = 'Session Tools';
+  title.textContent = 'More';
 
   const closeButton = createButton({
     label: 'Close',
@@ -1656,160 +2024,6 @@ function buildSessionToolsDrawer(state, ui) {
   nameSection.appendChild(nameSave);
   nameSection.appendChild(nameHelp);
 
-  const modelSection = document.createElement('section');
-  modelSection.className = 'ui-drawer__section';
-
-  const liveModelLabel = document.createElement('label');
-  liveModelLabel.className = 'ui-field__label';
-  liveModelLabel.textContent = 'Live model';
-
-  const liveModelInput = document.createElement('input');
-  liveModelInput.className = 'ui-field__input';
-  liveModelInput.type = 'text';
-  liveModelInput.placeholder = 'e.g. gemini-3-flash-preview';
-  liveModelInput.value = state.liveModel || '';
-  liveModelInput.setAttribute('data-testid', 'live-model-input');
-
-  const liveModelHelp = document.createElement('p');
-  liveModelHelp.className = 'ui-field__help';
-  liveModelHelp.textContent = 'Used for streaming sessions.';
-
-  const textModelLabel = document.createElement('label');
-  textModelLabel.className = 'ui-field__label';
-  textModelLabel.textContent = 'Turn text model';
-
-  const textModelInput = document.createElement('input');
-  textModelInput.className = 'ui-field__input';
-  textModelInput.type = 'text';
-  textModelInput.placeholder = 'e.g. gemini-3-flash-preview';
-  textModelInput.value = state.textModel || '';
-  textModelInput.setAttribute('data-testid', 'text-model-input');
-
-  const textModelHelp = document.createElement('p');
-  textModelHelp.className = 'ui-field__help';
-  textModelHelp.textContent = 'Used for turn-based coaching.';
-
-  const ttsModelLabel = document.createElement('label');
-  ttsModelLabel.className = 'ui-field__label';
-  ttsModelLabel.textContent = 'Turn TTS model';
-
-  const ttsModelInput = document.createElement('input');
-  ttsModelInput.className = 'ui-field__input';
-  ttsModelInput.type = 'text';
-  ttsModelInput.placeholder = 'e.g. gemini-2.5-pro-preview-tts';
-  ttsModelInput.value = state.ttsModel || '';
-  ttsModelInput.setAttribute('data-testid', 'tts-model-input');
-
-  const ttsModelHelp = document.createElement('p');
-  ttsModelHelp.className = 'ui-field__help';
-  ttsModelHelp.textContent = 'Used for turn-based voice output.';
-
-  const voiceOutputLabel = document.createElement('label');
-  voiceOutputLabel.className = 'ui-field__label';
-  voiceOutputLabel.textContent = 'Coach audio output';
-
-  const voiceOutputSelect = document.createElement('select');
-  voiceOutputSelect.className = 'ui-field__input';
-  voiceOutputSelect.setAttribute('data-testid', 'voice-output-select');
-
-  [
-    { value: 'auto', label: 'Auto (prefer server audio)' },
-    { value: 'browser', label: 'Browser TTS' },
-    { value: 'server', label: 'Server audio only' }
-  ].forEach((option) => {
-    const opt = document.createElement('option');
-    opt.value = option.value;
-    opt.textContent = option.label;
-    voiceOutputSelect.appendChild(opt);
-  });
-  voiceOutputSelect.value = state.voiceOutputMode || 'auto';
-
-  const voiceOutputHelp = document.createElement('p');
-  voiceOutputHelp.className = 'ui-field__help';
-  voiceOutputHelp.textContent = 'Auto falls back to browser speech if server audio is missing.';
-
-  const resetModelsRow = document.createElement('div');
-  resetModelsRow.className = 'ui-drawer__row';
-
-  const resetModelsButton = createButton({
-    label: 'Reset models',
-    variant: 'ghost',
-    size: 'sm',
-    attrs: { 'data-testid': 'reset-models' }
-  });
-
-  resetModelsRow.appendChild(resetModelsButton);
-
-  modelSection.appendChild(liveModelLabel);
-  modelSection.appendChild(liveModelInput);
-  modelSection.appendChild(liveModelHelp);
-  modelSection.appendChild(textModelLabel);
-  modelSection.appendChild(textModelInput);
-  modelSection.appendChild(textModelHelp);
-  modelSection.appendChild(ttsModelLabel);
-  modelSection.appendChild(ttsModelInput);
-  modelSection.appendChild(ttsModelHelp);
-  modelSection.appendChild(voiceOutputLabel);
-  modelSection.appendChild(voiceOutputSelect);
-  modelSection.appendChild(voiceOutputHelp);
-  modelSection.appendChild(resetModelsRow);
-
-  const questionSection = document.createElement('section');
-  questionSection.className = 'ui-drawer__section';
-
-  const questionLabel = document.createElement('label');
-  questionLabel.className = 'ui-field__label';
-  questionLabel.textContent = 'Add known question';
-
-  const questionInput = document.createElement('textarea');
-  questionInput.className = 'ui-field__input ui-field__input--textarea';
-  questionInput.placeholder = 'Paste the question the interviewer will ask.';
-  questionInput.setAttribute('data-testid', 'custom-question-input');
-
-  const positionLabel = document.createElement('label');
-  positionLabel.className = 'ui-field__label';
-  positionLabel.textContent = 'Insert position';
-
-  const positionInput = document.createElement('input');
-  positionInput.className = 'ui-field__input ui-field__input--number';
-  positionInput.type = 'number';
-  positionInput.min = '1';
-  positionInput.value = '1';
-  positionInput.setAttribute('data-testid', 'custom-question-position');
-
-  const questionRow = document.createElement('div');
-  questionRow.className = 'ui-drawer__row';
-
-  const addAndJump = createButton({
-    label: 'Add & jump',
-    variant: 'primary',
-    size: 'sm',
-    disabled: true,
-    attrs: { 'data-testid': 'custom-question-add-jump' }
-  });
-
-  const addOnly = createButton({
-    label: 'Add only',
-    variant: 'ghost',
-    size: 'sm',
-    disabled: true,
-    attrs: { 'data-testid': 'custom-question-add' }
-  });
-
-  questionRow.appendChild(addAndJump);
-  questionRow.appendChild(addOnly);
-
-  const questionHelp = document.createElement('p');
-  questionHelp.className = 'ui-field__help';
-  questionHelp.textContent = 'Positions are 1-based in the question list.';
-
-  questionSection.appendChild(questionLabel);
-  questionSection.appendChild(questionInput);
-  questionSection.appendChild(positionLabel);
-  questionSection.appendChild(positionInput);
-  questionSection.appendChild(questionRow);
-  questionSection.appendChild(questionHelp);
-
   const exportSection = document.createElement('section');
   exportSection.className = 'ui-drawer__section';
 
@@ -1849,36 +2063,215 @@ function buildSessionToolsDrawer(state, ui) {
   exportSection.appendChild(exportButton);
   exportSection.appendChild(exportHelp);
 
-  const restartSection = document.createElement('section');
-  restartSection.className = 'ui-drawer__section';
-
-  const restartLabel = document.createElement('label');
-  restartLabel.className = 'ui-field__label';
-  restartLabel.textContent = 'Restart interview';
-
-  const restartButton = createButton({
-    label: 'Restart',
-    variant: 'ghost',
-    size: 'sm',
-    disabled: true,
-    attrs: { 'data-testid': 'restart-interview' }
-  });
-
-  const restartHelp = document.createElement('p');
-  restartHelp.className = 'ui-field__help';
-  restartHelp.textContent = 'Enabled after a session starts.';
-
-  restartSection.appendChild(restartLabel);
-  restartSection.appendChild(restartButton);
-  restartSection.appendChild(restartHelp);
-
   drawer.appendChild(header);
   drawer.appendChild(sessionSection);
   drawer.appendChild(nameSection);
-  drawer.appendChild(modelSection);
-  drawer.appendChild(questionSection);
   drawer.appendChild(exportSection);
-  drawer.appendChild(restartSection);
+
+  if (showAdvancedControls) {
+    const advancedTitle = document.createElement('h3');
+    advancedTitle.className = 'ui-drawer__title';
+    advancedTitle.textContent = 'Advanced';
+
+    const modelSection = document.createElement('section');
+    modelSection.className = 'ui-drawer__section';
+
+    const liveModelLabel = document.createElement('label');
+    liveModelLabel.className = 'ui-field__label';
+    liveModelLabel.textContent = 'Live model';
+
+    const liveModelInput = document.createElement('input');
+    liveModelInput.className = 'ui-field__input';
+    liveModelInput.type = 'text';
+    liveModelInput.placeholder = 'e.g. gemini-3-flash-preview';
+    liveModelInput.value = state.liveModel || '';
+    liveModelInput.setAttribute('data-testid', 'live-model-input');
+
+    const liveModelHelp = document.createElement('p');
+    liveModelHelp.className = 'ui-field__help';
+    liveModelHelp.textContent = 'Used for streaming sessions.';
+
+    const textModelLabel = document.createElement('label');
+    textModelLabel.className = 'ui-field__label';
+    textModelLabel.textContent = 'Turn text model';
+
+    const textModelInput = document.createElement('input');
+    textModelInput.className = 'ui-field__input';
+    textModelInput.type = 'text';
+    textModelInput.placeholder = 'e.g. gemini-3-flash-preview';
+    textModelInput.value = state.textModel || '';
+    textModelInput.setAttribute('data-testid', 'text-model-input');
+
+    const textModelHelp = document.createElement('p');
+    textModelHelp.className = 'ui-field__help';
+    textModelHelp.textContent = 'Used for turn-based coaching.';
+
+    const ttsModelLabel = document.createElement('label');
+    ttsModelLabel.className = 'ui-field__label';
+    ttsModelLabel.textContent = 'Turn TTS model';
+
+    const ttsModelInput = document.createElement('input');
+    ttsModelInput.className = 'ui-field__input';
+    ttsModelInput.type = 'text';
+    ttsModelInput.placeholder = 'e.g. gemini-2.5-pro-preview-tts';
+    ttsModelInput.value = state.ttsModel || '';
+    ttsModelInput.setAttribute('data-testid', 'tts-model-input');
+
+    const ttsModelHelp = document.createElement('p');
+    ttsModelHelp.className = 'ui-field__help';
+    ttsModelHelp.textContent = 'Used for turn-based voice output.';
+
+    const voiceOutputLabel = document.createElement('label');
+    voiceOutputLabel.className = 'ui-field__label';
+    voiceOutputLabel.textContent = 'Coach audio output';
+
+    const voiceOutputSelect = document.createElement('select');
+    voiceOutputSelect.className = 'ui-field__input';
+    voiceOutputSelect.setAttribute('data-testid', 'voice-output-select');
+
+    [
+      { value: 'auto', label: 'Auto (prefer server audio)' },
+      { value: 'browser', label: 'Browser TTS' },
+      { value: 'server', label: 'Server audio only' }
+    ].forEach((option) => {
+      const opt = document.createElement('option');
+      opt.value = option.value;
+      opt.textContent = option.label;
+      voiceOutputSelect.appendChild(opt);
+    });
+    voiceOutputSelect.value = state.voiceOutputMode || 'auto';
+
+    const voiceOutputHelp = document.createElement('p');
+    voiceOutputHelp.className = 'ui-field__help';
+    voiceOutputHelp.textContent = 'Auto falls back to browser speech if server audio is missing.';
+
+    const resetModelsRow = document.createElement('div');
+    resetModelsRow.className = 'ui-drawer__row';
+
+    const resetModelsButton = createButton({
+      label: 'Reset models',
+      variant: 'ghost',
+      size: 'sm',
+      attrs: { 'data-testid': 'reset-models' }
+    });
+
+    resetModelsRow.appendChild(resetModelsButton);
+
+    modelSection.appendChild(liveModelLabel);
+    modelSection.appendChild(liveModelInput);
+    modelSection.appendChild(liveModelHelp);
+    modelSection.appendChild(textModelLabel);
+    modelSection.appendChild(textModelInput);
+    modelSection.appendChild(textModelHelp);
+    modelSection.appendChild(ttsModelLabel);
+    modelSection.appendChild(ttsModelInput);
+    modelSection.appendChild(ttsModelHelp);
+    modelSection.appendChild(voiceOutputLabel);
+    modelSection.appendChild(voiceOutputSelect);
+    modelSection.appendChild(voiceOutputHelp);
+    modelSection.appendChild(resetModelsRow);
+
+    const questionSection = document.createElement('section');
+    questionSection.className = 'ui-drawer__section';
+
+    const questionLabel = document.createElement('label');
+    questionLabel.className = 'ui-field__label';
+    questionLabel.textContent = 'Add known question';
+
+    const questionInput = document.createElement('textarea');
+    questionInput.className = 'ui-field__input ui-field__input--textarea';
+    questionInput.placeholder = 'Paste the question the interviewer will ask.';
+    questionInput.setAttribute('data-testid', 'custom-question-input');
+
+    const positionLabel = document.createElement('label');
+    positionLabel.className = 'ui-field__label';
+    positionLabel.textContent = 'Insert position';
+
+    const positionInput = document.createElement('input');
+    positionInput.className = 'ui-field__input ui-field__input--number';
+    positionInput.type = 'number';
+    positionInput.min = '1';
+    positionInput.value = '1';
+    positionInput.setAttribute('data-testid', 'custom-question-position');
+
+    const questionRow = document.createElement('div');
+    questionRow.className = 'ui-drawer__row';
+
+    const addAndJump = createButton({
+      label: 'Add & jump',
+      variant: 'primary',
+      size: 'sm',
+      disabled: true,
+      attrs: { 'data-testid': 'custom-question-add-jump' }
+    });
+
+    const addOnly = createButton({
+      label: 'Add only',
+      variant: 'ghost',
+      size: 'sm',
+      disabled: true,
+      attrs: { 'data-testid': 'custom-question-add' }
+    });
+
+    questionRow.appendChild(addAndJump);
+    questionRow.appendChild(addOnly);
+
+    const questionHelp = document.createElement('p');
+    questionHelp.className = 'ui-field__help';
+    questionHelp.textContent = 'Positions are 1-based in the question list.';
+
+    questionSection.appendChild(questionLabel);
+    questionSection.appendChild(questionInput);
+    questionSection.appendChild(positionLabel);
+    questionSection.appendChild(positionInput);
+    questionSection.appendChild(questionRow);
+    questionSection.appendChild(questionHelp);
+
+    const restartSection = document.createElement('section');
+    restartSection.className = 'ui-drawer__section';
+
+    const restartLabel = document.createElement('label');
+    restartLabel.className = 'ui-field__label';
+    restartLabel.textContent = 'Restart interview';
+
+    const restartButton = createButton({
+      label: 'Restart',
+      variant: 'ghost',
+      size: 'sm',
+      disabled: true,
+      attrs: { 'data-testid': 'restart-interview' }
+    });
+
+    const restartHelp = document.createElement('p');
+    restartHelp.className = 'ui-field__help';
+    restartHelp.textContent = 'Enabled after a session starts.';
+
+    restartSection.appendChild(restartLabel);
+    restartSection.appendChild(restartButton);
+    restartSection.appendChild(restartHelp);
+
+    drawer.appendChild(advancedTitle);
+    drawer.appendChild(modelSection);
+    drawer.appendChild(questionSection);
+    drawer.appendChild(restartSection);
+
+    ui.liveModelInput = liveModelInput;
+    ui.liveModelHelp = liveModelHelp;
+    ui.textModelInput = textModelInput;
+    ui.textModelHelp = textModelHelp;
+    ui.ttsModelInput = ttsModelInput;
+    ui.ttsModelHelp = ttsModelHelp;
+    ui.voiceOutputSelect = voiceOutputSelect;
+    ui.voiceOutputHelp = voiceOutputHelp;
+    ui.resetModelsButton = resetModelsButton;
+    ui.customQuestionInput = questionInput;
+    ui.customQuestionPosition = positionInput;
+    ui.customQuestionAdd = addOnly;
+    ui.customQuestionAddJump = addAndJump;
+    ui.customQuestionHelp = questionHelp;
+    ui.restartButton = restartButton;
+    ui.restartHelp = restartHelp;
+  }
 
   ui.sessionToolsDrawer = drawer;
   ui.sessionToolsBackdrop = backdrop;
@@ -1889,25 +2282,9 @@ function buildSessionToolsDrawer(state, ui) {
   ui.sessionNameInput = nameInput;
   ui.sessionNameSave = nameSave;
   ui.sessionNameHelp = nameHelp;
-  ui.liveModelInput = liveModelInput;
-  ui.liveModelHelp = liveModelHelp;
-  ui.textModelInput = textModelInput;
-  ui.textModelHelp = textModelHelp;
-  ui.ttsModelInput = ttsModelInput;
-  ui.ttsModelHelp = ttsModelHelp;
-  ui.voiceOutputSelect = voiceOutputSelect;
-  ui.voiceOutputHelp = voiceOutputHelp;
-  ui.resetModelsButton = resetModelsButton;
-  ui.customQuestionInput = questionInput;
-  ui.customQuestionPosition = positionInput;
-  ui.customQuestionAdd = addOnly;
-  ui.customQuestionAddJump = addAndJump;
-  ui.customQuestionHelp = questionHelp;
   ui.exportFormat = exportFormat;
   ui.exportTranscript = exportButton;
   ui.exportHelp = exportHelp;
-  ui.restartButton = restartButton;
-  ui.restartHelp = restartHelp;
 
   return { drawer, backdrop };
 }
@@ -2048,12 +2425,14 @@ function buildLogDashboardPanel(ui) {
   const clientDisconnects = buildCard('Client disconnects');
   const serverDisconnects = buildCard('Server disconnects');
   const geminiDisconnects = buildCard('Gemini disconnects');
+  const turnCompletionChecks = buildCard('Turn completion checks');
   const errors = buildCard('Errors');
   const errorSessions = buildCard('Error sessions');
 
   grid.appendChild(clientDisconnects.card);
   grid.appendChild(serverDisconnects.card);
   grid.appendChild(geminiDisconnects.card);
+  grid.appendChild(turnCompletionChecks.card);
   grid.appendChild(errors.card);
   grid.appendChild(errorSessions.card);
 
@@ -2061,6 +2440,7 @@ function buildLogDashboardPanel(ui) {
     clientDisconnects: clientDisconnects.valueEl,
     serverDisconnects: serverDisconnects.valueEl,
     geminiDisconnects: geminiDisconnects.valueEl,
+    turnCompletionChecks: turnCompletionChecks.valueEl,
     errors: errors.valueEl,
     errorSessions: errorSessions.valueEl
   };
@@ -2115,12 +2495,15 @@ function buildScorePanel(ui) {
 
   renderScore(ui, null);
 
-  return createPanel({
+  const panel = createPanel({
     title: 'Score Summary',
     subtitle: 'Full transcript and coaching highlights.',
     content: container,
     attrs: { 'data-testid': 'score-panel' }
   });
+  panel.tabIndex = -1;
+  ui.scorePanel = panel;
+  return panel;
 }
 
 export function buildVoiceLayout() {
@@ -2133,7 +2516,7 @@ export function buildVoiceLayout() {
     transcript: [],
     score: null,
     adapter: config.adapter,
-    voiceMode: config.voiceMode,
+    voiceMode: config.uiDevMode ? config.voiceMode : 'turn',
     voiceOutputMode: config.voiceOutputMode,
     userId: config.userId,
     liveModel: config.liveModel,
@@ -2141,11 +2524,16 @@ export function buildVoiceLayout() {
     ttsModel: config.ttsModel,
     voiceTtsLanguage: config.voiceTtsLanguage,
     turnEndDelayMs: config.voiceTurnEndDelayMs,
+    turnCompletionConfidence: config.voiceTurnCompletionConfidence,
+    turnCompletionCooldownMs: config.voiceTurnCompletionCooldownMs,
     liveMode: null,
     transport: null,
     audioCapture: null,
     audioPlayback: null,
     audioPlaybackSampleRate: null,
+    e2eCandidatePlayback: null,
+    e2eCandidatePlaybackSampleRate: null,
+    e2eCandidatePlaybackEnabled: false,
     audioFrameBuffer: null,
     audioFrameFlusher: null,
     activityDetector: null,
@@ -2155,6 +2543,9 @@ export function buildVoiceLayout() {
     speechRecognitionRestartTimer: null,
     turnEndTimer: null,
     captionFinalText: '',
+    captionDraftText: '',
+    turnReadyToSubmit: false,
+    turnAwaitingAnswer: false,
     geminiReady: false,
     sessionActive: false,
     sessionStarted: false,
@@ -2174,10 +2565,14 @@ export function buildVoiceLayout() {
     turnQueue: [],
     turnRequestActive: false,
     turnSpeaking: false,
+    turnAnswerStartedAt: null,
+    turnCompletionLastCheckAt: 0,
+    turnCompletionPending: false,
     liveAudioSeen: false,
     liveCoachPendingText: '',
     liveCoachSpeakTimer: null,
-    lastSpokenCoachText: ''
+    lastSpokenCoachText: '',
+    lastCoachQuestion: ''
   };
 
   const ui = {};
@@ -2414,10 +2809,8 @@ export function buildVoiceLayout() {
     if (typeof summary?.error_event_count === 'number') {
       return summary.error_event_count;
     }
-    const serverDisconnects = summary?.server_disconnects || 0;
-    const geminiDisconnects = summary?.gemini_disconnects || 0;
     const errorCount = summary?.error_count || 0;
-    return errorCount + serverDisconnects + geminiDisconnects;
+    return errorCount;
   }
 
   function updateLogCharts(summary) {
@@ -2455,11 +2848,13 @@ export function buildVoiceLayout() {
       const clientDisconnects = summary.client_disconnects || 0;
       const serverDisconnects = summary.server_disconnects || 0;
       const geminiDisconnects = summary.gemini_disconnects || 0;
+      const turnCompletionChecks = summary.turn_completion_checks || 0;
       const errors = getErrorEventCount(summary);
       const errorSessions = summary.error_session_count || 0;
       ui.metricsCards.clientDisconnects.textContent = formatCount(clientDisconnects);
       ui.metricsCards.serverDisconnects.textContent = formatCount(serverDisconnects);
       ui.metricsCards.geminiDisconnects.textContent = formatCount(geminiDisconnects);
+      ui.metricsCards.turnCompletionChecks.textContent = formatCount(turnCompletionChecks);
       ui.metricsCards.errors.textContent = formatCount(errors);
       ui.metricsCards.errorSessions.textContent = formatCount(errorSessions);
       updateLogCharts(summary);
@@ -2487,7 +2882,9 @@ export function buildVoiceLayout() {
   rightColumn.className = 'layout-stack';
   rightColumn.appendChild(buildQuestionsPanel(ui));
   rightColumn.appendChild(buildTranscriptPanel(ui));
-  rightColumn.appendChild(buildLogDashboardPanel(ui));
+  if (config.uiDevMode) {
+    rightColumn.appendChild(buildLogDashboardPanel(ui));
+  }
   rightColumn.appendChild(buildScorePanel(ui));
 
   const layout = document.createElement('main');
@@ -2495,7 +2892,7 @@ export function buildVoiceLayout() {
   layout.appendChild(leftColumn);
   layout.appendChild(rightColumn);
 
-  const { drawer, backdrop } = buildSessionToolsDrawer(state, ui);
+  const { drawer, backdrop } = buildSessionToolsDrawer(state, ui, config);
   layout.appendChild(drawer);
   layout.appendChild(backdrop);
 
@@ -2819,7 +3216,9 @@ export function buildVoiceLayout() {
   });
 
   updateSessionToolsState();
-  startLogSummaryPolling();
+  if (config.uiDevMode) {
+    startLogSummaryPolling();
+  }
 
   return layout;
 }

@@ -62,7 +62,7 @@ test('candidate interview flow (gemini live)', async ({ page }) => {
   });
 
   await page.getByTestId('generate-questions').click();
-  await expect(page.getByTestId('start-interview')).toBeEnabled();
+  await expect(page.getByTestId('start-interview')).toBeEnabled({ timeout: 120000 });
 
   await page.getByTestId('start-interview').click();
   await expect(page.getByTestId('session-status')).toHaveText('Live', { timeout: 60000 });

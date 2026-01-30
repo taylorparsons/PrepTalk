@@ -87,7 +87,7 @@ class GeminiInterviewAdapter(InterviewAdapter):
         job_text = extract_document_text(job)
         return generate_interview_questions(
             api_key=self.api_key,
-            model=self.settings.text_model,
+            model=self.settings.interview_text_model,
             resume_text=resume_text,
             job_text=job_text,
             role_title=role_title
@@ -105,7 +105,7 @@ class GeminiInterviewAdapter(InterviewAdapter):
         self._ensure_configured()
         return score_interview_transcript(
             api_key=self.api_key,
-            model=self.settings.text_model,
+            model=self.settings.interview_text_model,
             transcript=transcript,
             role_title=getattr(record, "role_title", None),
             focus_areas=getattr(record, "focus_areas", None)

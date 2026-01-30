@@ -205,7 +205,7 @@ Task tracking
 - Transport-level reconnect: the WebSocket client retries if the connection drops.
 - Gemini session reconnect: on `gemini-disconnected`, the UI retries `start` up to 3 times.
 - On reconnect, the server rebuilds the system prompt using the locally stored transcript memory to preserve context.
-- No model fallback: if Gemini Live returns a policy error (e.g., 1008), the session ends and the user must restart. Set `GEMINI_LIVE_MODEL` to a supported model to stabilize Live sessions.
+- Model fallback: if Gemini Live returns a policy error (e.g., 1008 for `bidiGenerateContent`), the server retries with `GEMINI_LIVE_MODEL_FALLBACKS` and logs the effective model.
 
 ## Logging & Observability
 - Log per request with short, user-friendly fields; use interview_id hash only (5-char alphanumeric).

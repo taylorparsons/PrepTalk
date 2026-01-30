@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
-const isLive = Boolean(process.env.E2E_LIVE);
+const e2eLiveRaw = (process.env.E2E_LIVE || '').trim().toLowerCase();
+const isLive = e2eLiveRaw === '1' || e2eLiveRaw === 'true' || e2eLiveRaw === 'yes';
 const adapter = isLive ? 'gemini' : 'mock';
 const launchOptions = isLive
   ? { args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] }
@@ -11,6 +12,8 @@ const baseURL = process.env.E2E_BASE_URL || `http://localhost:${port}`;
 export default defineConfig({
   testDir: './tests/e2e',
   timeout: 60000,
+  workers: isLive ? 1 : undefined,
+  fullyParallel: !isLive,
   expect: {
     timeout: 10000
   },

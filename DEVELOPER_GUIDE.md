@@ -66,9 +66,12 @@ Add values to `.env` as needed:
 - `INTERVIEW_ADAPTER` (mock or gemini)
 - `GEMINI_API_KEY`
 - `GEMINI_LIVE_MODEL`
+- `GEMINI_LIVE_MODEL_FALLBACKS`
+- `GEMINI_INTERVIEW_TEXT_MODEL`
 - `GEMINI_TEXT_MODEL`
 - `GEMINI_LIVE_RESUME`
 - `VOICE_MODE`
+- Live streaming UI option is only available when `UI_DEV_MODE=1`.
 - `VOICE_TTS_ENABLED`
 - `GEMINI_TTS_MODEL`
 - `GEMINI_TTS_MODEL_FALLBACKS`
@@ -77,7 +80,10 @@ Add values to `.env` as needed:
 - `VOICE_TTS_TIMEOUT_MS`
 - `VOICE_TTS_WAIT_MS`
 - `VOICE_TURN_END_DELAY_MS`
+- `VOICE_TURN_COMPLETION_CONFIDENCE`
+- `VOICE_TURN_COMPLETION_COOLDOWN_MS`
 - `VOICE_OUTPUT_MODE`
+- `UI_DEV_MODE`
 - `SESSION_STORE_DIR`
 - `APP_USER_ID`
 
@@ -87,6 +93,9 @@ Add values to `.env` as needed:
 3. Start live session; audio and transcript stream over WebSocket.
 4. Stop session; score and summary are generated.
 5. Export study guide as PDF or TXT.
+
+Turn mode confirmation:
+- In `VOICE_MODE=turn`, after the minimum answer window, the UI checks Gemini for completion. If confidence meets the threshold, it prompts “Are you done?” and waits for **Submit Answer** or **Continue Speaking** before sending the turn.
 
 ## Question Tracking
 - Each question has a status: not_started, started, answered.
@@ -128,10 +137,15 @@ E2E_LIVE=1 E2E_LIVE_LONG=1 ./run.sh e2e
 ```
 Trace output: `test-results/live-interview-long-*/trace.zip` (open with `npx playwright show-trace ...`).
 
+Real-file live E2E (optional):
+- Set `E2E_RESUME_PATH` and `E2E_JOB_PATH` to local files (docx/pdf).
+- Optional tuning: `E2E_LIVE_REAL_DURATION_MS`, `E2E_LIVE_REAL_ANSWER_MS`, `E2E_LIVE_REAL_ANSWER_PAUSE_MS`, `E2E_LIVE_MALE_FREQUENCY_HZ`.
+
 Manual voice smoke test:
 - Follow `docs/testing/voice-smoke-test.md`.
 
 ## Troubleshooting
 - Gemini Live errors: verify `GEMINI_API_KEY` and `GEMINI_LIVE_MODEL`.
-- Text model errors: verify `GEMINI_TEXT_MODEL` supports generateContent.
+- Interview text model errors: verify `GEMINI_INTERVIEW_TEXT_MODEL` supports generateContent.
+- Turn-mode text model errors: verify `GEMINI_TEXT_MODEL` supports generateContent.
 - Mic issues: check browser permissions and device access.

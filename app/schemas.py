@@ -49,6 +49,46 @@ class VoiceTurnResponse(BaseModel):
     coach_audio_mime: str | None = None
 
 
+class VoiceIntroRequest(BaseModel):
+    interview_id: str
+    text_model: str | None = None
+    tts_model: str | None = None
+
+
+class VoiceIntroResponse(BaseModel):
+    interview_id: str
+    coach: TranscriptEntry
+    coach_audio: str | None = None
+    coach_audio_mime: str | None = None
+
+
+class VoiceFeedbackRequest(BaseModel):
+    interview_id: str
+    answer: str = Field(min_length=1)
+    question: str | None = None
+    text_model: str | None = None
+
+
+class VoiceFeedbackResponse(BaseModel):
+    interview_id: str
+    feedback: TranscriptEntry
+
+
+class VoiceTurnCompletionRequest(BaseModel):
+    interview_id: str
+    question: str = Field(min_length=1)
+    answer: str = Field(min_length=1)
+    text_model: str | None = None
+
+
+class VoiceTurnCompletionResponse(BaseModel):
+    interview_id: str
+    decision: str
+    confidence: float
+    attempted: bool
+    reason: str | None = None
+
+
 class InterviewSummaryResponse(BaseModel):
     interview_id: str
     role_title: str | None = None
@@ -143,6 +183,7 @@ class LogSummaryResponse(BaseModel):
     client_disconnects: int = 0
     server_disconnects: int = 0
     gemini_disconnects: int = 0
+    turn_completion_checks: int = 0
     error_count: int = 0
     error_event_count: int = 0
     error_session_count: int = 0

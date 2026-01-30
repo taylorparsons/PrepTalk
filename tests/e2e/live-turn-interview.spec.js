@@ -64,10 +64,13 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
   });
 
   await page.getByTestId('generate-questions').click();
-  await expect(page.getByTestId('start-interview')).toBeEnabled();
+  await expect(page.getByTestId('start-interview')).toBeEnabled({
+    timeout: isLive ? 30000 : 10000
+  });
 
   await page.getByTestId('start-interview').click();
-  await expect(page.getByTestId('session-status')).toHaveText('Listening');
+  await expect(page.getByTestId('session-status')).toHaveText(/Welcoming|Listening/);
+  await expect(page.getByTestId('session-status')).toHaveText('Listening', { timeout: 60000 });
 
   await page.waitForFunction(() => Boolean(window.__e2eQueueTurn));
   await page.evaluate(() => window.__e2eQueueTurn?.('Hello from the e2e test.'));
@@ -81,5 +84,7 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
   ).toBeGreaterThan(0);
 
   await page.getByTestId('stop-interview').click();
-  await expect(page.getByTestId('score-value')).not.toHaveText('--');
+  await expect(page.getByTestId('score-value')).not.toHaveText('--', {
+    timeout: isLive ? 60000 : 10000
+  });
 });
