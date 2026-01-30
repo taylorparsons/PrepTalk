@@ -21,17 +21,17 @@ Script modes (`./run.sh`):
 
 Adapter modes (set in `.env`):
 - `INTERVIEW_ADAPTER=mock`: mock questions, transcript, scoring
-- `INTERVIEW_ADAPTER=gemini`: Gemini Live + Gemini text scoring (requires `GEMINI_API_KEY`)
+- `INTERVIEW_ADAPTER=gemini`: Gemini text + turn-based TTS coaching (requires `GEMINI_API_KEY`)
 
 ## Environment
 
 - `INTERVIEW_ADAPTER`: `mock` (default) or `gemini`
 - `GEMINI_API_KEY`: required when `INTERVIEW_ADAPTER=gemini`
-- `GEMINI_LIVE_MODEL`: override live audio model (default `gemini-2.5-flash-native-audio-preview-12-2025`)
-- `GEMINI_LIVE_MODEL_FALLBACKS`: comma-separated fallback live audio models
+- `GEMINI_LIVE_MODEL`: reserved for live streaming (feature branch only)
+- `GEMINI_LIVE_MODEL_FALLBACKS`: comma-separated fallback live audio models (feature branch only)
 - `GEMINI_INTERVIEW_TEXT_MODEL`: override text model for question generation + scoring (default `gemini-3-pro-preview`)
 - `GEMINI_TEXT_MODEL`: override text model for turn-based coaching (default `gemini-2.5-flash`)
-- `VOICE_MODE`: `live` or `turn` for voice flow (default `live`; live option is hidden unless `UI_DEV_MODE=1`)
+- `VOICE_MODE`: `turn` only on `main` (live streaming is disabled)
 - `VOICE_TTS_ENABLED`: enable server TTS for turn mode (default `1` when `INTERVIEW_ADAPTER=gemini`, else `0`)
 - `GEMINI_TTS_MODEL`: turn-mode TTS model (default `gemini-2.5-flash-native-audio-preview-12-2025`)
 - `GEMINI_TTS_MODEL_FALLBACKS`: comma-separated fallback TTS models (default `gemini-2.5-pro-preview-tts`)
@@ -43,8 +43,8 @@ Adapter modes (set in `.env`):
 - `VOICE_TURN_COMPLETION_CONFIDENCE`: confidence threshold for prompting “Are you done?” (default `0.9`)
 - `VOICE_TURN_COMPLETION_COOLDOWN_MS`: minimum delay between completion checks (default `0`)
 - `VOICE_OUTPUT_MODE`: `browser`, `server`, or `auto` for turn audio output (default `auto` when `INTERVIEW_ADAPTER=gemini`, else `browser`)
-- `UI_DEV_MODE`: show advanced UI controls (model overrides, Live Stats, interrupt toggle) (default `0`)
-- `GEMINI_LIVE_RESUME`: enable auth-token session resumption for transient drops (default `1`)
+- `UI_DEV_MODE`: reserved for feature-branch debug controls (ignored on `main`)
+- `GEMINI_LIVE_RESUME`: live session resumption (feature branch only)
 - `APP_API_BASE`: API base path for the UI (default `/api`)
 - `SESSION_STORE_DIR`: session storage directory (default `app/session_store`)
 - `APP_USER_ID`: default user id for session storage (default `local`)
@@ -59,7 +59,6 @@ Example `.env` for turn mode with browser TTS:
 ```bash
 GEMINI_API_KEY=your-key
 INTERVIEW_ADAPTER=gemini
-GEMINI_LIVE_MODEL=gemini-2.5-flash-native-audio-preview-12-2025
 GEMINI_INTERVIEW_TEXT_MODEL=gemini-3-pro-preview
 GEMINI_TEXT_MODEL=gemini-2.5-flash
 VOICE_MODE=turn
@@ -106,11 +105,6 @@ select interview_id, count(*) from awesome_log group by interview_id order by co
 select event, count(*) from awesome_log where upper(log_level) = 'ERROR' or status = 'error' group by event;
 ```
 
-## Live log dashboard
-
-The UI includes a Live Stats panel that polls `/api/logs/summary` for disconnects
-and error counts. Client-side disconnects are logged via `/api/telemetry`.
-
 ## Tests
 
 UI component tests (Vitest):
@@ -128,7 +122,7 @@ E2E tests (Playwright, starts the app automatically):
 npm run test:e2e
 ```
 
-Optional live Gemini E2E (requires `GEMINI_API_KEY`):
+Optional live Gemini E2E (feature branch only):
 ```bash
 E2E_LIVE=1 GEMINI_API_KEY=your-key npm run test:e2e
 ```

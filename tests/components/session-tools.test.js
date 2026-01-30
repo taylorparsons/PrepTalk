@@ -17,6 +17,8 @@ describe('session tools drawer', () => {
     expect(layout.querySelector('[data-testid="tts-model-input"]')).toBeFalsy();
     expect(layout.querySelector('[data-testid="voice-output-select"]')).toBeFalsy();
     expect(Array.from(layout.querySelectorAll('.ui-panel__title')).map((node) => node.textContent)).not.toContain('Live Stats');
+    expect(layout.querySelector('[data-testid="custom-question-input"]')).toBeTruthy();
+    expect(layout.querySelector('[data-testid="restart-interview"]')).toBeTruthy();
   });
 
   it('renders session tools controls and drawer', () => {
@@ -59,18 +61,6 @@ describe('session tools drawer', () => {
     expect(mute.textContent).toContain('Unmute');
   });
 
-  it('toggles barge-in state label', () => {
-    window.__APP_CONFIG__ = { uiDevMode: true };
-    const layout = buildVoiceLayout();
-    document.body.appendChild(layout);
-
-    const toggle = layout.querySelector('[data-testid="barge-in-toggle"]');
-    expect(toggle.textContent).toContain('Interrupt On');
-
-    toggle.click();
-    expect(toggle.textContent).toContain('Interrupt Off');
-  });
-
   it('disables transcript export and restart by default', () => {
     const layout = buildVoiceLayout();
     document.body.appendChild(layout);
@@ -82,33 +72,6 @@ describe('session tools drawer', () => {
     expect(exportButton.disabled).toBe(true);
     expect(exportButton.textContent).toContain('Export PDF');
     expect(exportFormat.value).toBe('pdf');
-    expect(restartButton).toBeFalsy();
-  });
-
-  it('resets model inputs to defaults', () => {
-    window.__APP_CONFIG__ = {
-      uiDevMode: true,
-      liveModel: 'live-default',
-      textModel: 'text-default',
-      ttsModel: 'tts-default'
-    };
-    const layout = buildVoiceLayout();
-    document.body.appendChild(layout);
-
-    const liveInput = layout.querySelector('[data-testid="live-model-input"]');
-    const textInput = layout.querySelector('[data-testid="text-model-input"]');
-    const ttsInput = layout.querySelector('[data-testid="tts-model-input"]');
-    const resetButton = layout.querySelector('[data-testid="reset-models"]');
-
-    liveInput.value = 'live-custom';
-    textInput.value = 'text-custom';
-    ttsInput.value = 'tts-custom';
-
-    resetButton.click();
-
-    expect(liveInput.value).toBe('live-default');
-    expect(textInput.value).toBe('text-default');
-    expect(ttsInput.value).toBe('tts-default');
-
+    expect(restartButton.disabled).toBe(true);
   });
 });

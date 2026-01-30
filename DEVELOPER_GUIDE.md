@@ -1,14 +1,14 @@
 # Developer Guide
 
 ## Overview
-This repo is a voice-first interview practice app built with FastAPI and a vanilla JS UI. It uses Gemini text models for question generation and scoring, and Gemini Live for real-time audio and transcript streaming.
+This repo is a voice-first interview practice app built with FastAPI and a vanilla JS UI. It uses Gemini text models for question generation and scoring, plus Gemini TTS for turn-based coaching. Live streaming is deferred on `main`.
 
 ## Architecture
 - Backend: FastAPI in `app/`, with routes in `app/api.py` and websocket handling in `app/ws.py`.
 - Frontend: static app in `app/static/` with the main layout in `app/static/js/ui.js`.
 - Gemini text: `app/services/gemini_text.py` for question generation and scoring.
-- Gemini live: `app/services/gemini_live.py` for streaming audio + transcript.
-- Live system prompt: `app/services/live_context.py` uses resume/job/questions.
+- Gemini live: `app/services/gemini_live.py` remains for future stabilization (not exposed in the main UI).
+- Live system prompt: `app/services/live_context.py` uses resume/job/questions (feature branch only).
 - Session store: `app/services/store.py` writes per-user JSON under `app/session_store/`.
 - Exports: `app/services/pdf_service.py` builds PDF and TXT study guides.
 
@@ -71,7 +71,7 @@ Add values to `.env` as needed:
 - `GEMINI_TEXT_MODEL`
 - `GEMINI_LIVE_RESUME`
 - `VOICE_MODE`
-- Live streaming UI option is only available when `UI_DEV_MODE=1`.
+- Live streaming UI option is disabled on `main`.
 - `VOICE_TTS_ENABLED`
 - `GEMINI_TTS_MODEL`
 - `GEMINI_TTS_MODEL_FALLBACKS`
@@ -90,7 +90,7 @@ Add values to `.env` as needed:
 ## Session Flow
 1. Upload resume + job description.
 2. Backend generates questions and focus areas.
-3. Start live session; audio and transcript stream over WebSocket.
+3. Start turn-based session; coaching and transcript update during the session.
 4. Stop session; score and summary are generated.
 5. Export study guide as PDF or TXT.
 
@@ -107,8 +107,7 @@ Turn mode confirmation:
 - Logs are written to `logs/app.log` and archived on startup.
 - IDs are short hashes for readability.
 - Key events include interview create, live connect, and model calls.
-- The UI includes a Live Stats panel that polls `/api/logs/summary` and sends
-  client disconnect telemetry to `/api/telemetry`.
+- Live Stats panel is removed from the main UI; log endpoints remain for debugging.
 
 ## Tests
 UI (Vitest):
@@ -126,7 +125,7 @@ E2E (Playwright):
 ./run.sh e2e
 ```
 
-Live E2E (optional):
+Live E2E (feature branch only):
 ```bash
 E2E_LIVE=1 ./run.sh e2e
 ```

@@ -27,11 +27,11 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
     buffer: jobBuffer
   });
 
-  await expect(page.locator('.ui-caption__label')).toHaveText('Live captions (local, en-US)');
+  await expect(page.locator('.ui-caption__label')).toHaveText('Captions (local, en-US)');
   await expect(page.locator('.ui-caption__text')).toHaveText('Captions idle.');
 
   await page.getByTestId('generate-questions').click();
-  await expect(page.getByTestId('question-list')).toContainText('Walk me through');
+  await expect(page.getByTestId('question-list')).toContainText(/walk me through/i);
   await expect(page.getByTestId('start-interview')).toBeEnabled();
 
   await page.getByTestId('start-interview').click();
