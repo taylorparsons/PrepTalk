@@ -49,6 +49,7 @@ MOCK_SCORE = {
 }
 
 MOCK_VOICE_REPLY = "Thanks for that. Let's move to the next question."
+MOCK_VOICE_FEEDBACK = "Nice structure there. Your answer stayed focused on impact and clarity."
 
 
 def build_mock_tts_audio() -> tuple[bytes, str]:

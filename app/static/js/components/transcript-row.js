@@ -2,6 +2,7 @@ import { renderMarkdownInto } from '../markdown.js';
 
 const ROLE_MAP = {
   coach: 'Coach',
+  coach_feedback: 'Coach note',
   assistant: 'Coach',
   ai: 'Coach',
   candidate: 'You',

@@ -9,10 +9,10 @@ from ..logging_config import get_logger, short_id
 from ..settings import load_settings
 from .adapters import get_adapter
 from .document_text import DocumentInput, extract_document_text
-from .gemini_text import generate_coach_reply
+from .gemini_text import generate_coach_reply, generate_turn_feedback, evaluate_turn_completion
 from .gemini_tts import generate_tts_audio_with_fallbacks
 from .live_context import build_live_system_prompt
-from .mock_data import MOCK_VOICE_REPLY, build_mock_tts_audio
+from .mock_data import MOCK_VOICE_REPLY, MOCK_VOICE_FEEDBACK, build_mock_tts_audio
 from .store import store
 from .pdf_service import build_study_guide_pdf, build_study_guide_text as build_study_guide_text_output
 
@@ -76,6 +76,126 @@ def start_live_session(interview_id: str, user_id: str | None = None) -> dict:
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _build_intro_prompt(record) -> str:
+    role_title = (record.role_title or "").strip()
+    role_instruction = (
+        "Ask the candidate to confirm the role before proceeding to the first interview question."
+        if not role_title
+        else f"The target role is {role_title}."
+    )
+    return (
+        "The interview is about to begin. Introduce yourself as the interview coach and welcome the candidate. "
+        "Use the candidate's name if you can infer it from the resume; otherwise use a generic greeting. "
+        f"{role_instruction} "
+        "If the company is unclear from the job description, ask for it. "
+        "After the welcome, ask exactly one interview question from the provided list."
+    )
+
+
+def _latest_coach_prompt(record) -> str:
+    transcript = list(getattr(record, "transcript", []) or [])
+    for entry in reversed(transcript):
+        if entry.get("role") == "coach":
+            return (entry.get("text") or "").strip()
+    return ""
+
+
+def run_voice_intro(
+    interview_id: str,
+    user_id: str | None = None,
+    text_model: str | None = None,
+    tts_model: str | None = None
+) -> dict:
+    record = store.get(interview_id, user_id)
+    if not record:
+        raise KeyError("Interview not found")
+
+    text_model_override = (text_model or "").strip() or None
+    tts_model_override = (tts_model or "").strip() or None
+
+    adapter = get_adapter()
+    if adapter.name == "gemini":
+        if not getattr(adapter, "api_key", None):
+            raise RuntimeError("GEMINI_API_KEY is required for the Gemini adapter.")
+        system_prompt = build_live_system_prompt(record)
+        coach_text = generate_coach_reply(
+            api_key=adapter.api_key,
+            model=text_model_override or adapter.settings.text_model,
+            system_prompt=system_prompt,
+            candidate_text=_build_intro_prompt(record)
+        )
+    else:
+        coach_text = "Hi, I'm your interview coach. Let's get started. Tell me about yourself."
+
+    coach_cleaned = (coach_text or "").strip() or "Welcome. Let's begin."
+    coach_entry = {
+        "role": "coach",
+        "text": coach_cleaned,
+        "timestamp": _now_iso()
+    }
+    store.append_transcript_entry(interview_id, coach_entry, user_id)
+
+    audio_payload = None
+    audio_mime = None
+    settings = getattr(adapter, "settings", None) or load_settings()
+    if settings.voice_tts_enabled and settings.voice_output_mode != "browser":
+        try:
+            if adapter.name == "gemini":
+                if not getattr(adapter, "api_key", None):
+                    raise RuntimeError("GEMINI_API_KEY is required for Gemini TTS.")
+                models = list(getattr(settings, "voice_tts_models", ())) or [settings.voice_tts_model]
+                if tts_model_override:
+                    models = [tts_model_override, *[model for model in models if model != tts_model_override]]
+                wait_ms = getattr(settings, "voice_tts_wait_ms", 0)
+                audio_bytes = None
+                if wait_ms > 0:
+                    future = _TTS_EXECUTOR.submit(
+                        generate_tts_audio_with_fallbacks,
+                        api_key=adapter.api_key,
+                        models=models,
+                        text=coach_cleaned,
+                        voice_name=settings.voice_tts_voice or None,
+                        language_code=settings.voice_tts_language or None,
+                        timeout_ms=getattr(settings, "voice_tts_timeout_ms", None)
+                    )
+                    try:
+                        audio_bytes, audio_mime, _ = future.result(timeout=wait_ms / 1000)
+                    except FutureTimeout:
+                        future.cancel()
+                        logger.warning(
+                            "event=voice_intro_tts status=timeout interview_id=%s user_id=%s wait_ms=%s",
+                            short_id(interview_id),
+                            short_id(user_id),
+                            wait_ms
+                        )
+                else:
+                    audio_bytes, audio_mime, _ = generate_tts_audio_with_fallbacks(
+                        api_key=adapter.api_key,
+                        models=models,
+                        text=coach_cleaned,
+                        voice_name=settings.voice_tts_voice or None,
+                        language_code=settings.voice_tts_language or None,
+                        timeout_ms=getattr(settings, "voice_tts_timeout_ms", None)
+                    )
+            else:
+                audio_bytes, audio_mime = build_mock_tts_audio()
+            if audio_bytes:
+                audio_payload = base64.b64encode(audio_bytes).decode("ascii")
+        except Exception:
+            logger.exception(
+                "event=voice_intro_tts status=error interview_id=%s user_id=%s",
+                short_id(interview_id),
+                short_id(user_id)
+            )
+
+    return {
+        "interview_id": interview_id,
+        "coach": coach_entry,
+        "coach_audio": audio_payload,
+        "coach_audio_mime": audio_mime
+    }
 
 
 def run_voice_turn(
@@ -184,6 +304,100 @@ def run_voice_turn(
         "coach": coach_entry,
         "coach_audio": audio_payload,
         "coach_audio_mime": audio_mime
+    }
+
+
+def run_voice_feedback(
+    interview_id: str,
+    answer_text: str,
+    question_text: str | None = None,
+    user_id: str | None = None,
+    text_model: str | None = None
+) -> dict:
+    record = store.get(interview_id, user_id)
+    if not record:
+        raise KeyError("Interview not found")
+
+    cleaned_answer = (answer_text or "").strip()
+    if not cleaned_answer:
+        raise ValueError("Answer text is required")
+
+    cleaned_question = (question_text or "").strip() or _latest_coach_prompt(record)
+    text_model_override = (text_model or "").strip() or None
+
+    adapter = get_adapter()
+    if adapter.name == "gemini":
+        if not getattr(adapter, "api_key", None):
+            raise RuntimeError("GEMINI_API_KEY is required for the Gemini adapter.")
+        feedback_text = generate_turn_feedback(
+            api_key=adapter.api_key,
+            model=text_model_override or adapter.settings.text_model,
+            role_title=record.role_title,
+            focus_areas=list(record.focus_areas or []),
+            resume_text=record.resume_text or "",
+            job_text=record.job_text or "",
+            question_text=cleaned_question,
+            answer_text=cleaned_answer
+        )
+    else:
+        feedback_text = MOCK_VOICE_FEEDBACK
+
+    feedback_cleaned = (feedback_text or "").strip() or "Thanks for sharing that."
+    feedback_entry = {
+        "role": "coach_feedback",
+        "text": feedback_cleaned,
+        "timestamp": _now_iso()
+    }
+    store.append_transcript_entry(interview_id, feedback_entry, user_id)
+
+    return {
+        "interview_id": interview_id,
+        "feedback": feedback_entry
+    }
+
+
+def run_turn_completion_check(
+    interview_id: str,
+    question_text: str,
+    answer_text: str,
+    user_id: str | None = None,
+    text_model: str | None = None
+) -> dict:
+    record = store.get(interview_id, user_id)
+    if not record:
+        raise KeyError("Interview not found")
+
+    cleaned_question = (question_text or "").strip()
+    cleaned_answer = (answer_text or "").strip()
+    if not cleaned_question:
+        raise ValueError("Question text is required")
+    if not cleaned_answer:
+        raise ValueError("Answer text is required")
+
+    text_model_override = (text_model or "").strip() or None
+    adapter = get_adapter()
+    if adapter.name == "gemini":
+        if not getattr(adapter, "api_key", None):
+            raise RuntimeError("GEMINI_API_KEY is required for the Gemini adapter.")
+        result = evaluate_turn_completion(
+            api_key=adapter.api_key,
+            model=text_model_override or adapter.settings.text_model,
+            question_text=cleaned_question,
+            answer_text=cleaned_answer
+        )
+    else:
+        result = {"decision": "partial", "confidence": 0.6, "reason": "mock"}
+
+    decision = result.get("decision", "not_answered")
+    confidence = float(result.get("confidence", 0.0) or 0.0)
+    attempted = decision in {"partial", "complete"}
+
+    return {
+        "interview_id": interview_id,
+        "decision": decision,
+        "confidence": confidence,
+        "attempted": attempted,
+        "reason": result.get("reason") or ""
     }
 
 

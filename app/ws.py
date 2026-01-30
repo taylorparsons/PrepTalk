@@ -23,6 +23,29 @@ logger = get_logger()
 
 MOCK_AUDIO_SAMPLE_RATE = 24000
 MOCK_AUDIO_BASE64 = None
+LIVE_MODEL_UNSUPPORTED_MARKERS = (
+    "bidigeneratecontent",
+    "not supported for bidi",
+    "not found for api version",
+)
+
+
+def _is_live_model_unsupported_error(exc: Exception) -> bool:
+    message = str(exc).lower()
+    return any(marker in message for marker in LIVE_MODEL_UNSUPPORTED_MARKERS)
+
+
+def _build_live_model_candidates(primary: str | None, fallbacks: tuple[str, ...]) -> list[str]:
+    models: list[str] = []
+    seen = set()
+    for model in (primary, *fallbacks):
+        if not model:
+            continue
+        if model in seen:
+            continue
+        seen.add(model)
+        models.append(model)
+    return models
 
 
 def _mock_audio_base64(duration_ms: int = 180, frequency: float = 440.0) -> str:
@@ -212,6 +235,10 @@ class LiveWebSocketSession:
             return
 
         requested_model = self._live_model_override or self.settings.live_model
+        candidate_models = _build_live_model_candidates(
+            requested_model,
+            self.settings.live_model_fallbacks
+        )
         logger.info(
             "event=gemini_live_connect status=start user_id=%s interview_id=%s requested_model=%s",
             short_id(self._user_id),
@@ -220,34 +247,65 @@ class LiveWebSocketSession:
         )
 
         system_prompt = build_live_system_prompt(record)
-        self._gemini_bridge = GeminiLiveBridge(
-            api_key=api_key,
-            model=requested_model,
-            interview_id=interview_id,
-            user_id=self._user_id,
-            send_json=self._send,
-            system_prompt=system_prompt,
-            resume_enabled=self.settings.live_resume_enabled,
-            resume_requested=resume_requested
-        )
-        try:
-            await self._gemini_bridge.connect()
-            logger.info(
-                "event=gemini_live_connect status=complete user_id=%s interview_id=%s requested_model=%s effective_model=%s",
-                short_id(self._user_id),
-                short_id(interview_id),
-                requested_model,
-                requested_model
+        for index, model in enumerate(candidate_models):
+            self._gemini_bridge = GeminiLiveBridge(
+                api_key=api_key,
+                model=model,
+                interview_id=interview_id,
+                user_id=self._user_id,
+                send_json=self._send,
+                system_prompt=system_prompt,
+                resume_enabled=self.settings.live_resume_enabled,
+                resume_requested=resume_requested
             )
-        except Exception as exc:
-            logger.exception(
-                "event=gemini_live_connect status=error user_id=%s interview_id=%s requested_model=%s",
-                short_id(self._user_id),
-                short_id(interview_id),
-                requested_model
-            )
-            await self._send({"type": "error", "message": str(exc)})
-            await self._stop_gemini_session()
+            try:
+                await self._gemini_bridge.connect()
+                if model != requested_model:
+                    self._live_model_override = model
+                    logger.warning(
+                        "event=gemini_live_connect status=fallback user_id=%s interview_id=%s requested_model=%s effective_model=%s",
+                        short_id(self._user_id),
+                        short_id(interview_id),
+                        requested_model,
+                        model
+                    )
+                    await self._send(
+                        {
+                            "type": "status",
+                            "state": "live-model-fallback",
+                            "requested_model": requested_model,
+                            "effective_model": model
+                        }
+                    )
+                logger.info(
+                    "event=gemini_live_connect status=complete user_id=%s interview_id=%s requested_model=%s effective_model=%s",
+                    short_id(self._user_id),
+                    short_id(interview_id),
+                    requested_model,
+                    model
+                )
+                return
+            except Exception as exc:
+                await self._stop_gemini_session()
+                should_retry = _is_live_model_unsupported_error(exc)
+                if should_retry and index < len(candidate_models) - 1:
+                    logger.warning(
+                        "event=gemini_live_connect status=fallback user_id=%s interview_id=%s requested_model=%s attempted_model=%s",
+                        short_id(self._user_id),
+                        short_id(interview_id),
+                        requested_model,
+                        model
+                    )
+                    continue
+                logger.exception(
+                    "event=gemini_live_connect status=error user_id=%s interview_id=%s requested_model=%s attempted_model=%s",
+                    short_id(self._user_id),
+                    short_id(interview_id),
+                    requested_model,
+                    model
+                )
+                await self._send({"type": "error", "message": str(exc)})
+                return
 
     async def _stop_gemini_session(self) -> None:
         if self._gemini_bridge is None:

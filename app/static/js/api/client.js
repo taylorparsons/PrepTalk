@@ -70,6 +70,50 @@ export async function sendVoiceTurn({ interviewId, text, textModel, ttsModel }) 
   return handleResponse(response);
 }
 
+export async function sendVoiceIntro({ interviewId, textModel, ttsModel }) {
+  const response = await fetch(`${getApiBase()}/voice/intro`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
+    body: JSON.stringify({
+      interview_id: interviewId,
+      text_model: textModel,
+      tts_model: ttsModel
+    })
+  });
+
+  return handleResponse(response);
+}
+
+export async function sendVoiceFeedback({ interviewId, question, answer, textModel }) {
+  const response = await fetch(`${getApiBase()}/voice/feedback`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
+    body: JSON.stringify({
+      interview_id: interviewId,
+      question,
+      answer,
+      text_model: textModel
+    })
+  });
+
+  return handleResponse(response);
+}
+
+export async function sendVoiceTurnCompletion({ interviewId, question, answer, textModel }) {
+  const response = await fetch(`${getApiBase()}/voice/turn/completion`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
+    body: JSON.stringify({
+      interview_id: interviewId,
+      question,
+      answer,
+      text_model: textModel
+    })
+  });
+
+  return handleResponse(response);
+}
+
 export async function scoreInterview({ interviewId, transcript }) {
   const response = await fetch(`${getApiBase()}/interviews/${interviewId}/score`, {
     method: 'POST',

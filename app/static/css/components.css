@@ -392,6 +392,11 @@ body {
   border-left-color: var(--ui-color-primary);
 }
 
+.ui-transcript__row--coach_feedback {
+  background: #f2f7f4;
+  border-left-color: var(--ui-color-primary);
+}
+
 .ui-transcript__row--candidate {
   background: #f9f4ec;
   border-left-color: var(--ui-color-accent);
@@ -613,14 +618,15 @@ body {
   display: grid;
   gap: 16px;
   height: 100vh;
+  height: 100dvh;
   left: 0;
   overflow-y: auto;
-  padding: 20px 22px 24px;
+  padding: calc(20px + env(safe-area-inset-top, 0px)) 22px calc(24px + env(safe-area-inset-bottom, 0px));
   position: fixed;
   top: 0;
   transform: translateX(-110%);
   transition: transform 0.2s ease;
-  width: min(360px, 90vw);
+  width: min(640px, 100vw);
   z-index: 30;
 }
 
@@ -648,6 +654,12 @@ body {
   display: flex;
   gap: 12px;
   justify-content: space-between;
+  position: sticky;
+  top: 0;
+  background: var(--ui-color-raised);
+  padding-top: 4px;
+  padding-bottom: 8px;
+  z-index: 1;
 }
 
 .ui-drawer__title {
@@ -685,6 +697,7 @@ body {
   display: grid;
   gap: 24px;
   grid-template-columns: minmax(260px, 1fr) minmax(320px, 2fr);
+  align-items: start;
 }
 
 .layout-stack {

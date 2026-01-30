@@ -77,3 +77,60 @@ def test_score_uses_primary_model_when_supported(monkeypatch):
     assert result["overall_score"] == 90
     assert result["summary"] == "Good"
     assert calls == ["gemini-2.5-flash"]
+
+
+def test_generate_questions_coerces_question_objects_to_text(monkeypatch):
+    calls = []
+    behavior = {
+        "gemini-3": (
+            '{"questions": [{"id": "q1", "text": "Tell me about yourself."}],'
+            ' "focus_areas": ["Clarity"]}'
+        )
+    }
+
+    monkeypatch.setattr(gemini_text, "genai", _FakeGenAI(calls, behavior))
+
+    questions, focus_areas = gemini_text.generate_interview_questions(
+        api_key="test",
+        model="gemini-3",
+        resume_text="resume",
+        job_text="job",
+        role_title="Role"
+    )
+
+    assert questions == ["Tell me about yourself."]
+    assert focus_areas == ["Clarity"]
+    assert calls == ["gemini-3"]
+
+
+def test_gemini_text_logs_peas_eval(monkeypatch):
+    calls = []
+    behavior = {
+        "gemini-3": '{"questions": ["Question?"], "focus_areas": ["Focus"]}'
+    }
+    messages = []
+
+    class _DummyLogger:
+        def info(self, msg, *args):
+            messages.append(msg % args if args else msg)
+
+        def exception(self, msg, *args):
+            messages.append(msg % args if args else msg)
+
+    monkeypatch.setattr(gemini_text, "genai", _FakeGenAI(calls, behavior))
+    monkeypatch.setattr(gemini_text, "logger", _DummyLogger())
+
+    gemini_text.generate_interview_questions(
+        api_key="test",
+        model="gemini-3",
+        resume_text="resume",
+        job_text="job",
+        role_title="Role"
+    )
+
+    assert any(
+        "event=peas_eval" in message
+        and "category=gemini_text" in message
+        and "status=complete" in message
+        for message in messages
+    )
