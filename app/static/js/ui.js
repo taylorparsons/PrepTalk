@@ -9,7 +9,6 @@ import {
   createInterview,
   downloadStudyGuide,
   getInterviewSummary,
-  getLogSummary,
   listSessions,
   logClientEvent,
   restartInterview,
@@ -328,7 +327,7 @@ export function renderTranscript(list, entries) {
     list.appendChild(
       createTranscriptRow({
         role: 'system',
-        text: 'Waiting for live session to start.',
+        text: 'Waiting for session to start.',
         timestamp: ''
       })
     );
@@ -471,8 +470,7 @@ function buildSetupPanel(state, ui) {
       );
       ui.resetSessionState?.();
       ui.startButton.disabled = false;
-      status.textContent = 'Questions ready. Start the live session when ready.';
-      ui.adapterMeta.textContent = `Adapter: ${state.adapter}`;
+      status.textContent = 'Questions ready. Start the session when ready.';
       ui.updateMeta?.();
       if (ui.sessionNameInput) {
         ui.sessionNameInput.value = '';
@@ -512,14 +510,12 @@ function buildSetupPanel(state, ui) {
 }
 
 function buildControlsPanel(state, ui, config) {
-  const showAdvancedControls = Boolean(config?.uiDevMode);
+  const showAdvancedControls = false;
   const statusPill = createStatusPill({
     label: 'Idle',
     tone: 'neutral',
     attrs: { 'data-testid': 'session-status' }
   });
-  let modeSelect = null;
-
   const startButton = createButton({
     label: 'Start Interview',
     variant: 'primary',
@@ -607,10 +603,6 @@ function buildControlsPanel(state, ui, config) {
 
   setBargeInState(state.bargeInEnabled);
 
-  const meta = document.createElement('p');
-  meta.className = 'ui-meta';
-  meta.setAttribute('data-testid', 'adapter-meta');
-
   function voiceModeLabel() {
     return state.voiceMode === 'turn' ? 'Turn-based' : 'Live';
   }
@@ -630,27 +622,10 @@ function buildControlsPanel(state, ui, config) {
     return 'Auto';
   }
 
-  function applyVoiceMode(value) {
-    const allowLiveMode = Boolean(config?.uiDevMode);
-    const requestedMode = value === 'turn' ? 'turn' : 'live';
-    const nextMode = allowLiveMode ? requestedMode : 'turn';
-    state.voiceMode = nextMode;
-    if (!allowLiveMode && modeSelect && modeSelect.value !== 'turn') {
-      modeSelect.value = 'turn';
-    }
-    if (nextMode === 'turn') {
-      bargeInButton.disabled = true;
-      bargeInButton.setAttribute('aria-disabled', 'true');
-    } else {
-      bargeInButton.disabled = false;
-      bargeInButton.removeAttribute('aria-disabled');
-      state.liveAudioSeen = false;
-      state.lastSpokenCoachText = '';
-      cancelLiveCoachSpeech();
-      resetTurnCompletionTracking();
-      state.captionFinalText = '';
-      state.captionDraftText = '';
-    }
+  function applyVoiceMode() {
+    state.voiceMode = 'turn';
+    bargeInButton.disabled = true;
+    bargeInButton.setAttribute('aria-disabled', 'true');
     updateMeta();
     updateTurnSubmitUI();
   }
@@ -664,17 +639,7 @@ function buildControlsPanel(state, ui, config) {
     updateMeta();
   }
 
-  function updateMeta() {
-    const sessionLabel = state.sessionName ? ` | Session: ${state.sessionName}` : '';
-    const outputLabel = `Output: ${voiceOutputModeLabel()}`;
-    const modelLabel = isTurnMode()
-      ? `Text: ${state.textModel || 'unknown'} | TTS: ${state.ttsModel || 'unknown'}`
-      : `Live: ${state.liveModel || 'unknown'}`;
-    const devModeLabel = config?.uiDevMode ? ' | mode: Develop mode' : '';
-    meta.textContent = `Adapter: ${state.adapter} | Voice: ${voiceModeLabel()} | ${modelLabel} | ${outputLabel}${sessionLabel}${devModeLabel}`;
-  }
-
-  updateMeta();
+  function updateMeta() {}
 
   function setCaptionText(text) {
     if (!ui.captionText) {
@@ -697,7 +662,7 @@ function buildControlsPanel(state, ui, config) {
     return state.voiceMode === 'turn';
   }
 
-  applyVoiceMode(state.voiceMode);
+  applyVoiceMode();
   applyVoiceOutputMode(state.voiceOutputMode);
 
   function getSpeechRecognitionClass() {
@@ -1848,54 +1813,6 @@ function buildControlsPanel(state, ui, config) {
   turnActionsRow.className = 'ui-controls__row';
   turnActionsRow.appendChild(submitTurnButton);
 
-  const modeRow = document.createElement('div');
-  modeRow.className = 'ui-controls__row';
-
-  const allowLiveMode = Boolean(config?.uiDevMode);
-  const modeLabel = document.createElement('label');
-  modeLabel.className = 'ui-field__label';
-  modeLabel.textContent = 'Voice mode';
-  if (allowLiveMode) {
-    modeLabel.setAttribute('for', 'voice-mode-select');
-  }
-
-  modeRow.appendChild(modeLabel);
-
-  if (allowLiveMode) {
-    modeSelect = document.createElement('select');
-    modeSelect.className = 'ui-field__input';
-    modeSelect.id = 'voice-mode-select';
-    modeSelect.setAttribute('data-testid', 'voice-mode-select');
-
-    const modeOptions = [
-      { value: 'turn', label: 'Turn-based (TTS)' },
-      { value: 'live', label: 'Live (streaming)' }
-    ];
-    modeOptions.forEach((option) => {
-      const opt = document.createElement('option');
-      opt.value = option.value;
-      opt.textContent = option.label;
-      modeSelect.appendChild(opt);
-    });
-    modeSelect.value = state.voiceMode;
-    modeSelect.addEventListener('change', async () => {
-      const nextMode = modeSelect.value;
-      if (state.sessionActive) {
-        await endLiveSession({ label: 'Mode changed', tone: 'warning', allowRestart: true });
-        resetSessionState();
-      }
-      applyVoiceMode(nextMode);
-    });
-    modeRow.appendChild(modeSelect);
-  } else {
-    modeSelect = null;
-    const modeValue = document.createElement('div');
-    modeValue.className = 'ui-field__input';
-    modeValue.setAttribute('data-testid', 'voice-mode-value');
-    modeValue.textContent = 'Turn-based (TTS)';
-    modeRow.appendChild(modeValue);
-  }
-
   const toolsRow = document.createElement('div');
   toolsRow.className = 'ui-controls__row ui-controls__row--tools';
   toolsRow.appendChild(sessionToolsButton);
@@ -1905,9 +1822,7 @@ function buildControlsPanel(state, ui, config) {
   content.appendChild(statusPill);
   content.appendChild(actionsRow);
   content.appendChild(turnActionsRow);
-  content.appendChild(modeRow);
   content.appendChild(toolsRow);
-  content.appendChild(meta);
 
   ui.statusPill = statusPill;
   ui.startButton = startButton;
@@ -1917,7 +1832,6 @@ function buildControlsPanel(state, ui, config) {
   ui.submitTurnButton = submitTurnButton;
   ui.turnActionsRow = turnActionsRow;
   ui.sessionToolsToggle = sessionToolsButton;
-  ui.adapterMeta = meta;
   ui.updateMeta = updateMeta;
   ui.applyModelOverrides = applyModelOverrides;
   ui.resetModelOverrides = resetModelOverrides;
@@ -1934,7 +1848,6 @@ function buildControlsPanel(state, ui, config) {
 }
 
 function buildSessionToolsDrawer(state, ui, config) {
-  const showAdvancedControls = Boolean(config?.uiDevMode);
   const drawer = document.createElement('aside');
   drawer.className = 'ui-drawer ui-drawer--left';
   drawer.id = 'session-tools-drawer';
@@ -2067,211 +1980,95 @@ function buildSessionToolsDrawer(state, ui, config) {
   drawer.appendChild(sessionSection);
   drawer.appendChild(nameSection);
   drawer.appendChild(exportSection);
+  const questionSection = document.createElement('section');
+  questionSection.className = 'ui-drawer__section';
 
-  if (showAdvancedControls) {
-    const advancedTitle = document.createElement('h3');
-    advancedTitle.className = 'ui-drawer__title';
-    advancedTitle.textContent = 'Advanced';
+  const questionLabel = document.createElement('label');
+  questionLabel.className = 'ui-field__label';
+  questionLabel.textContent = 'Add known question';
 
-    const modelSection = document.createElement('section');
-    modelSection.className = 'ui-drawer__section';
+  const questionInput = document.createElement('textarea');
+  questionInput.className = 'ui-field__input ui-field__input--textarea';
+  questionInput.placeholder = 'Paste the question the interviewer will ask.';
+  questionInput.setAttribute('data-testid', 'custom-question-input');
 
-    const liveModelLabel = document.createElement('label');
-    liveModelLabel.className = 'ui-field__label';
-    liveModelLabel.textContent = 'Live model';
+  const positionLabel = document.createElement('label');
+  positionLabel.className = 'ui-field__label';
+  positionLabel.textContent = 'Insert position';
 
-    const liveModelInput = document.createElement('input');
-    liveModelInput.className = 'ui-field__input';
-    liveModelInput.type = 'text';
-    liveModelInput.placeholder = 'e.g. gemini-3-flash-preview';
-    liveModelInput.value = state.liveModel || '';
-    liveModelInput.setAttribute('data-testid', 'live-model-input');
+  const positionInput = document.createElement('input');
+  positionInput.className = 'ui-field__input ui-field__input--number';
+  positionInput.type = 'number';
+  positionInput.min = '1';
+  positionInput.value = '1';
+  positionInput.setAttribute('data-testid', 'custom-question-position');
 
-    const liveModelHelp = document.createElement('p');
-    liveModelHelp.className = 'ui-field__help';
-    liveModelHelp.textContent = 'Used for streaming sessions.';
+  const questionRow = document.createElement('div');
+  questionRow.className = 'ui-drawer__row';
 
-    const textModelLabel = document.createElement('label');
-    textModelLabel.className = 'ui-field__label';
-    textModelLabel.textContent = 'Turn text model';
+  const addAndJump = createButton({
+    label: 'Add & jump',
+    variant: 'primary',
+    size: 'sm',
+    disabled: true,
+    attrs: { 'data-testid': 'custom-question-add-jump' }
+  });
 
-    const textModelInput = document.createElement('input');
-    textModelInput.className = 'ui-field__input';
-    textModelInput.type = 'text';
-    textModelInput.placeholder = 'e.g. gemini-3-flash-preview';
-    textModelInput.value = state.textModel || '';
-    textModelInput.setAttribute('data-testid', 'text-model-input');
+  const addOnly = createButton({
+    label: 'Add only',
+    variant: 'ghost',
+    size: 'sm',
+    disabled: true,
+    attrs: { 'data-testid': 'custom-question-add' }
+  });
 
-    const textModelHelp = document.createElement('p');
-    textModelHelp.className = 'ui-field__help';
-    textModelHelp.textContent = 'Used for turn-based coaching.';
+  questionRow.appendChild(addAndJump);
+  questionRow.appendChild(addOnly);
 
-    const ttsModelLabel = document.createElement('label');
-    ttsModelLabel.className = 'ui-field__label';
-    ttsModelLabel.textContent = 'Turn TTS model';
+  const questionHelp = document.createElement('p');
+  questionHelp.className = 'ui-field__help';
+  questionHelp.textContent = 'Positions are 1-based in the question list.';
 
-    const ttsModelInput = document.createElement('input');
-    ttsModelInput.className = 'ui-field__input';
-    ttsModelInput.type = 'text';
-    ttsModelInput.placeholder = 'e.g. gemini-2.5-pro-preview-tts';
-    ttsModelInput.value = state.ttsModel || '';
-    ttsModelInput.setAttribute('data-testid', 'tts-model-input');
+  questionSection.appendChild(questionLabel);
+  questionSection.appendChild(questionInput);
+  questionSection.appendChild(positionLabel);
+  questionSection.appendChild(positionInput);
+  questionSection.appendChild(questionRow);
+  questionSection.appendChild(questionHelp);
 
-    const ttsModelHelp = document.createElement('p');
-    ttsModelHelp.className = 'ui-field__help';
-    ttsModelHelp.textContent = 'Used for turn-based voice output.';
+  const restartSection = document.createElement('section');
+  restartSection.className = 'ui-drawer__section';
 
-    const voiceOutputLabel = document.createElement('label');
-    voiceOutputLabel.className = 'ui-field__label';
-    voiceOutputLabel.textContent = 'Coach audio output';
+  const restartLabel = document.createElement('label');
+  restartLabel.className = 'ui-field__label';
+  restartLabel.textContent = 'Restart interview';
 
-    const voiceOutputSelect = document.createElement('select');
-    voiceOutputSelect.className = 'ui-field__input';
-    voiceOutputSelect.setAttribute('data-testid', 'voice-output-select');
+  const restartButton = createButton({
+    label: 'Restart',
+    variant: 'ghost',
+    size: 'sm',
+    disabled: true,
+    attrs: { 'data-testid': 'restart-interview' }
+  });
 
-    [
-      { value: 'auto', label: 'Auto (prefer server audio)' },
-      { value: 'browser', label: 'Browser TTS' },
-      { value: 'server', label: 'Server audio only' }
-    ].forEach((option) => {
-      const opt = document.createElement('option');
-      opt.value = option.value;
-      opt.textContent = option.label;
-      voiceOutputSelect.appendChild(opt);
-    });
-    voiceOutputSelect.value = state.voiceOutputMode || 'auto';
+  const restartHelp = document.createElement('p');
+  restartHelp.className = 'ui-field__help';
+  restartHelp.textContent = 'Enabled after a session starts.';
 
-    const voiceOutputHelp = document.createElement('p');
-    voiceOutputHelp.className = 'ui-field__help';
-    voiceOutputHelp.textContent = 'Auto falls back to browser speech if server audio is missing.';
+  restartSection.appendChild(restartLabel);
+  restartSection.appendChild(restartButton);
+  restartSection.appendChild(restartHelp);
 
-    const resetModelsRow = document.createElement('div');
-    resetModelsRow.className = 'ui-drawer__row';
+  drawer.appendChild(questionSection);
+  drawer.appendChild(restartSection);
 
-    const resetModelsButton = createButton({
-      label: 'Reset models',
-      variant: 'ghost',
-      size: 'sm',
-      attrs: { 'data-testid': 'reset-models' }
-    });
-
-    resetModelsRow.appendChild(resetModelsButton);
-
-    modelSection.appendChild(liveModelLabel);
-    modelSection.appendChild(liveModelInput);
-    modelSection.appendChild(liveModelHelp);
-    modelSection.appendChild(textModelLabel);
-    modelSection.appendChild(textModelInput);
-    modelSection.appendChild(textModelHelp);
-    modelSection.appendChild(ttsModelLabel);
-    modelSection.appendChild(ttsModelInput);
-    modelSection.appendChild(ttsModelHelp);
-    modelSection.appendChild(voiceOutputLabel);
-    modelSection.appendChild(voiceOutputSelect);
-    modelSection.appendChild(voiceOutputHelp);
-    modelSection.appendChild(resetModelsRow);
-
-    const questionSection = document.createElement('section');
-    questionSection.className = 'ui-drawer__section';
-
-    const questionLabel = document.createElement('label');
-    questionLabel.className = 'ui-field__label';
-    questionLabel.textContent = 'Add known question';
-
-    const questionInput = document.createElement('textarea');
-    questionInput.className = 'ui-field__input ui-field__input--textarea';
-    questionInput.placeholder = 'Paste the question the interviewer will ask.';
-    questionInput.setAttribute('data-testid', 'custom-question-input');
-
-    const positionLabel = document.createElement('label');
-    positionLabel.className = 'ui-field__label';
-    positionLabel.textContent = 'Insert position';
-
-    const positionInput = document.createElement('input');
-    positionInput.className = 'ui-field__input ui-field__input--number';
-    positionInput.type = 'number';
-    positionInput.min = '1';
-    positionInput.value = '1';
-    positionInput.setAttribute('data-testid', 'custom-question-position');
-
-    const questionRow = document.createElement('div');
-    questionRow.className = 'ui-drawer__row';
-
-    const addAndJump = createButton({
-      label: 'Add & jump',
-      variant: 'primary',
-      size: 'sm',
-      disabled: true,
-      attrs: { 'data-testid': 'custom-question-add-jump' }
-    });
-
-    const addOnly = createButton({
-      label: 'Add only',
-      variant: 'ghost',
-      size: 'sm',
-      disabled: true,
-      attrs: { 'data-testid': 'custom-question-add' }
-    });
-
-    questionRow.appendChild(addAndJump);
-    questionRow.appendChild(addOnly);
-
-    const questionHelp = document.createElement('p');
-    questionHelp.className = 'ui-field__help';
-    questionHelp.textContent = 'Positions are 1-based in the question list.';
-
-    questionSection.appendChild(questionLabel);
-    questionSection.appendChild(questionInput);
-    questionSection.appendChild(positionLabel);
-    questionSection.appendChild(positionInput);
-    questionSection.appendChild(questionRow);
-    questionSection.appendChild(questionHelp);
-
-    const restartSection = document.createElement('section');
-    restartSection.className = 'ui-drawer__section';
-
-    const restartLabel = document.createElement('label');
-    restartLabel.className = 'ui-field__label';
-    restartLabel.textContent = 'Restart interview';
-
-    const restartButton = createButton({
-      label: 'Restart',
-      variant: 'ghost',
-      size: 'sm',
-      disabled: true,
-      attrs: { 'data-testid': 'restart-interview' }
-    });
-
-    const restartHelp = document.createElement('p');
-    restartHelp.className = 'ui-field__help';
-    restartHelp.textContent = 'Enabled after a session starts.';
-
-    restartSection.appendChild(restartLabel);
-    restartSection.appendChild(restartButton);
-    restartSection.appendChild(restartHelp);
-
-    drawer.appendChild(advancedTitle);
-    drawer.appendChild(modelSection);
-    drawer.appendChild(questionSection);
-    drawer.appendChild(restartSection);
-
-    ui.liveModelInput = liveModelInput;
-    ui.liveModelHelp = liveModelHelp;
-    ui.textModelInput = textModelInput;
-    ui.textModelHelp = textModelHelp;
-    ui.ttsModelInput = ttsModelInput;
-    ui.ttsModelHelp = ttsModelHelp;
-    ui.voiceOutputSelect = voiceOutputSelect;
-    ui.voiceOutputHelp = voiceOutputHelp;
-    ui.resetModelsButton = resetModelsButton;
-    ui.customQuestionInput = questionInput;
-    ui.customQuestionPosition = positionInput;
-    ui.customQuestionAdd = addOnly;
-    ui.customQuestionAddJump = addAndJump;
-    ui.customQuestionHelp = questionHelp;
-    ui.restartButton = restartButton;
-    ui.restartHelp = restartHelp;
-  }
+  ui.customQuestionInput = questionInput;
+  ui.customQuestionPosition = positionInput;
+  ui.customQuestionAdd = addOnly;
+  ui.customQuestionAddJump = addAndJump;
+  ui.customQuestionHelp = questionHelp;
+  ui.restartButton = restartButton;
+  ui.restartHelp = restartHelp;
 
   ui.sessionToolsDrawer = drawer;
   ui.sessionToolsBackdrop = backdrop;
@@ -2318,7 +2115,7 @@ function buildTranscriptPanel(ui) {
 
   const captionLabel = document.createElement('div');
   captionLabel.className = 'ui-caption__label';
-  captionLabel.textContent = 'Live captions (local, en-US)';
+  captionLabel.textContent = 'Captions (local, en-US)';
 
   const captionText = document.createElement('div');
   captionText.className = 'ui-caption__text';
@@ -2340,8 +2137,8 @@ function buildTranscriptPanel(ui) {
   ui.captionText = captionText;
 
   return createPanel({
-    title: 'Live Transcript',
-    subtitle: 'Streaming once the session starts.',
+    title: 'Transcript',
+    subtitle: 'Updates as the session runs.',
     content: container,
     attrs: { 'data-testid': 'transcript-panel' }
   });
@@ -2516,7 +2313,7 @@ export function buildVoiceLayout() {
     transcript: [],
     score: null,
     adapter: config.adapter,
-    voiceMode: config.uiDevMode ? config.voiceMode : 'turn',
+    voiceMode: 'turn',
     voiceOutputMode: config.voiceOutputMode,
     userId: config.userId,
     liveModel: config.liveModel,
@@ -2882,9 +2679,6 @@ export function buildVoiceLayout() {
   rightColumn.className = 'layout-stack';
   rightColumn.appendChild(buildQuestionsPanel(ui));
   rightColumn.appendChild(buildTranscriptPanel(ui));
-  if (config.uiDevMode) {
-    rightColumn.appendChild(buildLogDashboardPanel(ui));
-  }
   rightColumn.appendChild(buildScorePanel(ui));
 
   const layout = document.createElement('main');
@@ -2958,7 +2752,7 @@ export function buildVoiceLayout() {
       return;
     }
     if (state.sessionActive) {
-      ui.sessionHelp.textContent = 'Stop the live session before loading another.';
+      ui.sessionHelp.textContent = 'Stop the session before loading another.';
       return;
     }
     ui.sessionHelp.textContent = 'Loading session...';
@@ -3009,7 +2803,7 @@ export function buildVoiceLayout() {
       }
       if (ui.setupStatus) {
         ui.setupStatus.className = 'ui-field__help';
-        ui.setupStatus.textContent = 'Session loaded. Start the live session when ready.';
+        ui.setupStatus.textContent = 'Session loaded. Start the session when ready.';
       }
       ui.sessionHelp.textContent = 'Session loaded.';
       ui.startButton.disabled = !state.interviewId;
@@ -3216,10 +3010,6 @@ export function buildVoiceLayout() {
   });
 
   updateSessionToolsState();
-  if (config.uiDevMode) {
-    startLogSummaryPolling();
-  }
-
   return layout;
 }
 

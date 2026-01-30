@@ -5,6 +5,7 @@
 - Gemini 3 Live full-duplex voice is the primary interface via AI Studio; no text input.
 - Multi-model Gemini 3 usage: questions, live coaching, summaries.
 - Demo likely delivered via an AI Studio app.
+- Main branch submission ships turn-based TTS only; live streaming is deferred to a feature branch until stabilized.
 
 ## Goals
 - Voice-first interview practice with streaming audio in and out.
@@ -16,6 +17,7 @@
 - Text-only fallback.
 - Third-party voice services.
 - Production-scale auth, billing, or team management.
+- Live streaming in the main-branch submission (deferred until stabilization).
 
 ## Decisions
 - Audio streaming format: PCM16 mono at 24 kHz in ~20 ms frames for natural conversation.
