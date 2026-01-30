@@ -19,7 +19,7 @@ describe('voice layout', () => {
         'Candidate Setup',
         'Session Controls',
         'Interview Questions',
-        'Live Transcript',
+        'Transcript',
         'Score Summary'
       ])
     );
@@ -32,44 +32,16 @@ describe('voice layout', () => {
     expect(root.children.length).toBeGreaterThan(0);
     expect(root.querySelector('[data-testid="transcript-list"]')).toBeTruthy();
     expect(root.querySelector('[data-testid="voice-mode-select"]')).toBeFalsy();
-    const modeValue = root.querySelector('[data-testid="voice-mode-value"]');
-    expect(modeValue).toBeTruthy();
-    expect(modeValue.textContent).toContain('Turn-based');
+    expect(root.querySelector('[data-testid="voice-mode-value"]')).toBeFalsy();
   });
 
-  it('treats string uiDevMode values as false when set to 0', () => {
-    window.__APP_CONFIG__ = { uiDevMode: '0', voiceMode: 'live' };
-    const root = document.createElement('div');
-    mountVoiceApp(root);
-
-    expect(root.querySelector('[data-testid="voice-mode-select"]')).toBeFalsy();
-    expect(root.querySelector('[data-testid="voice-mode-value"]')).toBeTruthy();
-  });
-
-  it('shows live streaming option in dev mode', () => {
+  it('never renders live mode selectors even when uiDevMode is enabled', () => {
     window.__APP_CONFIG__ = { uiDevMode: true, voiceMode: 'live' };
     const root = document.createElement('div');
     mountVoiceApp(root);
 
-    const modeSelect = root.querySelector('[data-testid="voice-mode-select"]');
-    expect(modeSelect).toBeTruthy();
-    expect(Array.from(modeSelect.querySelectorAll('option')).map((opt) => opt.value)).toContain('live');
-  });
-
-  it('adds a dev mode label to the adapter meta line when enabled', () => {
-    window.__APP_CONFIG__ = {
-      uiDevMode: true,
-      voiceMode: 'turn',
-      adapter: 'gemini',
-      voiceOutputMode: 'browser',
-      textModel: 'gemini-3-flash-preview',
-      ttsModel: 'gemini-2.5-flash-native-audio-preview-12-2025'
-    };
-    const root = document.createElement('div');
-    mountVoiceApp(root);
-
-    const meta = root.querySelector('[data-testid="adapter-meta"]');
-    expect(meta).toBeTruthy();
-    expect(meta.textContent).toContain('mode: Develop mode');
+    expect(root.querySelector('[data-testid="voice-mode-select"]')).toBeFalsy();
+    expect(root.querySelector('[data-testid="voice-mode-value"]')).toBeFalsy();
+    expect(root.querySelector('[data-testid="adapter-meta"]')).toBeFalsy();
   });
 });

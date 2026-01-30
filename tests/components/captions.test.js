@@ -13,7 +13,7 @@ describe('captions', () => {
     const label = document.querySelector('.ui-caption__label');
     const text = document.querySelector('.ui-caption__text');
 
-    expect(label?.textContent).toBe('Live captions (local, en-US)');
+    expect(label?.textContent).toBe('Captions (local, en-US)');
     expect(text?.textContent).toBe('Captions idle.');
   });
 });

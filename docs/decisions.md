@@ -352,3 +352,22 @@ Alternatives considered:
 
 Acceptance / test:
 - Live prompts include at most 4000 characters each for resume and job excerpts.
+
+## D-20260130-1445
+Date: 2026-01-30 14:45
+Inputs: CR-20260130-1445
+PRD: Functional requirements, Next / backlog
+
+Decision:
+Remove the live-mode requirement from the main-branch PRD and ship a TTS-only (turn-based) UI on `main`. Keep backend live endpoints in place for future stabilization, but remove live controls and debug panels from the main UI.
+
+Rationale:
+Live mode is currently too unstable for the hackathon submission; a turn-based TTS flow is reliable and aligns with the submission scope while preserving the option to reintroduce live mode later.
+
+Alternatives considered:
+- Keep live mode behind dev gating (rejected: still exposes unstable behavior in main and confuses submission UX).
+- Remove live backend endpoints entirely (rejected: larger change that blocks later reintroduction).
+
+Acceptance / test:
+- Main UI exposes only turn-based controls; no live mode selector, live transcript label, or Live Stats panel.
+- PRD shipped requirements no longer claim live streaming or Live Stats as shipped in main.

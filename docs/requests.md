@@ -279,3 +279,25 @@ the fallback from the live voice to the TTS is bad user expereince it should be 
 Notes:
 - Live mode should not default to browser TTS fallback.
 - Use other sources if needed for live audio guidance.
+
+## CR-20260130-1445
+Date: 2026-01-30 14:45
+Source: chat
+
+Request (verbatim):
+working from main branch I want to do the following
+1. remove the develop view with the live chat and only have TTS as the option
+2.  complete the original work for submit this for the hackathon
+3. clean up the UI
+4. once approved I will clean up git with $git-workflow-automation
+1. I want the live mode removed from the main branch but keep it on the feature branch that is not main for now
+2. docs/plans/2026-01-10-gemini-live-design.md 
+3. remove all debug text
+1. yes remove from main because we are removing the buggy live mode, and can add later
+2. remove the requirement and log in the ralphs desion
+follow $ralph audit trail and staging work as we move along
+
+Notes:
+- Remove live mode from `main` while keeping it on the feature branch.
+- Update `docs/plans/2026-01-10-gemini-live-design.md` for hackathon submission scope.
+- Remove debug UI text and dev-only live chat view from `main`.

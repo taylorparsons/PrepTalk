@@ -223,6 +223,38 @@ NOTES
 
 ---
 
+Session: 2026-01-30 14:45
+Agent: Codex CLI
+Model: GPT-5.2
+Skills: ralph, create-plan, systematic-debugging, verification-before-completion
+Feature: 20260130-main-tts-only
+Input: CR-20260130-1445
+Decisions: D-20260130-1445
+Spec: docs/specs/20260130-main-tts-only/spec.md
+Tasks: docs/specs/20260130-main-tts-only/tasks.md
+Goal: Remove live mode UI from main, keep TTS-only flow, and clean debug UI while updating hackathon plan docs.
+
+DONE
+- [2026-01-30 14:45] Capture CR-20260130-1445 and start new RALPH session. (Skills: ralph)
+- [2026-01-30 15:23] T-001: Remove live mode UI + debug text in main, force turn-based mode. (Skills: ralph, systematic-debugging)
+- [2026-01-30 15:23] T-002: Update hackathon design plan for TTS-only main. (Skills: ralph)
+- [2026-01-30 15:23] T-003: Update tests for TTS-only UI and remove live assertions. (Skills: ralph)
+- [2026-01-30 15:33] T-004: Run verification suites for the TTS-only changes. (Skills: verification-before-completion)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `ls`, `rg`, `sed`, `date`, `apply_patch`, `./.venv/bin/python -m pytest`, `./run.sh test`, `npm run test:e2e`, `lsof -i :8129`, `kill 75888`.
+- Decisions: D-20260130-1445 (remove live-mode requirement from main PRD and UI).
+- Tests: `./.venv/bin/python -m pytest` -> 53 passed (1 warning); `./run.sh test` -> 51 passed; `npm run test:e2e` -> 2 passed, 5 skipped (live tests skipped).
+- Risks / open questions: Keep backend live endpoints but remove UI controls on main to avoid breaking feature branch.
+
+---
+
 Session: 2026-01-29 13:28
 Feature: 20260129-peas-gemini-calls
 Input: CR-20260129-1328

@@ -108,7 +108,7 @@ def load_settings() -> AppSettings:
         interview_text_model=interview_text_model,
         text_model=text_model,
         ui_dev_mode=ui_dev_mode,
-        voice_mode=os.getenv("VOICE_MODE", "live"),
+        voice_mode="turn",
         voice_tts_enabled=_env_flag("VOICE_TTS_ENABLED", "1" if adapter == "gemini" else "0"),
         voice_tts_model=tts_model,
         voice_tts_models=tuple(dict.fromkeys([tts_model, *tts_fallbacks])),

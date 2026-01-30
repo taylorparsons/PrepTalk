@@ -28,7 +28,7 @@ def test_default_models(monkeypatch):
     assert settings.live_model == "gemini-2.5-flash-native-audio-preview-12-2025"
     assert settings.live_model_fallbacks == ()
     assert settings.ui_dev_mode is False
-    assert settings.voice_mode == "live"
+    assert settings.voice_mode == "turn"
     assert settings.live_resume_enabled is True
     assert settings.voice_tts_enabled is False
     assert settings.voice_tts_model == "gemini-2.5-flash-native-audio-preview-12-2025"
