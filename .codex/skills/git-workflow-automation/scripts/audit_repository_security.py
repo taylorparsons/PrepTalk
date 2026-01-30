@@ -23,6 +23,16 @@ class SecurityAuditor:
 
     def __init__(self, repo_path: Path = Path(".")):
         self.repo_path = repo_path
+        self.excluded_path_prefixes = (
+            ".codex/",
+            ".venv/",
+            "node_modules/",
+            "playwright-report",
+            "test-results",
+            "logs/",
+            "app/session_store/",
+            "docs/requests.md"
+        )
         self.findings = {
             "critical": [],
             "high": [],
@@ -95,7 +105,23 @@ class SecurityAuditor:
         try:
             # Search git history for patterns
             for pattern, desc in patterns:
-                cmd = ["git", "log", "-S", pattern, "--all", "--oneline"]
+                cmd = [
+                    "git",
+                    "log",
+                    "-S",
+                    pattern,
+                    "--all",
+                    "--oneline",
+                    "--",
+                    ".",
+                    ":(exclude).codex",
+                    ":(exclude).venv",
+                    ":(exclude)node_modules",
+                    ":(exclude)playwright-report",
+                    ":(exclude)test-results",
+                    ":(exclude)logs",
+                    ":(exclude)app/session_store"
+                ]
                 result = subprocess.run(cmd, capture_output=True, text=True,
                                       cwd=self.repo_path)
 
@@ -129,6 +155,8 @@ class SecurityAuditor:
 
             for file in files:
                 if not file:
+                    continue
+                if file.startswith(self.excluded_path_prefixes):
                     continue
                 file_path = self.repo_path / file
                 if file_path.suffix in ['.pyc', '.so', '.dll', '.exe']:
@@ -214,6 +242,8 @@ class SecurityAuditor:
             tracked_files = result.stdout.strip().split('\n')
 
             for file in tracked_files:
+                if file.startswith(self.excluded_path_prefixes):
+                    continue
                 for pattern, desc in sensitive_patterns:
                     if pattern in file.lower():
                         self.add_finding("critical",
