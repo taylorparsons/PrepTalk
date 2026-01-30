@@ -251,6 +251,7 @@ NOTES
 - Commands run: `ls`, `rg`, `sed`, `date`, `apply_patch`, `./.venv/bin/python -m pytest`, `./run.sh test`, `npm run test:e2e`, `lsof -i :8129`, `kill 75888`.
 - Decisions: D-20260130-1445 (remove live-mode requirement from main PRD and UI).
 - Tests: `./.venv/bin/python -m pytest` -> 53 passed (1 warning); `./run.sh test` -> 51 passed; `npm run test:e2e` -> 2 passed, 5 skipped (live tests skipped).
+- Commit: 078e23d8efd529107fb4812e6aeff9c1ba1d88fa
 - Risks / open questions: Keep backend live endpoints but remove UI controls on main to avoid breaking feature branch.
 
 ---
