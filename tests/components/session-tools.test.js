@@ -1,7 +1,24 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { buildVoiceLayout } from '../../app/static/js/ui.js';
 
 describe('session tools drawer', () => {
+  afterEach(() => {
+    delete window.__APP_CONFIG__;
+    document.body.innerHTML = '';
+  });
+
+  it('hides advanced controls by default', () => {
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    expect(layout.querySelector('[data-testid="barge-in-toggle"]')).toBeFalsy();
+    expect(layout.querySelector('[data-testid="live-model-input"]')).toBeFalsy();
+    expect(layout.querySelector('[data-testid="text-model-input"]')).toBeFalsy();
+    expect(layout.querySelector('[data-testid="tts-model-input"]')).toBeFalsy();
+    expect(layout.querySelector('[data-testid="voice-output-select"]')).toBeFalsy();
+    expect(Array.from(layout.querySelectorAll('.ui-panel__title')).map((node) => node.textContent)).not.toContain('Live Stats');
+  });
+
   it('renders session tools controls and drawer', () => {
     const layout = buildVoiceLayout();
     document.body.appendChild(layout);
@@ -43,14 +60,15 @@ describe('session tools drawer', () => {
   });
 
   it('toggles barge-in state label', () => {
+    window.__APP_CONFIG__ = { uiDevMode: true };
     const layout = buildVoiceLayout();
     document.body.appendChild(layout);
 
     const toggle = layout.querySelector('[data-testid="barge-in-toggle"]');
-    expect(toggle.textContent).toContain('Barge In On');
+    expect(toggle.textContent).toContain('Interrupt On');
 
     toggle.click();
-    expect(toggle.textContent).toContain('Barge In Off');
+    expect(toggle.textContent).toContain('Interrupt Off');
   });
 
   it('disables transcript export and restart by default', () => {
@@ -64,11 +82,12 @@ describe('session tools drawer', () => {
     expect(exportButton.disabled).toBe(true);
     expect(exportButton.textContent).toContain('Export PDF');
     expect(exportFormat.value).toBe('pdf');
-    expect(restartButton.disabled).toBe(true);
+    expect(restartButton).toBeFalsy();
   });
 
   it('resets model inputs to defaults', () => {
     window.__APP_CONFIG__ = {
+      uiDevMode: true,
       liveModel: 'live-default',
       textModel: 'text-default',
       ttsModel: 'tts-default'
@@ -91,6 +110,5 @@ describe('session tools drawer', () => {
     expect(textInput.value).toBe('text-default');
     expect(ttsInput.value).toBe('tts-default');
 
-    delete window.__APP_CONFIG__;
   });
 });

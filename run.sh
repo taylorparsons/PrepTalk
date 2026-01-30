@@ -23,9 +23,11 @@ load_dotenv() {
     value="${value#${value%%[![:space:]]*}}"
     value="${value%${value##*[![:space:]]}}"
     if [[ "$value" == \"*\" && "$value" == *\" ]]; then
-      value="${value:1:-1}"
+      value="${value#\"}"
+      value="${value%\"}"
     elif [[ "$value" == \'*\' && "$value" == *\' ]]; then
-      value="${value:1:-1}"
+      value="${value#\'}"
+      value="${value%\'}"
     fi
     export "$key=$value"
   done < "$dotenv_file"

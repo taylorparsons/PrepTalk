@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import time
 
 from ..logging_config import get_logger
 
@@ -129,6 +130,7 @@ def generate_tts_audio(
         else config_payload
     )
 
+    start_time = time.monotonic()
     logger.info("event=tts_model_call status=start requested_model=%s", model)
     try:
         response = client.models.generate_content(
@@ -144,6 +146,13 @@ def generate_tts_audio(
         audio_bytes, mime_type = _extract_audio(response)
         if not audio_bytes:
             raise RuntimeError("No audio returned from the TTS model.")
+        duration_ms = int((time.monotonic() - start_time) * 1000)
+        logger.info(
+            "event=peas_eval status=complete category=gemini_tts requested_model=%s effective_model=%s duration_ms=%s",
+            model,
+            effective_model,
+            duration_ms
+        )
         logger.info(
             "event=tts_model_call status=complete requested_model=%s effective_model=%s bytes=%s",
             model,
@@ -152,6 +161,13 @@ def generate_tts_audio(
         )
         return audio_bytes, mime_type or "audio/wav"
     except Exception as exc:
+        duration_ms = int((time.monotonic() - start_time) * 1000)
+        logger.info(
+            "event=peas_eval status=error category=gemini_tts requested_model=%s duration_ms=%s error=%s",
+            model,
+            duration_ms,
+            str(exc)
+        )
         logger.exception("event=tts_model_call status=error requested_model=%s", model)
         raise RuntimeError(_friendly_tts_error(model, exc)) from exc
 

@@ -12,6 +12,12 @@ from .schemas import (
     InterviewSummaryResponse,
     LiveSessionRequest,
     LiveSessionResponse,
+    VoiceIntroRequest,
+    VoiceIntroResponse,
+    VoiceFeedbackRequest,
+    VoiceFeedbackResponse,
+    VoiceTurnCompletionRequest,
+    VoiceTurnCompletionResponse,
     VoiceTurnRequest,
     VoiceTurnResponse,
     ScoreRequest,
@@ -215,6 +221,157 @@ async def voice_turn(request: Request, payload: VoiceTurnRequest):
         log_interview_id,
         _duration_ms(start),
         len(coach_text)
+    )
+
+    return response
+
+
+@router.post("/voice/intro", response_model=VoiceIntroResponse)
+async def voice_intro(request: Request, payload: VoiceIntroRequest):
+    user_id = _get_user_id(request)
+    log_user_id = short_id(user_id)
+    log_interview_id = short_id(payload.interview_id)
+    start = time.perf_counter()
+
+    logger.info(
+        "event=voice_intro status=start user_id=%s interview_id=%s",
+        log_user_id,
+        log_interview_id
+    )
+
+    try:
+        response = interview_service.run_voice_intro(
+            payload.interview_id,
+            user_id,
+            text_model=payload.text_model,
+            tts_model=payload.tts_model
+        )
+    except KeyError as exc:
+        logger.warning(
+            "event=voice_intro status=not_found user_id=%s interview_id=%s duration_ms=%s",
+            log_user_id,
+            log_interview_id,
+            _duration_ms(start)
+        )
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (RuntimeError, ValueError) as exc:
+        logger.exception(
+            "event=voice_intro status=error user_id=%s interview_id=%s duration_ms=%s",
+            log_user_id,
+            log_interview_id,
+            _duration_ms(start)
+        )
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    coach_text = response.get("coach", {}).get("text", "")
+    logger.info(
+        "event=voice_intro status=complete user_id=%s interview_id=%s duration_ms=%s response_len=%s",
+        log_user_id,
+        log_interview_id,
+        _duration_ms(start),
+        len(coach_text)
+    )
+
+    return response
+
+
+@router.post("/voice/feedback", response_model=VoiceFeedbackResponse)
+async def voice_feedback(request: Request, payload: VoiceFeedbackRequest):
+    user_id = _get_user_id(request)
+    log_user_id = short_id(user_id)
+    log_interview_id = short_id(payload.interview_id)
+    start = time.perf_counter()
+
+    logger.info(
+        "event=voice_feedback status=start user_id=%s interview_id=%s answer_len=%s",
+        log_user_id,
+        log_interview_id,
+        len(payload.answer)
+    )
+
+    try:
+        response = interview_service.run_voice_feedback(
+            payload.interview_id,
+            payload.answer,
+            payload.question,
+            user_id,
+            text_model=payload.text_model
+        )
+    except KeyError as exc:
+        logger.warning(
+            "event=voice_feedback status=not_found user_id=%s interview_id=%s duration_ms=%s",
+            log_user_id,
+            log_interview_id,
+            _duration_ms(start)
+        )
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (RuntimeError, ValueError) as exc:
+        logger.exception(
+            "event=voice_feedback status=error user_id=%s interview_id=%s duration_ms=%s",
+            log_user_id,
+            log_interview_id,
+            _duration_ms(start)
+        )
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    feedback_text = response.get("feedback", {}).get("text", "")
+    logger.info(
+        "event=voice_feedback status=complete user_id=%s interview_id=%s duration_ms=%s response_len=%s",
+        log_user_id,
+        log_interview_id,
+        _duration_ms(start),
+        len(feedback_text)
+    )
+
+    return response
+
+
+@router.post("/voice/turn/completion", response_model=VoiceTurnCompletionResponse)
+async def voice_turn_completion(request: Request, payload: VoiceTurnCompletionRequest):
+    user_id = _get_user_id(request)
+    log_user_id = short_id(user_id)
+    log_interview_id = short_id(payload.interview_id)
+    start = time.perf_counter()
+
+    logger.info(
+        "event=voice_turn_completion status=start user_id=%s interview_id=%s answer_len=%s",
+        log_user_id,
+        log_interview_id,
+        len(payload.answer)
+    )
+
+    try:
+        response = interview_service.run_turn_completion_check(
+            payload.interview_id,
+            payload.question,
+            payload.answer,
+            user_id,
+            text_model=payload.text_model
+        )
+    except KeyError as exc:
+        logger.warning(
+            "event=voice_turn_completion status=not_found user_id=%s interview_id=%s duration_ms=%s",
+            log_user_id,
+            log_interview_id,
+            _duration_ms(start)
+        )
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (RuntimeError, ValueError) as exc:
+        logger.exception(
+            "event=voice_turn_completion status=error user_id=%s interview_id=%s duration_ms=%s",
+            log_user_id,
+            log_interview_id,
+            _duration_ms(start)
+        )
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    logger.info(
+        "event=voice_turn_completion status=complete user_id=%s interview_id=%s duration_ms=%s decision=%s confidence=%s",
+        log_user_id,
+        log_interview_id,
+        _duration_ms(start),
+        response.get("decision"),
+        response.get("confidence")
     )
 
     return response

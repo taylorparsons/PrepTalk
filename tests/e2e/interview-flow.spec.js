@@ -35,11 +35,12 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
   await expect(page.getByTestId('start-interview')).toBeEnabled();
 
   await page.getByTestId('start-interview').click();
+  const introText = "Hi, I'm your interview coach. Let's get started. Tell me about yourself.";
   if (voiceMode === 'turn') {
     await expect(page.getByTestId('session-status')).toHaveText('Listening');
-    await expect(page.getByTestId('transcript-list')).toContainText('Waiting for live session to start.');
+    await expect(page.getByTestId('transcript-list')).toContainText(introText);
   } else {
-    await expect(page.getByTestId('transcript-list')).toContainText('Welcome');
+    await expect(page.getByTestId('transcript-list')).toContainText(introText);
   }
 
   await page.getByTestId('stop-interview').click();

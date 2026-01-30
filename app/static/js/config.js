@@ -1,3 +1,17 @@
+function parseBoolean(value) {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value === 'number') {
+    return value === 1;
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
+  }
+  return false;
+}
+
 export function getAppConfig() {
   if (typeof window === 'undefined') {
     return {
@@ -6,10 +20,13 @@ export function getAppConfig() {
       liveModel: '',
       textModel: '',
       ttsModel: '',
+      uiDevMode: false,
       voiceMode: 'live',
       voiceOutputMode: 'auto',
       voiceTtsLanguage: 'en-US',
-      voiceTurnEndDelayMs: 1500,
+      voiceTurnEndDelayMs: 10000,
+      voiceTurnCompletionConfidence: 0.9,
+      voiceTurnCompletionCooldownMs: 0,
       userId: 'local'
     };
   }
@@ -21,10 +38,17 @@ export function getAppConfig() {
     liveModel: config.liveModel || '',
     textModel: config.textModel || '',
     ttsModel: config.ttsModel || '',
+    uiDevMode: parseBoolean(config.uiDevMode),
     voiceMode: config.voiceMode || 'live',
     voiceOutputMode: config.voiceOutputMode || 'auto',
     voiceTtsLanguage: config.voiceTtsLanguage || 'en-US',
-    voiceTurnEndDelayMs: Number.isFinite(config.voiceTurnEndDelayMs) ? config.voiceTurnEndDelayMs : 1500,
+    voiceTurnEndDelayMs: Number.isFinite(config.voiceTurnEndDelayMs) ? config.voiceTurnEndDelayMs : 10000,
+    voiceTurnCompletionConfidence: Number.isFinite(config.voiceTurnCompletionConfidence)
+      ? config.voiceTurnCompletionConfidence
+      : 0.9,
+    voiceTurnCompletionCooldownMs: Number.isFinite(config.voiceTurnCompletionCooldownMs)
+      ? config.voiceTurnCompletionCooldownMs
+      : 0,
     userId: config.userId || 'local'
   };
 }

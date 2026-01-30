@@ -28,17 +28,22 @@ Adapter modes (set in `.env`):
 - `INTERVIEW_ADAPTER`: `mock` (default) or `gemini`
 - `GEMINI_API_KEY`: required when `INTERVIEW_ADAPTER=gemini`
 - `GEMINI_LIVE_MODEL`: override live audio model (default `gemini-2.5-flash-native-audio-preview-12-2025`)
-- `GEMINI_TEXT_MODEL`: override text model for questions/scoring (default `gemini-3-pro-preview`)
-- `VOICE_MODE`: `live` or `turn` for voice flow (default `live`)
-- `VOICE_TTS_ENABLED`: enable server TTS for turn mode (default `0`)
-- `GEMINI_TTS_MODEL`: turn-mode TTS model (default `gemini-2.5-flash-tts`)
-- `GEMINI_TTS_MODEL_FALLBACKS`: comma-separated fallback TTS models (default `gemini-2.5-flash-preview-tts`)
+- `GEMINI_LIVE_MODEL_FALLBACKS`: comma-separated fallback live audio models
+- `GEMINI_INTERVIEW_TEXT_MODEL`: override text model for question generation + scoring (default `gemini-3-pro-preview`)
+- `GEMINI_TEXT_MODEL`: override text model for turn-based coaching (default `gemini-2.5-flash`)
+- `VOICE_MODE`: `live` or `turn` for voice flow (default `live`; live option is hidden unless `UI_DEV_MODE=1`)
+- `VOICE_TTS_ENABLED`: enable server TTS for turn mode (default `1` when `INTERVIEW_ADAPTER=gemini`, else `0`)
+- `GEMINI_TTS_MODEL`: turn-mode TTS model (default `gemini-2.5-flash-native-audio-preview-12-2025`)
+- `GEMINI_TTS_MODEL_FALLBACKS`: comma-separated fallback TTS models (default `gemini-2.5-pro-preview-tts`)
 - `GEMINI_TTS_VOICE`: voice selection for turn TTS (default `Kore`)
 - `GEMINI_TTS_LANGUAGE`: language code for turn TTS (default `en-US`)
 - `VOICE_TTS_TIMEOUT_MS`: per-TTS request timeout (default `20000`)
-- `VOICE_TTS_WAIT_MS`: max wait before returning text-only (default `12000`)
-- `VOICE_TURN_END_DELAY_MS`: delay before sending a turn after speech ends (default `1500`)
-- `VOICE_OUTPUT_MODE`: `browser`, `server`, or `auto` for turn audio output (default `browser`)
+- `VOICE_TTS_WAIT_MS`: max wait before returning text-only (default `2500`)
+- `VOICE_TURN_END_DELAY_MS`: minimum answer time before enabling submit / checking if the candidate is done (default `10000`)
+- `VOICE_TURN_COMPLETION_CONFIDENCE`: confidence threshold for prompting “Are you done?” (default `0.9`)
+- `VOICE_TURN_COMPLETION_COOLDOWN_MS`: minimum delay between completion checks (default `0`)
+- `VOICE_OUTPUT_MODE`: `browser`, `server`, or `auto` for turn audio output (default `auto` when `INTERVIEW_ADAPTER=gemini`, else `browser`)
+- `UI_DEV_MODE`: show advanced UI controls (model overrides, Live Stats, interrupt toggle) (default `0`)
 - `GEMINI_LIVE_RESUME`: enable auth-token session resumption for transient drops (default `1`)
 - `APP_API_BASE`: API base path for the UI (default `/api`)
 - `SESSION_STORE_DIR`: session storage directory (default `app/session_store`)
@@ -54,21 +59,26 @@ Example `.env` for turn mode with browser TTS:
 ```bash
 GEMINI_API_KEY=your-key
 INTERVIEW_ADAPTER=gemini
-GEMINI_LIVE_MODEL=gemini-3-flash-preview
-GEMINI_TEXT_MODEL=gemini-3-flash-preview
+GEMINI_LIVE_MODEL=gemini-2.5-flash-native-audio-preview-12-2025
+GEMINI_INTERVIEW_TEXT_MODEL=gemini-3-pro-preview
+GEMINI_TEXT_MODEL=gemini-2.5-flash
 VOICE_MODE=turn
 VOICE_TTS_ENABLED=1
 VOICE_TTS_TIMEOUT_MS=20000
-VOICE_TTS_WAIT_MS=15000
-VOICE_TURN_END_DELAY_MS=2000
-GEMINI_TTS_MODEL=gemini-2.5-pro-preview-tts
-GEMINI_TTS_MODEL_FALLBACKS=gemini-2.5-flash-preview-tts
+VOICE_TTS_WAIT_MS=2500
+VOICE_TURN_END_DELAY_MS=10000
+VOICE_TURN_COMPLETION_CONFIDENCE=0.9
+VOICE_TURN_COMPLETION_COOLDOWN_MS=0
+GEMINI_TTS_MODEL=gemini-2.5-flash-native-audio-preview-12-2025
+GEMINI_TTS_MODEL_FALLBACKS=gemini-2.5-pro-preview-tts
 GEMINI_TTS_VOICE=Kore
 GEMINI_TTS_LANGUAGE=en-US
-VOICE_OUTPUT_MODE=browser
+VOICE_OUTPUT_MODE=auto
 APP_API_BASE=/api
 PORT=8000
 ```
+
+Turn mode flow: after you’ve been answering for the configured window, the app asks Gemini whether the response looks attempted or complete. Only then does the UI prompt “Are you done?” and enable **Submit Answer** or **Continue Speaking**.
 
 ## FastAPI URLs
 

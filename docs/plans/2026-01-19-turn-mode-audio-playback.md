@@ -25,24 +25,24 @@ Update `tests/test_settings.py` to assert the new defaults:
 def test_default_models(monkeypatch):
     # ... existing env cleanup ...
     settings = load_settings()
-    assert settings.voice_tts_model == "gemini-2.5-flash-tts"
-    assert settings.voice_tts_models == ("gemini-2.5-flash-tts", "gemini-2.5-flash-preview-tts")
+    assert settings.voice_tts_model == "gemini-2.5-flash-preview-tts"
+    assert settings.voice_tts_models == ("gemini-2.5-flash-preview-tts", "gemini-2.5-pro-preview-tts")
     assert settings.voice_output_mode == "browser"
 ```
 
 **Step 2: Run test to verify it fails**
 
 Run: `./.venv/bin/python -m pytest tests/test_settings.py::test_default_models -v`  
-Expected: FAIL because defaults are still `gemini-2.5-flash-preview-tts` and `auto`.
+Expected: FAIL if defaults are not yet updated.
 
 **Step 3: Write minimal implementation**
 
 In `app/settings.py`, update defaults to the stable model (verify in docs before editing):
 ```python
-tts_model = os.getenv("GEMINI_TTS_MODEL", "gemini-2.5-flash-tts")
+tts_model = os.getenv("GEMINI_TTS_MODEL", "gemini-2.5-flash-preview-tts")
 tts_fallbacks = _env_list("GEMINI_TTS_MODEL_FALLBACKS")
 if not tts_fallbacks:
-    tts_fallbacks = ["gemini-2.5-flash-preview-tts"]
+    tts_fallbacks = ["gemini-2.5-pro-preview-tts"]
 voice_output_mode=os.getenv("VOICE_OUTPUT_MODE", "browser"),
 ```
 

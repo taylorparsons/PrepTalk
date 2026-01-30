@@ -31,10 +31,13 @@ def read_root(request: Request):
         "liveModel": settings.live_model,
         "textModel": settings.text_model,
         "ttsModel": settings.voice_tts_model,
+        "uiDevMode": settings.ui_dev_mode,
         "voiceMode": settings.voice_mode,
         "voiceOutputMode": settings.voice_output_mode,
         "voiceTtsLanguage": settings.voice_tts_language,
         "voiceTurnEndDelayMs": settings.voice_turn_end_delay_ms,
+        "voiceTurnCompletionConfidence": settings.voice_turn_completion_confidence,
+        "voiceTurnCompletionCooldownMs": settings.voice_turn_completion_cooldown_ms,
         "userId": settings.user_id
     }
     return templates.TemplateResponse(

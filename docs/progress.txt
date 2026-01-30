@@ -1,0 +1,499 @@
+Session: 2026-01-28 00:00
+Goal: Snapshot repo status from docs/plans and align next work.
+
+DONE
+- [2026-01-28 00:00] Create `docs/PRD.md` and `docs/progress.txt` to start RALPH tracking.
+- [2026-01-28 00:00] Review `docs/plans/*` and map plans to implementation (most items already shipped; see notes).
+
+IN PROGRESS
+- Validate and update Live audio model defaults (see `docs/plans/2026-01-16-gemini-live-audio-model-options.md`).
+
+NEXT
+- Run manual voice smoke test checklist in `docs/testing/voice-smoke-test.md` and record results.
+- Fill hackathon deliverables in `README.md` (demo link, write-up, 3-minute video).
+- Decide whether the LiveKit voice coach POC belongs in this repo (see `docs/plans/2026-01-14-livekit-voice-coach-plan.md`).
+- Optional hygiene: add `.codex/` to `.gitignore` if it should not be tracked (called out in `docs/plans/2026-01-10-gemini-live-design.md`).
+
+NOTES
+- Commands run: `ls`, `find`, `rg`, `sed` (status review only)
+- Decisions: N/A
+- Findings:
+  - `docs/plans/2026-01-10-gemini-live-design.md`: core backend/frontend checklist is complete; manual voice smoke test + hackathon deliverables remain unchecked.
+  - `docs/plans/2026-01-12-session-resume-plan.md`: all action items are checked and appear implemented.
+  - `docs/plans/2026-01-13-live-log-dashboard.md` + `docs/plans/2026-01-13-log-analysis-design.md`: log parsing/metrics, `/api/logs/summary`, `/api/telemetry`, and the Live Stats panel are implemented with tests.
+  - `docs/plans/2026-01-19-p0-audio-playback.md` + `docs/plans/2026-01-19-turn-mode-audio-playback.md`: turn-mode defaults + browser TTS path are implemented with tests; still worth verifying via the manual Chrome smoke test.
+  - `docs/plans/2026-01-14-livekit-voice-coach-plan.md`: research plan only (no LiveKit code in `app/`).
+  - `docs/plans/2026-01-16-gemini-live-audio-model-options.md`: still pending.
+- Risks / open questions: Some plan docs are design-only and not tracked as a backlog; pick one next deliverable and timebox it.
+
+---
+
+Session: 2026-01-28 14:10
+Feature: 20260128-prd-from-git-history
+Input: CR-20260128-1409
+Decisions: D-20260128-1410
+Spec: docs/specs/20260128-prd-from-git-history/spec.md
+Tasks: docs/specs/20260128-prd-from-git-history/tasks.md
+Goal: Create a traceable PRD grounded in git history.
+
+DONE
+- [2026-01-28 14:10] Create traceability scaffolding (`docs/requests.md`, `docs/decisions.md`, `docs/TRACEABILITY.md`).
+- [2026-01-28 14:10] Expand `docs/PRD.md` with shipped requirements, evidence, and backlog separation.
+
+IN PROGRESS
+- T-002: Hide debug/advanced controls by default (keep opt-in dev mode) and update UI tests.
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `git log --oneline --decorate -n 80`, `sed -n ...` -> used for PRD evidence gathering
+- Decisions: Treat PRD as current-state snapshot; avoid speculative scope.
+
+---
+
+Session: 2026-01-29 09:38
+Feature: 20260129-submission-polish
+Input: CR-20260129-0938
+Decisions: D-20260129-0938, D-20260129-0942
+Spec: docs/specs/20260129-submission-polish/spec.md
+Tasks: docs/specs/20260129-submission-polish/tasks.md
+Goal: Polish submission defaults and reduce robotic voice output.
+
+DONE
+- [2026-01-29 09:49] T-001: Prefer server TTS in turn mode by default (keep browser fallback) and update defaults/tests.
+- [2026-01-29 10:05] T-002: Hide debug/advanced controls by default (keep opt-in dev mode) and update UI tests.
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `./.venv/bin/python -m pytest -q` -> 48 passed; `./run.sh test` -> 53 passed (note: `./run.sh test` prints a benign substring error after completion).
+- Decisions: Prefer server TTS in turn mode via `voiceOutputMode=auto`, keep fallback to browser speech; split interview vs turn-mode text model defaults.
+
+---
+
+Session: 2026-01-29 11:05
+Feature: 20260129-submission-polish
+Input: CR-20260129-1105
+Decisions: D-20260129-1105
+Spec: docs/specs/20260129-submission-polish/spec.md
+Tasks: docs/specs/20260129-submission-polish/tasks.md
+Goal: Fix turn-mode submit UX, question formatting, drawer truncation, and scoring visibility; require live E2E.
+
+DONE
+- [2026-01-29 12:19] T-007: Run required validations incl Playwright live and record outputs.
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `tail logs/app.log`, `rg logs/app.log` -> logs contain server events but not phrase-level transcript; `set -a; source .env; set +a; E2E_LIVE=1 npm run test:e2e` -> failed first due to start-interview enable timeout, then passed after increasing live wait to 30s.
+- Decisions: Increase live E2E wait for start-interview to cover Gemini question generation latency.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-01-29 12:21
+Feature: 20260129-voice-tts-default
+Input: CR-20260129-1221
+Decisions: D-20260129-1221
+Spec: docs/specs/20260129-voice-tts-default/spec.md
+Tasks: docs/specs/20260129-voice-tts-default/tasks.md
+Goal: Default turn-mode TTS to the requested Gemini voice model.
+
+DONE
+- [2026-01-29 12:23] T-001: Update TTS default model + tests.
+- [2026-01-29 12:23] T-002: Update README defaults/examples for the new voice model.
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `./.venv/bin/python -m pytest tests/test_settings.py -q` -> 3 passed.
+- Decisions: (none)
+- Risks / open questions: (none)
+
+---
+
+Session: 2026-01-29 12:28
+Feature: 20260129-voice-tts-default
+Input: CR-20260129-1228
+Decisions: D-20260129-1221
+Spec: docs/specs/20260129-voice-tts-default/spec.md
+Tasks: docs/specs/20260129-voice-tts-default/tasks.md
+Goal: Update .env to the new voice TTS model defaults.
+
+DONE
+- [2026-01-29 12:28] T-003: Update `.env` with the new voice TTS model defaults.
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: update `.env` TTS model lines.
+- Decisions: (none)
+- Risks / open questions: (none)
+
+---
+
+Session: 2026-01-29 12:32
+Feature: 20260129-e2e-real-files-env
+Input: CR-20260129-1232
+Decisions: D-20260129-1232
+Spec: docs/specs/20260129-e2e-real-files-env/spec.md
+Tasks: docs/specs/20260129-e2e-real-files-env/tasks.md
+Goal: Ensure live E2E real-file paths are only used when env vars are set.
+
+DONE
+- [2026-01-29 12:32] T-001: Remove real-file path entries from `.env`.
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: (none)
+- Decisions: (none)
+- Risks / open questions: (none)
+
+---
+
+Session: 2026-01-29 12:34
+Feature: 20260129-e2e-real-files-env
+Input: CR-20260129-1234
+Decisions: D-20260129-1234
+Spec: docs/specs/20260129-e2e-real-files-env/spec.md
+Tasks: docs/specs/20260129-e2e-real-files-env/tasks.md
+Goal: Keep real-file paths in `.env` but never hardcode them in code.
+
+DONE
+- [2026-01-29 12:34] T-002: Restore `.env` real-file paths and confirm code still uses env-only values.
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: updated `.env` E2E paths.
+- Decisions: (none)
+- Risks / open questions: (none)
+
+---
+
+Session: 2026-01-29 12:55
+Feature: 20260129-peas-gemini-calls
+Input: CR-20260129-1255
+Decisions: D-20260129-1255
+Spec: docs/specs/20260129-peas-gemini-calls/spec.md
+Tasks: docs/specs/20260129-peas-gemini-calls/tasks.md
+Goal: Scope PEAS to Gemini text/voice calls and add log-based eval signals.
+
+DONE
+- [2026-01-29 12:56] T-001: Update PEAS in `AGENTS.md` and PRD/specs for Gemini call scope.
+- [2026-01-29 12:59] T-002: Add `event=peas_eval` log entries to Gemini text + TTS calls.
+- [2026-01-29 12:59] T-003: Add tests for PEAS eval logging.
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `./.venv/bin/python -m pytest tests/test_gemini_text.py tests/test_gemini_tts.py -q` -> 7 passed.
+- Decisions: (none)
+- Risks / open questions: (none)
+
+---
+
+Session: 2026-01-29 13:28
+Feature: 20260129-peas-gemini-calls
+Input: CR-20260129-1328
+Decisions: D-20260129-1328
+Spec: docs/specs/20260129-peas-gemini-calls/spec.md
+Tasks: docs/specs/20260129-peas-gemini-calls/tasks.md
+Goal: Run full suite incl. live E2E and stabilize live turn scoring check.
+
+DONE
+- [2026-01-29 13:28] Increase live E2E score wait timeout in `tests/e2e/live-turn-interview.spec.js`.
+- [2026-01-29 13:28] Run full suite (pytest, Vitest, Playwright mock, Playwright live).
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `./.venv/bin/python -m pytest` -> 51 passed; `./run.sh test` -> 55 passed; `npm run test:e2e` -> 2 passed, 5 skipped; `set -a; source .env; set +a; E2E_LIVE=1 npm run test:e2e` -> first failed on score wait, then passed after timeout increase.
+- Decisions: Increase live E2E score wait to 60s for Gemini scoring latency.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-01-29 13:57
+Feature: 20260129-disable-live-nondev
+Input: CR-20260129-1357
+Decisions: D-20260129-1357
+Spec: docs/specs/20260129-disable-live-nondev/spec.md
+Tasks: docs/specs/20260129-disable-live-nondev/tasks.md
+Goal: Hide live streaming unless UI dev mode is enabled.
+
+DONE
+- [2026-01-29 13:57] T-001: Force turn mode in non-dev UI and hide live option.
+- [2026-01-29 13:57] T-002: Update component tests for voice mode selector behavior.
+- [2026-01-29 13:57] T-003: Update docs to mention live streaming is dev-only.
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: (none) — per user request to hold off on testing (CR-20260129-1400).
+- Decisions: (none)
+- Risks / open questions: None.
+
+---
+
+Session: 2026-01-29 14:02
+Feature: 20260129-more-drawer-width
+Input: CR-20260129-1402
+Decisions: D-20260129-1402
+Spec: docs/specs/20260129-more-drawer-width/spec.md
+Tasks: docs/specs/20260129-more-drawer-width/tasks.md
+Goal: Widen the More drawer to avoid truncation.
+
+DONE
+- [2026-01-29 14:02] T-001: Increase drawer width in CSS.
+- [2026-01-29 14:02] T-002: Update or add tests if needed.
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: (none) — per user request to hold off on testing.
+- Decisions: (none)
+- Risks / open questions: None.
+
+---
+
+Session: 2026-01-29 14:03
+Feature: 20260129-voice-mode-static
+Input: CR-20260129-1403
+Decisions: D-20260129-1403
+Spec: docs/specs/20260129-voice-mode-static/spec.md
+Tasks: docs/specs/20260129-voice-mode-static/tasks.md
+Goal: Remove the single-option voice mode dropdown in non-dev mode.
+
+DONE
+- [2026-01-29 14:03] T-001: Replace dropdown with static label in non-dev mode.
+- [2026-01-29 14:03] T-002: Update component tests.
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: (none) — per user request to hold off on testing.
+- Decisions: (none)
+- Risks / open questions: None.
+
+---
+
+Session: 2026-01-29 14:04
+Feature: 20260129-more-drawer-width
+Input: CR-20260129-1404
+Decisions: D-20260129-1404
+Spec: docs/specs/20260129-more-drawer-width/spec.md
+Tasks: docs/specs/20260129-more-drawer-width/tasks.md
+Goal: Widen the More drawer further after follow-up feedback.
+
+DONE
+- [2026-01-29 14:04] T-003: Increase drawer width again per follow-up feedback.
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: (none) — per user request to hold off on testing.
+- Decisions: (none)
+- Risks / open questions: None.
+
+---
+
+Session: 2026-01-29 15:40
+Feature: 20260129-session-controls-ux
+Input: CR-20260129-1520, CR-20260129-1521
+Decisions: D-20260129-1522
+Spec: docs/specs/20260129-session-controls-ux/spec.md
+Tasks: docs/specs/20260129-session-controls-ux/tasks.md
+Goal: Add dev-mode indicator, ensure non-dev hides voice-mode dropdown, and align Session Controls under Candidate Setup.
+
+DONE
+- [2026-01-29 15:40] T-001: Parse `uiDevMode` strings safely and append dev-mode indicator to the adapter meta line.
+- [2026-01-29 15:40] T-002: Align the split layout to the top so Session Controls remain directly under Candidate Setup.
+- [2026-01-29 15:40] T-003: Update/add UI tests for dev-mode meta and `uiDevMode` parsing, then run full test suites.
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `tail -n 40 logs/app.log` -> no output; `./.venv/bin/python -m pytest` -> 51 passed (1 warning); `./run.sh test` -> failed 2 tests (voice-output mode) then updated tests; `./run.sh test` -> 58 passed; `npm run test:e2e` -> 2 passed, 5 skipped; `set -a; source .env; set +a; E2E_LIVE=1 npm run test:e2e` -> 2 passed, 5 skipped.
+- Decisions: Add dev-mode label in meta, parse `uiDevMode` strings defensively, and align grid items to top.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-01-29 15:46
+Feature: 20260129-session-controls-ux
+Input: CR-20260129-1543, CR-20260129-1544
+Decisions: D-20260129-1545
+Spec: docs/specs/20260129-session-controls-ux/spec.md
+Tasks: docs/specs/20260129-session-controls-ux/tasks.md
+Goal: Clarify live E2E real-file skip conditions and honor request to avoid live streaming tests.
+
+DONE
+- [2026-01-29 15:46] Document why live real-file E2E skips with current `.env` values and acknowledge no live streaming tests will be run unless explicitly requested.
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `sed -n '1,200p' .env` -> inspected E2E config.
+- Decisions: Respect request to avoid live streaming tests; explain required `.env` settings for live real-file runs.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-01-29 15:52
+Feature: 20260129-session-controls-ux
+Input: CR-20260129-1551
+Decisions: D-20260129-1545
+Spec: docs/specs/20260129-session-controls-ux/spec.md
+Tasks: docs/specs/20260129-session-controls-ux/tasks.md
+Goal: Confirm live real-file E2E uses env paths without editing `.env`.
+
+DONE
+- [2026-01-29 15:52] Document how live real-file E2E uses `E2E_RESUME_PATH`/`E2E_JOB_PATH` and which env switches are required.
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: (none).
+- Decisions: Do not edit `.env`; explain required env flags for the live real-file test to run.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-01-29 16:10
+Feature: 20260129-dev-live-model
+Input: CR-20260129-1600
+Decisions: D-20260129-1601
+Spec: docs/specs/20260129-dev-live-model/spec.md
+Tasks: docs/specs/20260129-dev-live-model/tasks.md
+Goal: Force dev-mode live streaming to use Gemini 2.5 Native Audio.
+
+DONE
+- [2026-01-29 16:10] T-001: Force dev-mode live model to Gemini 2.5 Native Audio and update settings tests.
+- [2026-01-29 16:10] T-002: Run required test suites (excluding live-streaming E2E per request).
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `./.venv/bin/python -m pytest` -> passed; `./run.sh test` -> passed; `E2E_LIVE=0 npm run test:e2e` -> passed (live tests skipped).
+- Decisions: Honor dev-only live model override while keeping `.env` unchanged.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-01-29 17:02
+Feature: 20260129-live-audio-hygiene
+Input: CR-20260129-1632
+Decisions: D-20260129-1635
+Spec: docs/specs/20260129-live-audio-hygiene/spec.md
+Tasks: docs/specs/20260129-live-audio-hygiene/tasks.md
+Goal: Prevent double playback in live mode and block internal reasoning in coach output.
+
+DONE
+- [2026-01-29 17:02] T-001: Respect live output mode for audio playback and cancel pending TTS on live audio.
+- [2026-01-29 17:02] T-002: Add live system prompt guard against internal reasoning.
+- [2026-01-29 17:02] T-003: Update tests for live audio/TTS behavior and prompt guard; run full suites.
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `./.venv/bin/python -m pytest` -> 52 passed (1 warning); `./run.sh test` -> passed; `E2E_LIVE=0 npm run test:e2e` -> 1 passed, 6 skipped (live streaming tests skipped per request).
+- Decisions: Prefer server audio in live auto/server modes and avoid internal reasoning via prompt guard.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-01-30 09:40
+Feature: 20260130-live-fallback-stability
+Input: CR-20260130-0920, CR-20260130-0922
+Decisions: D-20260130-0925
+Spec: docs/specs/20260130-live-fallback-stability/spec.md
+Tasks: docs/specs/20260130-live-fallback-stability/tasks.md
+Goal: Make live-mode audio fallback rare and ensure Live Stats errors reflect real errors only.
+
+DONE
+- [2026-01-30 09:40] T-001: Update live-mode speech logic to disable browser TTS in auto/server output.
+- [2026-01-30 09:40] T-002: Adjust log metrics and UI fallback so Errors reflect real errors only.
+- [2026-01-30 09:40] T-003: Update tests for live output fallback and log metrics counts.
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `npx vitest run tests/components/voice-output-mode.test.js tests/components/log-dashboard.test.js` -> 10 passed.
+- Commands run: `./.venv/bin/python -m pytest tests/test_log_metrics.py -q` -> 1 passed.
+- Decisions: D-20260130-0925.
+- Risks / open questions: None.
