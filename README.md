@@ -1,4 +1,4 @@
-# Awesome Interview
+# PrepTalk
 
 Voice-first interview practice app for the Gemini hackathon.
 

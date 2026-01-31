@@ -371,3 +371,21 @@ Alternatives considered:
 Acceptance / test:
 - Main UI exposes only turn-based controls; no live mode selector, live transcript label, or Live Stats panel.
 - PRD shipped requirements no longer claim live streaming or Live Stats as shipped in main.
+
+## D-20260130-1729
+Date: 2026-01-30 17:29
+Inputs: CR-20260130-1729
+PRD: N/A (repo governance)
+
+Decision:
+Attempted to enable branch protection on `main` via GitHub API; the request is blocked because branch protection requires GitHub Pro or a public repo for this account.
+
+Rationale:
+The GitHub API returned HTTP 403 with guidance to upgrade or make the repository public; no server-side change can be applied without that prerequisite.
+
+Alternatives considered:
+- Apply protection locally only (rejected: does not prevent remote deletion).
+- Use rulesets API (rejected: same plan restriction).
+
+Acceptance / test:
+- Once the repo is public or upgraded, re-run the branch protection API call to set “Allow deletions” = false.
