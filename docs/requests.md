@@ -351,3 +351,13 @@ yes run the full suit
 
 Notes:
 - Run the full test suite: pytest, Vitest, Playwright mock, and Playwright live with `.env`.
+
+## CR-20260131-1404
+Date: 2026-01-31 14:04
+Source: chat
+
+Request (verbatim):
+working with $ralph to fix this   - Local .env has a typo: GEMINI_TTS_MODEL==... (.env:12) causing the “model not found” warning; also contains a real
+
+Notes:
+- Fix the `.env` typo for `GEMINI_TTS_MODEL` and remove the real API key from the local `.env`.
