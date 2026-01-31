@@ -36,6 +36,7 @@ Voice-first interview practice app for the Gemini hackathon. (Sources: CR-202601
 - NFR-APP-002: Logs are written to `logs/app.log` using key=value pairs (logfmt style) with colorized console logs. (Sources: CR-20260128-1409; D-20260128-1410)
 - NFR-APP-003: The project includes automated test suites for UI (Vitest), API (pytest), and E2E (Playwright). (Sources: CR-20260128-1409; D-20260128-1410; CR-20260130-1445; D-20260130-1445)
 - NFR-APP-004: Repository text and UI copy do not reference the prior employer name. (Sources: CR-20260130-2036; D-20260130-2036)
+- NFR-APP-005: Package metadata and developer log tooling use the PrepTalk name; legacy “Awesome Interview” naming is removed. (Sources: CR-20260131-1410; D-20260131-1410)
 
 ## Out of scope (explicitly not required by this PRD)
 - A LiveKit-based “voice coach” implementation (there is a plan doc, but no requirement to ship it). (Sources: CR-20260128-1409; D-20260128-1410)

@@ -99,10 +99,10 @@ lnav logs/app.log
 
 Example queries (run in lnav with `;`):
 ```sql
-select event, status, count(*) from awesome_log group by event, status order by count(*) desc;
-select event, percentile(duration_ms, 95) from awesome_log where duration_ms is not null group by event;
-select interview_id, count(*) from awesome_log group by interview_id order by count(*) desc;
-select event, count(*) from awesome_log where upper(log_level) = 'ERROR' or status = 'error' group by event;
+select event, status, count(*) from preptalk_log group by event, status order by count(*) desc;
+select event, percentile(duration_ms, 95) from preptalk_log where duration_ms is not null group by event;
+select interview_id, count(*) from preptalk_log group by interview_id order by count(*) desc;
+select event, count(*) from preptalk_log where upper(log_level) = 'ERROR' or status = 'error' group by event;
 ```
 
 ## Tests

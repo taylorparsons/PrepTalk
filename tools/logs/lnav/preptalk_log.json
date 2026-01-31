@@ -1,6 +1,6 @@
 {
   "$schema": "https://lnav.org/schemas/format-v1.schema.json",
-  "awesome_interview_log": {
+  "preptalk_logfmt": {
     "title": "PrepTalk Log",
     "description": "App log format with logfmt payload.",
     "file-pattern": ".*\\.log$",

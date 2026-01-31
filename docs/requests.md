@@ -361,3 +361,17 @@ working with $ralph to fix this   - Local .env has a typo: GEMINI_TTS_MODEL==...
 
 Notes:
 - Fix the `.env` typo for `GEMINI_TTS_MODEL` and remove the real API key from the local `.env`.
+
+## CR-20260131-1410
+Date: 2026-01-31 14:10
+Source: chat
+
+Request (verbatim):
+$ralph also handle these finds - Legacy app name still present in package metadata: package.json:2, package-lock.json:2 (awesome-interview-frontend). If “Awesome Interview” must be fully replaced, update these.
+  - README/log tooling still uses awesome_log and awesome_interview.json: README.md:102, docs/plans/2026-01-13-log-analysis-design.md:15. Decide whether to rename the log format + examples.
+  - Live Stats UI string still exists in main JS bundle: app/static/js/ui.js:2249. It’s not rendered, but debug text still ships.
+
+Notes:
+- Update package metadata to the PrepTalk name.
+- Rename log tooling format/view names and update README/docs references.
+- Remove the Live Stats UI string from the main JS bundle.
