@@ -12,7 +12,7 @@ Use `lnav` with a custom format definition for the Python log line plus a query 
 
 ## Components
 
-- `~/.lnav/formats/installed/awesome_interview.json`: log format definition for lines like `YYYY-MM-DD HH:MM:SS,mmm LEVEL key=value ...` with a regex that captures timestamp, level, and message, then tokenizes `key=value` pairs.
+- `~/.lnav/formats/installed/preptalk_log.json`: log format definition for lines like `YYYY-MM-DD HH:MM:SS,mmm LEVEL key=value ...` with a regex that captures timestamp, level, and message, then tokenizes `key=value` pairs.
 - `~/.lnav/defaults.json`: saved queries for common stats.
 - Optional repo helper: `tools/logs/lnav/setup.sh` to copy format/query files into `~/.lnav/`.
 

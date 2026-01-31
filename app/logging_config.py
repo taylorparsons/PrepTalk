@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 
-_LOGGER_NAME = "awesome_interview"
+_LOGGER_NAME = "preptalk"
 _CONFIGURED = False
 
 
