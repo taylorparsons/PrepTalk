@@ -301,3 +301,23 @@ Notes:
 - Remove live mode from `main` while keeping it on the feature branch.
 - Update `docs/plans/2026-01-10-gemini-live-design.md` for hackathon submission scope.
 - Remove debug UI text and dev-only live chat view from `main`.
+
+## CR-20260130-1727
+Date: 2026-01-30 17:27
+Source: chat
+
+Request (verbatim):
+look in the app for the previous name called awesome interview and place with the app name
+
+Notes:
+- Replace “Awesome Interview” naming with the app name across UI/docs.
+
+## CR-20260130-1729
+Date: 2026-01-30 17:29
+Source: chat
+
+Request (verbatim):
+add protection on the main branch on remote to put in basic protection to prevent deletion of main
+
+Notes:
+- Apply remote branch protection to prevent deleting `main`.

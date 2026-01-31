@@ -256,6 +256,60 @@ NOTES
 
 ---
 
+Session: 2026-01-30 17:27
+Agent: Codex CLI
+Model: GPT-5.2
+Skills: ralph
+Feature: 20260130-preptalk-name
+Input: CR-20260130-1727
+Decisions: None
+Spec: docs/specs/20260130-preptalk-name/spec.md
+Tasks: docs/specs/20260130-preptalk-name/tasks.md
+Goal: Replace “Awesome Interview” naming with PrepTalk and add a title test.
+
+DONE
+- [2026-01-30 17:27] T-001: Replace legacy name in UI/docs/log title. (Skills: ralph)
+- [2026-01-30 17:27] T-002: Add UI template title test. (Skills: ralph)
+- [2026-01-30 17:27] T-003: Run UI test suite. (Skills: verification-before-completion)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `rg`, `apply_patch`, `./run.sh test`.
+- Tests: `./run.sh test` -> 52 passed.
+
+---
+
+Session: 2026-01-30 17:29
+Agent: Codex CLI
+Model: GPT-5.2
+Skills: ralph, git-workflow-automation
+Feature: 20260130-branch-protection
+Input: CR-20260130-1729
+Decisions: D-20260130-1729
+Spec: docs/specs/20260130-branch-protection/spec.md
+Tasks: docs/specs/20260130-branch-protection/tasks.md
+Goal: Add remote protection to prevent deleting `main`.
+
+DONE
+- [2026-01-30 17:29] T-001: Attempt to enable branch protection on `main`. (Skills: ralph, git-workflow-automation)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- T-002: Re-run branch protection API after repo is public or upgraded. (Skills: git-workflow-automation)
+
+NOTES
+- Commands run: `gh auth status -h github.com`, `gh api repos/taylorparsons/PrepTalk/branches/main/protection`.
+- Result: GitHub API returned 403: branch protection requires GitHub Pro or a public repo.
+
+---
+
 Session: 2026-01-29 13:28
 Feature: 20260129-peas-gemini-calls
 Input: CR-20260129-1328
