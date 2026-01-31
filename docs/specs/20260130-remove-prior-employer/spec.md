@@ -1,4 +1,4 @@
-# Feature Spec: 20260130-remove-veneo
+# Feature Spec: 20260130-remove-prior-employer
 
 Status: Done
 Created: 2026-01-30 20:36
