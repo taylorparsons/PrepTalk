@@ -725,4 +725,5 @@ NEXT
 NOTES
 - Commands run: `rg -n "Live Stats" app/static/js/ui.js` -> no matches; `./.venv/bin/python -m pytest tests/test_logging_config.py` -> 1 passed; `./run.sh test` -> 52 passed; `python3 .codex/skills/git-workflow-automation/scripts/audit_repository_security.py --quick` -> 0 findings; `python3 .codex/skills/git-workflow-automation/scripts/scan_for_secrets.py --all` -> no secrets.
 - Decisions: D-20260131-1410.
+- Commit: f100fca843314804f133e4826411bd9628a8b39c
 - Risks / open questions: (none)
