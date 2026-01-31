@@ -331,3 +331,13 @@ I want any reference to the prior employer name removed you can do that now on t
 
 Notes:
 - Remove all prior-employer-name references from the repository; choose the safest approach between merging PR #2 or manual edits.
+
+## CR-20260130-2053
+Date: 2026-01-30 20:53
+Source: chat
+
+Request (verbatim):
+remove the pul PR #2 when done to clean up
+
+Notes:
+- Close PR #2 and delete its branch after the manual removal is pushed.
