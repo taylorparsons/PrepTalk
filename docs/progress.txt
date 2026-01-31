@@ -613,4 +613,5 @@ NEXT
 NOTES
 - Commands run: `rg -n "Veneo" -S .` -> no matches; `./.venv/bin/python -m pytest tests/test_no_veneo_references.py -q` -> 1 passed.
 - Decisions: D-20260130-2036.
+- Commit: 3b7da702b8803d4e35b161b38317b0e7d03c4ae3
 - Risks / open questions: (none)
