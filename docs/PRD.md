@@ -1,4 +1,4 @@
-# PRD: Awesome Interview (PrepTalk)
+# PRD: PrepTalk
 
 Status: Active
 Updated: 2026-01-28 14:10
