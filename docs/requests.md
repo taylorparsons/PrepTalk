@@ -25,7 +25,7 @@ Date: 2026-01-29 11:05
 Source: chat
 
 Request (verbatim):
-all of the test passed did that include playwright with a live test? I am seeing poorly formatted questions {'id': 'technical_prototyping', 'text': 'You led the development of dual-mode search architectures and agent workflows at Veneo using AutoGen. Can you walk us through a specific technical trade-off you made during that system design regarding latency versus response quality? How did you validate that this architecture was ready for enterprise use rather than just a demo?', 'intent': 'Assess hands-on technical fluency with LLM limitations, architectural decision-making, and the ability to move from prototype to production-grade software.'} dev mode is off 2. sub-mitting the answer needs to be activated sooner and a few trigger phrases to submit the anser. 3. continue speaking is not working why is the button there at all? 4. when I click More button the pop-up is trunctated 5. when I end the session the Score Summary did not appear and I have no sense or indication that it was happening, make it more clear it is happening.
+all of the test passed did that include playwright with a live test? I am seeing poorly formatted questions {'id': 'technical_prototyping', 'text': 'You led the development of dual-mode search architectures and agent workflows at a previous employer using AutoGen. Can you walk us through a specific technical trade-off you made during that system design regarding latency versus response quality? How did you validate that this architecture was ready for enterprise use rather than just a demo?', 'intent': 'Assess hands-on technical fluency with LLM limitations, architectural decision-making, and the ability to move from prototype to production-grade software.'} dev mode is off 2. sub-mitting the answer needs to be activated sooner and a few trigger phrases to submit the anser. 3. continue speaking is not working why is the button there at all? 4. when I click More button the pop-up is trunctated 5. when I end the session the Score Summary did not appear and I have no sense or indication that it was happening, make it more clear it is happening.
 
 Notes:
 - Clarifications: remove Continue Speaking; submit triggers: “how did I do?” and “submit my answer”; submit timing target: 10 seconds.
@@ -321,3 +321,13 @@ add protection on the main branch on remote to put in basic protection to preven
 
 Notes:
 - Apply remote branch protection to prevent deleting `main`.
+
+## CR-20260130-2036
+Date: 2026-01-30 20:36
+Source: chat
+
+Request (verbatim):
+I want any reference to the prior employer name removed you can do that now on this code base or merge the pull request whichever is safer
+
+Notes:
+- Remove all prior-employer-name references from the repository; choose the safest approach between merging PR #2 or manual edits.
