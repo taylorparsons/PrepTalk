@@ -697,3 +697,32 @@ NOTES
 - Decisions: D-20260131-1404.
 - Commit: fd01638e22841f57354e6c5e765a51436c648e9b
 - Risks / open questions: (none)
+
+---
+
+Session: 2026-01-31 14:10
+Agent: Codex CLI
+Model: (unknown)
+Skills: ralph, git-workflow-automation
+Feature: 20260131-branding-log-cleanup
+Input: CR-20260131-1410
+Decisions: D-20260131-1410
+Spec: docs/specs/20260131-branding-log-cleanup/spec.md
+Tasks: docs/specs/20260131-branding-log-cleanup/tasks.md
+Goal: Remove legacy branding in metadata/log tooling and drop Live Stats label.
+
+DONE
+- [2026-01-31 14:24] T-001: Update package metadata name to PrepTalk. (Skills: ralph)
+- [2026-01-31 14:24] T-002: Rename log tooling + update README/docs. (Skills: ralph)
+- [2026-01-31 14:24] T-003: Remove Live Stats panel string from main UI bundle. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `rg -n "Live Stats" app/static/js/ui.js` -> no matches; `./.venv/bin/python -m pytest tests/test_logging_config.py` -> 1 passed; `./run.sh test` -> 52 passed; `python3 .codex/skills/git-workflow-automation/scripts/audit_repository_security.py --quick` -> 0 findings; `python3 .codex/skills/git-workflow-automation/scripts/scan_for_secrets.py --all` -> no secrets.
+- Decisions: D-20260131-1410.
+- Risks / open questions: (none)

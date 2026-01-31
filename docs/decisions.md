@@ -426,3 +426,24 @@ Alternatives considered:
 Acceptance / test:
 - `.env` uses a single `=` for `GEMINI_TTS_MODEL`.
 - `GEMINI_API_KEY` is set to a placeholder and not committed.
+
+## D-20260131-1410
+Date: 2026-01-31 14:10
+Inputs: CR-20260131-1410
+PRD: Non-functional requirements
+
+Decision:
+Replace legacy “Awesome Interview” naming in package metadata and log tooling with “PrepTalk”, and remove the unused Live Stats panel string from the main UI bundle by deleting the log dashboard panel code.
+
+Rationale:
+These names are legacy artifacts and do not reflect the current app branding; removing the Live Stats label ensures debug text is not shipped in main.
+
+Alternatives considered:
+- Leave package metadata unchanged (rejected: conflicts with branding cleanup request).
+- Keep log tooling names and only update README (rejected: mismatched tooling and docs).
+- Leave Live Stats code as dead UI (rejected: debug string still ships).
+
+Acceptance / test:
+- `package.json` and `package-lock.json` use the PrepTalk frontend name.
+- lnav format/SQL filenames and view name use PrepTalk naming, and README/docs reflect it.
+- `rg -n "Live Stats" app/static/js/ui.js` returns no matches.
