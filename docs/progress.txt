@@ -639,6 +639,6 @@ NEXT
 - (none)
 
 NOTES
-- Commands run: `gh pr close 2 --repo taylorparsons/PrepTalk --delete-branch` -> closed PR and deleted branch.
+- Commands run: `gh pr close 2 --repo taylorparsons/PrepTalk --delete-branch` -> closed PR and deleted branch; `git push origin main` -> pushed local commits.
 - Decisions: (none)
 - Risks / open questions: (none)
