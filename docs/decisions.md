@@ -389,3 +389,22 @@ Alternatives considered:
 
 Acceptance / test:
 - Once the repo is public or upgraded, re-run the branch protection API call to set “Allow deletions” = false.
+
+## D-20260130-2036
+Date: 2026-01-30 20:36
+Inputs: CR-20260130-2036
+PRD: Next / backlog, Non-functional requirements
+
+Decision:
+Remove all references to the prior employer name directly in the working tree on `main` instead of merging PR #2. Redact existing occurrences in docs (including historical request text) to satisfy the removal request.
+
+Rationale:
+Direct edits minimize scope and avoid unintended changes from an unmerged PR; the user explicitly requested removal across the codebase, which includes documentation.
+
+Alternatives considered:
+- Merge PR #2 (rejected: unknown diff scope and potential extra changes).
+- Leave historical request entries untouched (rejected: conflicts with “remove any reference” directive).
+
+Acceptance / test:
+- Repo scan for the prior-employer term returns no matches in tracked files.
+- Automated test asserts no prior-employer-name references remain in repository text files.
