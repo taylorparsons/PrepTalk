@@ -1,6 +1,6 @@
-# Tasks: 20260130-remove-veneo
+# Tasks: 20260130-remove-prior-employer
 
-Spec: docs/specs/20260130-remove-veneo/spec.md
+Spec: docs/specs/20260130-remove-prior-employer/spec.md
 
 ## NEXT
 - (none)
