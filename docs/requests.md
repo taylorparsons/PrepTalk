@@ -341,3 +341,13 @@ remove the pul PR #2 when done to clean up
 
 Notes:
 - Close PR #2 and delete its branch after the manual removal is pushed.
+
+## CR-20260131-1313
+Date: 2026-01-31 13:13
+Source: chat
+
+Request (verbatim):
+yes run the full suit
+
+Notes:
+- Run the full test suite: pytest, Vitest, Playwright mock, and Playwright live with `.env`.

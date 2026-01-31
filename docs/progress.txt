@@ -642,3 +642,30 @@ NOTES
 - Commands run: `gh pr close 2 --repo taylorparsons/PrepTalk --delete-branch` -> closed PR and deleted branch; `git push origin main` -> pushed local commits.
 - Decisions: (none)
 - Risks / open questions: (none)
+
+---
+
+Session: 2026-01-31 13:13
+Agent: Codex CLI
+Model: (unknown)
+Skills: ralph, verification-before-completion
+Feature: 20260131-full-suite-tests
+Input: CR-20260131-1313
+Decisions: (none)
+Spec: docs/specs/20260131-full-suite-tests/spec.md
+Tasks: docs/specs/20260131-full-suite-tests/tasks.md
+Goal: Run the full test suite and capture results.
+
+DONE
+- [2026-01-31 13:13] T-001: Run full test suite and capture results. (Skills: ralph, verification-before-completion)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `./.venv/bin/python -m pytest` -> 54 passed (1 warning); `./run.sh test` -> 52 passed; `npm run test:e2e` -> 2 passed, 5 skipped; `set -a; source .env; set +a; E2E_LIVE=1 npm run test:e2e` -> 2 passed, 5 skipped; `.env:12` warning about `gemini-2.5-pro-preview-tts` not found.
+- Decisions: (none)
+- Risks / open questions: Live E2E specs remain skipped on main because live streaming is removed from the UI.
