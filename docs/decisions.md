@@ -408,3 +408,21 @@ Alternatives considered:
 Acceptance / test:
 - Repo scan for the prior-employer term returns no matches in tracked files.
 - Automated test asserts no prior-employer-name references remain in repository text files.
+
+## D-20260131-1404
+Date: 2026-01-31 14:04
+Inputs: CR-20260131-1404
+PRD: N/A (local config hygiene)
+
+Decision:
+Fix the `.env` typo (`GEMINI_TTS_MODEL==`) and replace the real API key with a placeholder value in the local `.env`. Do not commit `.env`.
+
+Rationale:
+The typo triggers model lookup warnings, and leaving a real key in a local config risks accidental exposure. `.env` is already gitignored, so changes remain local.
+
+Alternatives considered:
+- Keep the real key and only fix the typo (rejected: leaves secret in a working file).
+
+Acceptance / test:
+- `.env` uses a single `=` for `GEMINI_TTS_MODEL`.
+- `GEMINI_API_KEY` is set to a placeholder and not committed.
