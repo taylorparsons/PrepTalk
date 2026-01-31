@@ -695,4 +695,5 @@ NEXT
 NOTES
 - Commands run: edited `.env` to fix `GEMINI_TTS_MODEL` and redact `GEMINI_API_KEY`.
 - Decisions: D-20260131-1404.
+- Commit: fd01638e22841f57354e6c5e765a51436c648e9b
 - Risks / open questions: (none)
