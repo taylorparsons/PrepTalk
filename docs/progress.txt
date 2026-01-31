@@ -613,5 +613,5 @@ NEXT
 NOTES
 - Commands run: `rg -n "<prior employer term>" -S .` -> no matches; `./.venv/bin/python -m pytest tests/test_no_prior_employer_references.py -q` -> failed (forbidden term found in progress log), then passed after redaction; `python3 .codex/skills/git-workflow-automation/scripts/audit_repository_security.py --quick` -> 0 findings.
 - Decisions: D-20260130-2036.
-- Commit: 3b7da702b8803d4e35b161b38317b0e7d03c4ae3
+- Commit: 0bdba4280ef8aa0cd659e23537c434603ef2ce4a
 - Risks / open questions: (none)
