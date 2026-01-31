@@ -586,3 +586,31 @@ NOTES
 - Commands run: `./.venv/bin/python -m pytest tests/test_log_metrics.py -q` -> 1 passed.
 - Decisions: D-20260130-0925.
 - Risks / open questions: None.
+
+---
+
+Session: 2026-01-30 20:36
+Agent: Codex CLI
+Model: (unknown)
+Skills: ralph
+Feature: 20260130-remove-veneo
+Input: CR-20260130-2036
+Decisions: D-20260130-2036
+Spec: docs/specs/20260130-remove-veneo/spec.md
+Tasks: docs/specs/20260130-remove-veneo/tasks.md
+Goal: Remove all prior-employer-name references from the repo and add guard tests.
+
+DONE
+- [2026-01-30 20:41] T-001: Remove/replace prior-employer-name references in tracked repo text. (Skills: ralph)
+- [2026-01-30 20:41] T-002: Add automated test to prevent prior-employer-name references. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `rg -n "Veneo" -S .` -> no matches; `./.venv/bin/python -m pytest tests/test_no_veneo_references.py -q` -> 1 passed.
+- Decisions: D-20260130-2036.
+- Risks / open questions: (none)
