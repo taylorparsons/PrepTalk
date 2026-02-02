@@ -64,7 +64,8 @@ Run:
 ## Environment
 Add values to `.env` as needed:
 - `INTERVIEW_ADAPTER` (mock or gemini)
-- `GEMINI_API_KEY`
+- `GEMINI_API_KEY` (AI Studio Gemini API key)
+- `GOOGLE_API_KEY` (optional fallback)
 - `GEMINI_LIVE_MODEL`
 - `GEMINI_LIVE_MODEL_FALLBACKS`
 - `GEMINI_INTERVIEW_TEXT_MODEL`
@@ -86,6 +87,8 @@ Add values to `.env` as needed:
 - `UI_DEV_MODE`
 - `SESSION_STORE_DIR`
 - `APP_USER_ID`
+
+AI Studio setup notes: `docs/ai-studio-setup.md`.
 
 ## Session Flow
 1. Upload resume + job description.

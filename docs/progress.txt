@@ -727,3 +727,31 @@ NOTES
 - Decisions: D-20260131-1410.
 - Commit: f100fca843314804f133e4826411bd9628a8b39c
 - Risks / open questions: (none)
+
+---
+
+Session: 2026-02-02 12:35
+Agent: Codex CLI
+Model: (unknown)
+Skills: ralph
+Feature: 20260202-ai-studio-endpoint
+Input: CR-20260202-1235
+Decisions: D-20260202-1235
+Spec: docs/specs/20260202-ai-studio-endpoint/spec.md
+Tasks: docs/specs/20260202-ai-studio-endpoint/tasks.md
+Goal: Document AI Studio setup + add API key fallback for Gemini.
+
+DONE
+- [2026-02-02 12:50] T-001: Document AI Studio setup + shared endpoint configuration. (Skills: ralph)
+- [2026-02-02 12:50] T-002: Add GOOGLE_API_KEY fallback + tests. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `./.venv/bin/python -m pytest tests/test_gemini_interview_model_selection.py` -> 2 passed.
+- Decisions: D-20260202-1235.
+- Risks / open questions: (none)

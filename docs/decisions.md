@@ -447,3 +447,23 @@ Acceptance / test:
 - `package.json` and `package-lock.json` use the PrepTalk frontend name.
 - lnav format/SQL filenames and view name use PrepTalk naming, and README/docs reflect it.
 - `rg -n "Live Stats" app/static/js/ui.js` returns no matches.
+
+## D-20260202-1235
+Date: 2026-02-02 12:35
+Inputs: CR-20260202-1235
+PRD: Functional requirements, Non-functional requirements
+
+Decision:
+Treat “import into ai.google.com” as AI Studio project + API key setup and document the steps. Keep the Gemini API key server-side via `GEMINI_API_KEY` (with `GOOGLE_API_KEY` fallback) and describe the shared endpoint as the app’s FastAPI base URL for hackathon sharing.
+
+Rationale:
+AI Studio provides the Gemini API key and project context, while the app already exposes a FastAPI endpoint; this is the smallest hackathon-ready path without exposing secrets in the client.
+
+Alternatives considered:
+- Use a client-side API key (rejected: exposes secret and violates best practices).
+- Require Vertex AI service accounts (rejected: heavier setup than needed for hackathon).
+
+Acceptance / test:
+- Docs include AI Studio project + API key setup and shared endpoint notes.
+- Gemini adapter accepts `GEMINI_API_KEY` or `GOOGLE_API_KEY`.
+- Unit test verifies the fallback key path.

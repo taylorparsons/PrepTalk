@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 const isLive = Boolean(process.env.E2E_LIVE);
-const hasKey = Boolean(process.env.GEMINI_API_KEY);
+const hasKey = Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
 const isLong = Boolean(process.env.E2E_LIVE_LONG);
 const liveDurationMs = Number.parseInt(process.env.E2E_LIVE_DURATION_MS || '180000', 10);
 const livePollIntervalMs = Number.parseInt(process.env.E2E_LIVE_POLL_MS || '1000', 10);
@@ -69,7 +69,7 @@ async function sendAudioBurst(page, { frames, frequencyHz, amplitude }) {
 test('candidate interview flow (gemini live long)', async ({ page }) => {
   test.skip(
     !isLive || !hasKey || !isLong,
-    'Requires E2E_LIVE=1, E2E_LIVE_LONG=1, and GEMINI_API_KEY.'
+    'Requires E2E_LIVE=1, E2E_LIVE_LONG=1, and GEMINI_API_KEY or GOOGLE_API_KEY.'
   );
   test.setTimeout(Math.max(240000, liveDurationMs + 60000));
 
