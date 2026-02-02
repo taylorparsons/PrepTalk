@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+import uuid
 
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import HTMLResponse
@@ -25,6 +26,11 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 @app.get("/", response_class=HTMLResponse)
 def read_root(request: Request):
     settings = load_settings()
+    cookie_user_id = request.cookies.get("preptalk_user_id")
+    user_id = cookie_user_id or settings.user_id
+    should_set_cookie = not cookie_user_id or cookie_user_id == "local"
+    if should_set_cookie:
+        user_id = str(uuid.uuid4())
     config = {
         "apiBase": settings.api_base,
         "adapter": settings.adapter,
@@ -38,13 +44,22 @@ def read_root(request: Request):
         "voiceTurnEndDelayMs": settings.voice_turn_end_delay_ms,
         "voiceTurnCompletionConfidence": settings.voice_turn_completion_confidence,
         "voiceTurnCompletionCooldownMs": settings.voice_turn_completion_cooldown_ms,
-        "userId": settings.user_id
+        "userId": user_id
     }
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         request,
         "index.html",
         {"app_config": json.dumps(config)}
     )
+    if should_set_cookie:
+        response.set_cookie(
+            "preptalk_user_id",
+            user_id,
+            httponly=True,
+            samesite="Lax",
+            secure=request.url.scheme == "https"
+        )
+    return response
 
 
 @app.websocket("/ws/live")
