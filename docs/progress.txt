@@ -754,4 +754,5 @@ NEXT
 NOTES
 - Commands run: `./.venv/bin/python -m pytest tests/test_gemini_interview_model_selection.py` -> 2 passed.
 - Decisions: D-20260202-1235.
+- Commit: 1ce1195f0aedaa02d9b81ca790c7ed77779033a5
 - Risks / open questions: (none)
