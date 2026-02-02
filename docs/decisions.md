@@ -485,3 +485,22 @@ Alternatives considered:
 Acceptance / test:
 - `docs/cloud-run-deploy.md` includes deployment and update guidance.
 - README and developer guide link to the Cloud Run deployment doc.
+
+## D-20260202-1424
+Date: 2026-02-02 14:24
+Inputs: CR-20260202-1424
+PRD: Non-functional requirements
+
+Decision:
+Isolate session history per browser by generating and persisting an anonymous client user ID (localStorage) and sending it on API and WebSocket calls, treating the `local` user as a fallback only.
+
+Rationale:
+The shared Cloud Run endpoint has no authentication; all clients defaulting to `local` will see each other’s sessions. A per-browser anonymous ID is the smallest change that partitions session data without introducing auth.
+
+Alternatives considered:
+- Add full authentication and accounts (rejected: larger scope for hackathon).
+- Disable session listing on shared endpoints (rejected: removes core feature).
+
+Acceptance / test:
+- New browser sessions receive a unique user ID stored in localStorage.
+- API calls send `X-User-Id` with the stored user ID by default.

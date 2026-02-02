@@ -397,3 +397,13 @@ yes document, but can I deploy any updates from my remote repo?
 
 Notes:
 - Document Cloud Run deployment steps and how to deploy updates from a remote repo.
+
+## CR-20260202-1424
+Date: 2026-02-02 14:24
+Source: chat
+
+Request (verbatim):
+I think I found a security issue https://preptalk-west-cz47ti6tbq-uw.a.run.app/ the session history will have other people account information, can you please check? I do not have any way for users to sigin to create an accunt to keep previous use from others
+
+Notes:
+- Address session isolation on the shared endpoint without full user auth.

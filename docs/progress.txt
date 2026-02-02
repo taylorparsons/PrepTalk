@@ -785,3 +785,31 @@ NOTES
 - Decisions: D-20260202-1408.
 - Commit: 70a7e96b40f6873a46c7c99a4827f0c0dc1eb5c3
 - Risks / open questions: Docs-only change; no automated tests added.
+
+---
+
+Session: 2026-02-02 14:24
+Agent: Codex CLI
+Model: (unknown)
+Skills: ralph
+Feature: 20260202-session-isolation
+Input: CR-20260202-1424
+Decisions: D-20260202-1424
+Spec: docs/specs/20260202-session-isolation/spec.md
+Tasks: docs/specs/20260202-session-isolation/tasks.md
+Goal: Isolate session history per browser on shared endpoints.
+
+DONE
+- [2026-02-02 14:26] T-001: Add anonymous per-browser user ID in UI config. (Skills: ralph)
+- [2026-02-02 14:26] T-002: Add tests for user ID generation and override behavior. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `npm test -- tests/components/config-userid.test.js` -> 2 passed.
+- Decisions: D-20260202-1424.
+- Risks / open questions: No auth; user IDs are client-side and can be spoofed.
