@@ -802,6 +802,7 @@ Goal: Isolate session history per browser on shared endpoints.
 DONE
 - [2026-02-02 14:26] T-001: Add anonymous per-browser user ID in UI config. (Skills: ralph)
 - [2026-02-02 14:26] T-002: Add tests for user ID generation and override behavior. (Skills: ralph)
+- [2026-02-02 14:28] T-003: Add server cookie fallback for user ID + tests. (Skills: ralph)
 
 IN PROGRESS
 - (none)
@@ -812,5 +813,5 @@ NEXT
 NOTES
 - Commands run: `npm test -- tests/components/config-userid.test.js` -> 2 passed; `./.venv/bin/python -m pytest tests/test_app_routes.py` -> 2 passed.
 - Decisions: D-20260202-1424.
-- Commit: be13ceb33505f8e7e83c3883ef5a08bc20d41c72
+- Commit: be13ceb33505f8e7e83c3883ef5a08bc20d41c72; 79f9d347bc8429e687e8f941e233667da63a9289
 - Risks / open questions: No auth; user IDs are client-side and can be spoofed.
