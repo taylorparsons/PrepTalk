@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const isLive = Boolean(process.env.E2E_LIVE);
-const hasKey = Boolean(process.env.GEMINI_API_KEY);
+const hasKey = Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
 const isBarge = Boolean(process.env.E2E_LIVE_LONG_BARGE);
 const bargeDurationMs = Number.parseInt(process.env.E2E_LIVE_BARGE_DURATION_MS || '60000', 10);
 const audioBurstFrames = Number.parseInt(process.env.E2E_LIVE_AUDIO_BURST_FRAMES || '6', 10);
@@ -124,7 +124,7 @@ async function sendAudioBurst(page, { frames, frequencyHz, amplitude }) {
 test('candidate interview flow (gemini live long barge)', async ({ page, request }) => {
   test.skip(
     !isLive || !hasKey || !isBarge,
-    'Requires E2E_LIVE=1, E2E_LIVE_LONG_BARGE=1, and GEMINI_API_KEY.'
+    'Requires E2E_LIVE=1, E2E_LIVE_LONG_BARGE=1, and GEMINI_API_KEY or GOOGLE_API_KEY.'
   );
   test.setTimeout(Math.max(180000, bargeDurationMs + 60000));
 

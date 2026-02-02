@@ -231,7 +231,7 @@ class LiveWebSocketSession:
         api_key = getattr(self.adapter, "api_key", None)
         if not api_key:
             logger.warning("event=gemini_live_connect status=missing_key user_id=%s interview_id=%s", self._user_id, interview_id)
-            await self._send({"type": "error", "message": "GEMINI_API_KEY is required."})
+            await self._send({"type": "error", "message": "GEMINI_API_KEY or GOOGLE_API_KEY is required."})
             return
 
         requested_model = self._live_model_override or self.settings.live_model

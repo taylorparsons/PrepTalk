@@ -27,6 +27,7 @@ Voice-first interview practice app for the Gemini hackathon. (Sources: CR-202601
 - FR-APP-001: The app runs with a FastAPI backend and a static vanilla JS UI. (Sources: CR-20260128-1409; D-20260128-1410)
 - FR-APP-002: The system supports two interview adapters: `mock` (deterministic) and `gemini` (Gemini text + TTS for turn-based coaching). (Sources: CR-20260128-1409; D-20260128-1410; CR-20260130-1445; D-20260130-1445)
 - FR-APP-002a: When `INTERVIEW_ADAPTER=gemini`, the system requires `GEMINI_API_KEY` to be set. (Sources: CR-20260128-1409; D-20260128-1410)
+- FR-APP-002b: The Gemini adapter accepts an AI Studio API key via `GEMINI_API_KEY` or `GOOGLE_API_KEY`. (Sources: CR-20260202-1235; D-20260202-1235)
 - FR-APP-003: The system supports a turn-based voice mode with completion checks and optional TTS. (Sources: CR-20260128-1409; D-20260128-1410; CR-20260130-1445; D-20260130-1445)
 - FR-APP-004: The app persists interview session state per user/interview as JSON under `app/session_store/<user_id>/<interview_id>.json`. (Sources: CR-20260128-1409; D-20260128-1410)
 - FR-APP-005: The app exports a study guide in PDF and TXT formats. (Sources: CR-20260128-1409; D-20260128-1410)
@@ -37,6 +38,7 @@ Voice-first interview practice app for the Gemini hackathon. (Sources: CR-202601
 - NFR-APP-003: The project includes automated test suites for UI (Vitest), API (pytest), and E2E (Playwright). (Sources: CR-20260128-1409; D-20260128-1410; CR-20260130-1445; D-20260130-1445)
 - NFR-APP-004: Repository text and UI copy do not reference the prior employer name. (Sources: CR-20260130-2036; D-20260130-2036)
 - NFR-APP-005: Package metadata and developer log tooling use the PrepTalk name; legacy “Awesome Interview” naming is removed. (Sources: CR-20260131-1410; D-20260131-1410)
+- NFR-APP-006: Documentation covers AI Studio project/API key setup and shared endpoint configuration for hackathon use. (Sources: CR-20260202-1235; D-20260202-1235)
 
 ## Out of scope (explicitly not required by this PRD)
 - A LiveKit-based “voice coach” implementation (there is a plan doc, but no requirement to ship it). (Sources: CR-20260128-1409; D-20260128-1410)

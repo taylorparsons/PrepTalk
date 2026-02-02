@@ -118,7 +118,7 @@ def run_voice_intro(
     adapter = get_adapter()
     if adapter.name == "gemini":
         if not getattr(adapter, "api_key", None):
-            raise RuntimeError("GEMINI_API_KEY is required for the Gemini adapter.")
+            raise RuntimeError("GEMINI_API_KEY or GOOGLE_API_KEY is required for the Gemini adapter.")
         system_prompt = build_live_system_prompt(record)
         coach_text = generate_coach_reply(
             api_key=adapter.api_key,
@@ -144,7 +144,7 @@ def run_voice_intro(
         try:
             if adapter.name == "gemini":
                 if not getattr(adapter, "api_key", None):
-                    raise RuntimeError("GEMINI_API_KEY is required for Gemini TTS.")
+                    raise RuntimeError("GEMINI_API_KEY or GOOGLE_API_KEY is required for Gemini TTS.")
                 models = list(getattr(settings, "voice_tts_models", ())) or [settings.voice_tts_model]
                 if tts_model_override:
                     models = [tts_model_override, *[model for model in models if model != tts_model_override]]
@@ -226,7 +226,7 @@ def run_voice_turn(
     adapter = get_adapter()
     if adapter.name == "gemini":
         if not getattr(adapter, "api_key", None):
-            raise RuntimeError("GEMINI_API_KEY is required for the Gemini adapter.")
+            raise RuntimeError("GEMINI_API_KEY or GOOGLE_API_KEY is required for the Gemini adapter.")
         system_prompt = build_live_system_prompt(record)
         coach_text = generate_coach_reply(
             api_key=adapter.api_key,
@@ -252,7 +252,7 @@ def run_voice_turn(
         try:
             if adapter.name == "gemini":
                 if not getattr(adapter, "api_key", None):
-                    raise RuntimeError("GEMINI_API_KEY is required for Gemini TTS.")
+                    raise RuntimeError("GEMINI_API_KEY or GOOGLE_API_KEY is required for Gemini TTS.")
                 models = list(getattr(settings, "voice_tts_models", ())) or [settings.voice_tts_model]
                 if tts_model_override:
                     models = [tts_model_override, *[model for model in models if model != tts_model_override]]
@@ -328,7 +328,7 @@ def run_voice_feedback(
     adapter = get_adapter()
     if adapter.name == "gemini":
         if not getattr(adapter, "api_key", None):
-            raise RuntimeError("GEMINI_API_KEY is required for the Gemini adapter.")
+            raise RuntimeError("GEMINI_API_KEY or GOOGLE_API_KEY is required for the Gemini adapter.")
         feedback_text = generate_turn_feedback(
             api_key=adapter.api_key,
             model=text_model_override or adapter.settings.text_model,
@@ -378,7 +378,7 @@ def run_turn_completion_check(
     adapter = get_adapter()
     if adapter.name == "gemini":
         if not getattr(adapter, "api_key", None):
-            raise RuntimeError("GEMINI_API_KEY is required for the Gemini adapter.")
+            raise RuntimeError("GEMINI_API_KEY or GOOGLE_API_KEY is required for the Gemini adapter.")
         result = evaluate_turn_completion(
             api_key=adapter.api_key,
             model=text_model_override or adapter.settings.text_model,
