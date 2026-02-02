@@ -467,3 +467,21 @@ Acceptance / test:
 - Docs include AI Studio project + API key setup and shared endpoint notes.
 - Gemini adapter accepts `GEMINI_API_KEY` or `GOOGLE_API_KEY`.
 - Unit test verifies the fallback key path.
+
+## D-20260202-1408
+Date: 2026-02-02 14:08
+Inputs: CR-20260202-1408
+PRD: Non-functional requirements
+
+Decision:
+Document Cloud Run deployment for hackathon use, including a buildpack entrypoint override for `app.main:app`, and describe two update paths: re-deploy from the latest repo checkout or enable continuous deployment from a GitHub repository via Cloud Run/Cloud Build.
+
+Rationale:
+The request is to document deployment and answer whether remote repo updates can be deployed. Documentation is the smallest change that answers this without altering runtime behavior.
+
+Alternatives considered:
+- Add a CI/CD pipeline or Terraform automation (rejected: larger scope and not required for hackathon docs).
+
+Acceptance / test:
+- `docs/cloud-run-deploy.md` includes deployment and update guidance.
+- README and developer guide link to the Cloud Run deployment doc.
