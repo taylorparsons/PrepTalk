@@ -70,11 +70,11 @@ class GeminiInterviewAdapter(InterviewAdapter):
 
     def __init__(self) -> None:
         self.settings = load_settings()
-        self.api_key = os.getenv("GEMINI_API_KEY")
+        self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 
     def _ensure_configured(self) -> None:
         if not self.api_key:
-            raise RuntimeError("GEMINI_API_KEY is required for the Gemini adapter.")
+            raise RuntimeError("GEMINI_API_KEY or GOOGLE_API_KEY is required for the Gemini adapter.")
 
     def generate_questions(
         self,

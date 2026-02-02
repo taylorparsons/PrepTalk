@@ -26,7 +26,8 @@ Adapter modes (set in `.env`):
 ## Environment
 
 - `INTERVIEW_ADAPTER`: `mock` (default) or `gemini`
-- `GEMINI_API_KEY`: required when `INTERVIEW_ADAPTER=gemini`
+- `GEMINI_API_KEY`: AI Studio Gemini API key (required when `INTERVIEW_ADAPTER=gemini`)
+- `GOOGLE_API_KEY`: optional fallback if `GEMINI_API_KEY` is not set
 - `GEMINI_LIVE_MODEL`: reserved for live streaming (feature branch only)
 - `GEMINI_LIVE_MODEL_FALLBACKS`: comma-separated fallback live audio models (feature branch only)
 - `GEMINI_INTERVIEW_TEXT_MODEL`: override text model for question generation + scoring (default `gemini-3-pro-preview`)
@@ -78,6 +79,10 @@ PORT=8000
 ```
 
 Turn mode flow: after you’ve been answering for the configured window, the app asks Gemini whether the response looks attempted or complete. Only then does the UI prompt “Are you done?” and enable **Submit Answer** or **Continue Speaking**.
+
+## AI Studio setup
+
+See `docs/ai-studio-setup.md` for AI Studio project/key setup and shared endpoint notes.
 
 ## FastAPI URLs
 

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 const isLive = Boolean(process.env.E2E_LIVE);
-const hasKey = Boolean(process.env.GEMINI_API_KEY);
+const hasKey = Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
 const liveDurationMs = Number.parseInt(process.env.E2E_LIVE_DURATION_MS || '45000', 10);
 const livePollIntervalMs = Number.parseInt(process.env.E2E_LIVE_POLL_MS || '1000', 10);
 
@@ -39,7 +39,7 @@ startxref
 }
 
 test('candidate interview flow (gemini live)', async ({ page }) => {
-  test.skip(!isLive || !hasKey, 'Requires E2E_LIVE=1 and GEMINI_API_KEY.');
+  test.skip(!isLive || !hasKey, 'Requires E2E_LIVE=1 and GEMINI_API_KEY or GOOGLE_API_KEY.');
   test.setTimeout(Math.max(120000, liveDurationMs + 60000));
 
   await page.goto('/');

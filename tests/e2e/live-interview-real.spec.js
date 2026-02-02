@@ -4,7 +4,7 @@ import path from 'node:path';
 import { runVoiceAgent } from './helpers/voice-agent.js';
 
 const isLive = Boolean(process.env.E2E_LIVE);
-const hasKey = Boolean(process.env.GEMINI_API_KEY);
+const hasKey = Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
 const resumePath = process.env.E2E_RESUME_PATH;
 const jobPath = process.env.E2E_JOB_PATH;
 const liveDurationMs = Number.parseInt(process.env.E2E_LIVE_REAL_DURATION_MS || '60000', 10);
@@ -27,7 +27,7 @@ function fileLabel(filePath) {
 }
 
 test('candidate interview flow (gemini live real files)', async ({ page }) => {
-  test.skip(!isLive || !hasKey, 'Requires E2E_LIVE=1 and GEMINI_API_KEY.');
+  test.skip(!isLive || !hasKey, 'Requires E2E_LIVE=1 and GEMINI_API_KEY or GOOGLE_API_KEY.');
   test.skip(!hasFile(resumePath), `Missing E2E_RESUME_PATH file: ${fileLabel(resumePath)}`);
   test.skip(!hasFile(jobPath), `Missing E2E_JOB_PATH file: ${fileLabel(jobPath)}`);
   test.setTimeout(Math.max(180000, liveDurationMs + 60000));

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 const isLive = Boolean(process.env.E2E_LIVE);
-const hasKey = Boolean(process.env.GEMINI_API_KEY);
+const hasKey = Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
 
 function buildPdfBuffer(label) {
   const content = `%PDF-1.4
@@ -37,7 +37,7 @@ startxref
 }
 
 test('candidate interview flow (gemini turn voice)', async ({ page }) => {
-  test.skip(!isLive || !hasKey, 'Requires E2E_LIVE=1 and GEMINI_API_KEY.');
+  test.skip(!isLive || !hasKey, 'Requires E2E_LIVE=1 and GEMINI_API_KEY or GOOGLE_API_KEY.');
   test.setTimeout(120000);
 
   await page.addInitScript(() => {
