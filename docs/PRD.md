@@ -40,6 +40,7 @@ Voice-first interview practice app for the Gemini hackathon. (Sources: CR-202601
 - NFR-APP-005: Package metadata and developer log tooling use the PrepTalk name; legacy “Awesome Interview” naming is removed. (Sources: CR-20260131-1410; D-20260131-1410)
 - NFR-APP-006: Documentation covers AI Studio project/API key setup and shared endpoint configuration for hackathon use. (Sources: CR-20260202-1235; D-20260202-1235)
 - NFR-APP-007: Documentation covers Cloud Run deployment steps and how to deploy updates from a remote repo. (Sources: CR-20260202-1408; D-20260202-1408)
+- NFR-APP-008: Shared endpoints isolate session history per browser using an anonymous client user ID (no full auth). (Sources: CR-20260202-1424; D-20260202-1424)
 
 ## Out of scope (explicitly not required by this PRD)
 - A LiveKit-based “voice coach” implementation (there is a plan doc, but no requirement to ship it). (Sources: CR-20260128-1409; D-20260128-1410)
