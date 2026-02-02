@@ -387,3 +387,13 @@ Notes:
 - Use the Gemini API via AI Studio (API key).
 - Provide a shared endpoint approach.
 - Choose the option that works for the hackathon.
+
+## CR-20260202-1408
+Date: 2026-02-02 14:08
+Source: chat
+
+Request (verbatim):
+yes document, but can I deploy any updates from my remote repo?
+
+Notes:
+- Document Cloud Run deployment steps and how to deploy updates from a remote repo.

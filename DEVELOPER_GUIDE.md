@@ -89,6 +89,7 @@ Add values to `.env` as needed:
 - `APP_USER_ID`
 
 AI Studio setup notes: `docs/ai-studio-setup.md`.
+Cloud Run deployment notes: `docs/cloud-run-deploy.md`.
 
 ## Session Flow
 1. Upload resume + job description.

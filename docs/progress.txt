@@ -756,3 +756,31 @@ NOTES
 - Decisions: D-20260202-1235.
 - Commit: 1ce1195f0aedaa02d9b81ca790c7ed77779033a5
 - Risks / open questions: (none)
+
+---
+
+Session: 2026-02-02 14:08
+Agent: Codex CLI
+Model: (unknown)
+Skills: ralph
+Feature: 20260202-cloud-run-deploy
+Input: CR-20260202-1408
+Decisions: D-20260202-1408
+Spec: docs/specs/20260202-cloud-run-deploy/spec.md
+Tasks: docs/specs/20260202-cloud-run-deploy/tasks.md
+Goal: Document Cloud Run deployment and remote update options.
+
+DONE
+- [2026-02-02 14:10] T-001: Add Cloud Run deployment doc with update options. (Skills: ralph)
+- [2026-02-02 14:10] T-002: Link Cloud Run doc from README and developer guide. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: (none)
+- Decisions: D-20260202-1408.
+- Risks / open questions: Docs-only change; no automated tests added.
