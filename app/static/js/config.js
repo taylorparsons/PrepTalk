@@ -31,7 +31,49 @@ export function getAppConfig() {
     };
   }
 
+  const storageKey = 'preptalk_user_id';
+
+  function getStoredUserId() {
+    if (!window?.localStorage) {
+      return '';
+    }
+    try {
+      return window.localStorage.getItem(storageKey) || '';
+    } catch (error) {
+      return '';
+    }
+  }
+
+  function setStoredUserId(value) {
+    if (!window?.localStorage) {
+      return;
+    }
+    try {
+      window.localStorage.setItem(storageKey, value);
+    } catch (error) {
+      // Ignore storage errors (private mode, blocked storage, etc.).
+    }
+  }
+
+  function generateAnonymousUserId() {
+    if (window?.crypto?.randomUUID) {
+      return window.crypto.randomUUID();
+    }
+    return `anon-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
   const config = window.__APP_CONFIG__ || {};
+  const providedUserId = (config.userId || '').trim();
+  const storedUserId = getStoredUserId();
+  const effectiveUserId =
+    providedUserId && providedUserId !== 'local'
+      ? providedUserId
+      : storedUserId || generateAnonymousUserId();
+
+  if (!storedUserId && effectiveUserId && effectiveUserId !== 'local') {
+    setStoredUserId(effectiveUserId);
+  }
+
   return {
     apiBase: config.apiBase || '/api',
     adapter: config.adapter || 'mock',
@@ -49,6 +91,6 @@ export function getAppConfig() {
     voiceTurnCompletionCooldownMs: Number.isFinite(config.voiceTurnCompletionCooldownMs)
       ? config.voiceTurnCompletionCooldownMs
       : 0,
-    userId: config.userId || 'local'
+    userId: effectiveUserId || 'local'
   };
 }
