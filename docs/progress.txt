@@ -810,7 +810,7 @@ NEXT
 - (none)
 
 NOTES
-- Commands run: `npm test -- tests/components/config-userid.test.js` -> 2 passed.
+- Commands run: `npm test -- tests/components/config-userid.test.js` -> 2 passed; `./.venv/bin/python -m pytest tests/test_app_routes.py` -> 2 passed.
 - Decisions: D-20260202-1424.
 - Commit: be13ceb33505f8e7e83c3883ef5a08bc20d41c72
 - Risks / open questions: No auth; user IDs are client-side and can be spoofed.

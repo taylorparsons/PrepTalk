@@ -55,7 +55,13 @@ def _is_supported(upload: UploadFile) -> bool:
 
 def _get_user_id(request: Request) -> str:
     settings = load_settings()
-    return request.headers.get("X-User-Id") or settings.user_id
+    header_user_id = request.headers.get("X-User-Id")
+    if header_user_id and header_user_id != "local":
+        return header_user_id
+    cookie_user_id = request.cookies.get("preptalk_user_id")
+    if cookie_user_id:
+        return cookie_user_id
+    return settings.user_id
 
 
 def _duration_ms(start: float) -> int:
