@@ -84,6 +84,10 @@ Turn mode flow: after you’ve been answering for the configured window, the app
 
 See `docs/ai-studio-setup.md` for AI Studio project/key setup and shared endpoint notes.
 
+## Cloud Run deployment (optional)
+
+See `docs/cloud-run-deploy.md` for Cloud Run deployment steps and update options.
+
 ## FastAPI URLs
 
 - Base: `http://localhost:8000` (or `PORT` if overridden)
