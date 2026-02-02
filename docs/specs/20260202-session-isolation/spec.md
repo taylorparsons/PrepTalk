@@ -6,7 +6,7 @@ Inputs: CR-20260202-1424
 Decisions: D-20260202-1424
 
 ## Summary
-Prevent shared session history on the public endpoint by issuing a per-browser anonymous user ID and using it in API/WebSocket calls.
+Prevent shared session history on the public endpoint by issuing a per-browser anonymous user ID and using it in API/WebSocket calls, with a server-side cookie fallback.
 
 ## User Stories & Acceptance
 
@@ -24,6 +24,7 @@ Acceptance scenarios:
 Functional requirements:
 - FR-001: Generate and persist a per-browser anonymous user ID and use it for API and WS calls by default. (Sources: CR-20260202-1424; D-20260202-1424)
 - FR-002: Respect a non-`local` user ID provided by server config. (Sources: CR-20260202-1424; D-20260202-1424)
+- FR-003: When no client header is provided (or it is `local`), fall back to a server-issued cookie user ID. (Sources: CR-20260202-1424; D-20260202-1424)
 
 ## Edge cases
 - Local storage unavailable or blocked (fallback to per-load anonymous ID). (Verifies: FR-001)
