@@ -749,7 +749,9 @@ function buildSetupPanel(state, ui) {
     state.questionStatuses = [];
     state.transcript = [];
     state.score = null;
+    state.scorePending = false;
     state.askedQuestionIndex = null;
+    state.setupAutoCollapsed = false;
     ui.startButton.disabled = true;
     renderQuestions(
       ui.questionList,
@@ -761,6 +763,7 @@ function buildSetupPanel(state, ui) {
     );
     renderTranscript(ui.transcriptList, state.transcript);
     renderScore(ui, null);
+    ui.updateSessionToolsState?.();
 
     try {
       const jobUrl = String(jobUrlField.input.value || '').trim();
@@ -1851,6 +1854,7 @@ function buildControlsPanel(state, ui, config) {
   function resetSessionState() {
     state.transcript = [];
     state.score = null;
+    state.scorePending = false;
     state.sessionId = null;
     state.liveMode = null;
     state.sessionActive = false;
@@ -1872,6 +1876,7 @@ function buildControlsPanel(state, ui, config) {
     state.liveAudioSeen = false;
     state.lastSpokenCoachText = '';
     state.lastCoachQuestion = '';
+    state.setupAutoCollapsed = false;
     clearGeminiReconnect(state);
     stopAudioBuffer(state);
     stopE2eCandidatePlayback();
@@ -2267,6 +2272,7 @@ function buildControlsPanel(state, ui, config) {
     state.turnRequestActive = false;
     state.turnSpeaking = false;
     stopButton.disabled = true;
+    state.scorePending = true;
     updateStatusPill(statusPill, { label: 'Scoring', tone: 'info' });
     renderScore(ui, {
       overall_score: '--',
@@ -2274,6 +2280,10 @@ function buildControlsPanel(state, ui, config) {
       strengths: [],
       improvements: []
     });
+    if (ui.scoreNotice) {
+      ui.scoreNotice.textContent = 'Scoring in progress. We will update this summary soon.';
+    }
+    ui.updateSessionToolsState?.();
     ui.scorePanel?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
     ui.scorePanel?.focus?.({ preventScroll: true });
 
@@ -2301,6 +2311,7 @@ function buildControlsPanel(state, ui, config) {
         interviewId: state.interviewId,
         transcript: state.transcript
       });
+      state.scorePending = false;
       state.score = score;
       renderScore(ui, score);
       updateStatusPill(statusPill, { label: 'Complete', tone: 'success' });
@@ -2308,8 +2319,17 @@ function buildControlsPanel(state, ui, config) {
       ui.scorePanel?.focus?.({ preventScroll: true });
     } catch (error) {
       updateStatusPill(statusPill, { label: 'Score Error', tone: 'danger' });
-      ui.scoreValue.textContent = '--';
-      ui.scoreSummary.textContent = error?.message || 'Scoring failed.';
+      state.scorePending = false;
+      state.score = {
+        overall_score: '--',
+        summary: error?.message || 'Scoring failed.',
+        strengths: [],
+        improvements: []
+      };
+      renderScore(ui, state.score);
+      if (ui.scoreNotice) {
+        ui.scoreNotice.textContent = 'Scoring failed. You can restart or export the transcript.';
+      }
     } finally {
       startButton.disabled = !state.interviewId;
       setMuteState(false);
@@ -2632,7 +2652,7 @@ function buildSessionToolsDrawer(state, ui, config) {
 }
 
 
-function buildQuestionsPanel(ui) {
+  function buildQuestionsPanel(ui) {
   const list = document.createElement('ul');
   list.className = 'ui-list';
   list.setAttribute('data-testid', 'question-list');
@@ -2643,15 +2663,17 @@ function buildQuestionsPanel(ui) {
   ui.questionList = list;
   ui.questionPlaceholder = placeholder;
 
-  return createPanel({
+  const panel = createPanel({
     title: 'Interview Questions',
     subtitle: 'Generated from the resume and role. Hover to see insights.',
     content: list,
     attrs: { 'data-testid': 'questions-panel' }
   });
+  ui.questionsPanel = panel;
+  return panel;
 }
 
-function buildQuestionInsightsPanel(ui) {
+  function buildQuestionInsightsPanel(ui) {
   const container = document.createElement('div');
   container.className = 'ui-insights';
 
@@ -2740,10 +2762,11 @@ function buildQuestionInsightsPanel(ui) {
     attrs: { 'data-testid': 'question-insights-panel' }
   });
   panel.classList.add('ui-panel--sticky');
+  ui.insightsPanel = panel;
   return panel;
 }
 
-function buildTranscriptPanel(ui) {
+  function buildTranscriptPanel(ui) {
   const container = document.createElement('div');
   container.className = 'layout-stack';
 
@@ -2773,16 +2796,18 @@ function buildTranscriptPanel(ui) {
   ui.transcriptList = transcriptList;
   ui.captionText = captionText;
 
-  return createPanel({
+  const panel = createPanel({
     title: 'Transcript',
     subtitle: 'Updates as the session runs.',
     content: container,
     attrs: { 'data-testid': 'transcript-panel' }
   });
+  ui.transcriptPanel = panel;
+  return panel;
 }
 
 
-function buildScorePanel(ui) {
+  function buildScorePanel(ui) {
   const scoreValue = document.createElement('div');
   scoreValue.className = 'ui-score__value';
   scoreValue.setAttribute('data-testid', 'score-value');
@@ -2883,6 +2908,7 @@ export function buildVoiceLayout() {
     questionInsightsActiveIndex: null,
     transcript: [],
     score: null,
+    scorePending: false,
     adapter: config.adapter,
     voiceMode: 'turn',
     voiceOutputMode: config.voiceOutputMode,
@@ -2935,7 +2961,8 @@ export function buildVoiceLayout() {
     liveCoachPendingText: '',
     liveCoachSpeakTimer: null,
     lastSpokenCoachText: '',
-    lastCoachQuestion: ''
+    lastCoachQuestion: '',
+    setupAutoCollapsed: false
   };
 
   const ui = {};
@@ -3218,8 +3245,11 @@ export function buildVoiceLayout() {
 
   const leftColumn = document.createElement('div');
   leftColumn.className = 'layout-stack';
-  leftColumn.appendChild(buildSetupPanel(state, ui));
-  leftColumn.appendChild(buildControlsPanel(state, ui, config));
+  const setupPanel = buildSetupPanel(state, ui);
+  leftColumn.appendChild(setupPanel);
+  const controlsPanel = buildControlsPanel(state, ui, config);
+  ui.controlsPanel = controlsPanel;
+  leftColumn.appendChild(controlsPanel);
 
   const rightColumn = document.createElement('div');
   rightColumn.className = 'layout-stack';
@@ -3227,6 +3257,7 @@ export function buildVoiceLayout() {
   questionRow.className = 'layout-duo';
   questionRow.appendChild(buildQuestionsPanel(ui));
   questionRow.appendChild(buildQuestionInsightsPanel(ui));
+  ui.questionRow = questionRow;
   rightColumn.appendChild(questionRow);
   rightColumn.appendChild(buildTranscriptPanel(ui));
   rightColumn.appendChild(buildScorePanel(ui));
@@ -3329,10 +3360,12 @@ export function buildVoiceLayout() {
           improvements: summary.improvements || []
         }
         : null;
+      state.scorePending = false;
       state.adapter = summary.adapter || state.adapter;
       state.sessionName = summary.session_name || '';
       state.askedQuestionIndex = summary.asked_question_index ?? null;
       state.sessionStarted = state.transcript.length > 0 || hasScore;
+      state.setupAutoCollapsed = false;
       state.sessionActive = false;
       state.sessionId = null;
       state.liveMode = null;
@@ -3400,9 +3433,12 @@ export function buildVoiceLayout() {
 
   function updateSessionToolsState() {
     const hasInterview = Boolean(state.interviewId);
+    const hasQuestions = state.questions.length > 0;
     const hasTranscript = state.transcript.length > 0;
     const canRestart = hasInterview && state.sessionStarted && !state.sessionActive;
     const hasScore = Boolean(state.score);
+    const showScore = hasScore || state.scorePending;
+    const showControls = hasQuestions || state.sessionActive;
     const restartPrimary = hasScore && !state.sessionActive;
     const nameValue = ui.sessionNameInput?.value.trim() || '';
     const questionValue = ui.customQuestionInput?.value.trim() || '';
@@ -3450,6 +3486,33 @@ export function buildVoiceLayout() {
       }
     }
     ui.updateSetupCtas?.();
+
+    if (!hasInterview) {
+      state.setupAutoCollapsed = false;
+    }
+    if (hasInterview && state.sessionStarted && ui.setSetupCollapsed && !state.setupAutoCollapsed) {
+      ui.setSetupCollapsed(true);
+      state.setupAutoCollapsed = true;
+    }
+
+    if (ui.questionRow) {
+      ui.questionRow.hidden = !hasQuestions;
+    }
+    if (ui.questionsPanel) {
+      ui.questionsPanel.hidden = !hasQuestions;
+    }
+    if (ui.insightsPanel) {
+      ui.insightsPanel.hidden = !hasQuestions;
+    }
+    if (ui.transcriptPanel) {
+      ui.transcriptPanel.hidden = !hasTranscript;
+    }
+    if (ui.scorePanel) {
+      ui.scorePanel.hidden = !showScore;
+    }
+    if (ui.controlsPanel) {
+      ui.controlsPanel.hidden = !showControls;
+    }
 
     if (ui.exportHelp) {
       ui.exportHelp.textContent = hasTranscript

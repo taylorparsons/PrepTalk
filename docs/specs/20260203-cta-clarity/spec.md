@@ -6,7 +6,7 @@ Inputs: CR-20260203-0949
 Decisions: D-20260203-1001
 
 ## Summary
-Define a stage-gated CTA hierarchy across Setup, Live, and Results so each screen has a single primary action and clear, minimal secondary actions that match the user’s stated priorities.
+Define a stage-gated CTA hierarchy across Setup, Live, and Results so each screen has a single primary action, and hide/collapse panels until they contain relevant content.
 
 ## User Stories & Acceptance
 
@@ -18,6 +18,8 @@ Acceptance scenarios:
 1. Given resume + job inputs are complete and questions are not generated, When the setup screen is shown, Then “Generate Questions” is the primary CTA and “Start Interview” is disabled. (Verifies: FR-001, FR-004)
 2. Given questions are generated, When the setup screen is shown, Then “Start Interview” is the primary CTA and generation is no longer the primary action. (Verifies: FR-001, FR-004)
 3. Given E2E tests are run in mock and live modes, When the CTA UI renders, Then tests assert primary/secondary CTA labels and states for each stage. (Verifies: FR-013)
+4. Given a session is started, When Stage 2 loads, Then Candidate Setup is collapsed by default and transcript/controls are visible. (Verifies: FR-014, FR-015)
+5. Given Stage 1 and no active session, When the app loads, Then transcript and score panels are hidden. (Verifies: FR-014)
 
 ### US2: Stage 2 CTA focus (Priority: P1)
 Narrative:
@@ -35,6 +37,16 @@ Acceptance scenarios:
 1. Given scoring is complete, When Stage 3 is shown, Then “Restart Interview” is the primary CTA and export actions are secondary. (Verifies: FR-003, FR-004)
 2. Given the score is ready, When Stage 3 is shown, Then the UI explicitly indicates that export options are available. (Verifies: FR-003)
 
+### US4: Stage-gated panel visibility (Priority: P1)
+Narrative:
+- As a user, I only want to see panels when they have content, so the interface stays focused on the current task.
+
+Acceptance scenarios:
+1. Given no questions are generated, When Stage 1 loads, Then the questions list, insights panel, and session controls are hidden. (Verifies: FR-016)
+2. Given no transcript entries exist, When Stage 1/2 loads, Then the transcript panel stays hidden until the first transcript entry arrives. (Verifies: FR-016)
+3. Given a session is active, When Stage 2 loads, Then Candidate Setup is collapsed by default and can be re-opened. (Verifies: FR-014, FR-015)
+4. Given scoring has started or completed, When Stage 3 loads, Then the score panel and export actions are visible; before scoring, the score panel remains hidden. (Verifies: FR-016)
+
 ## Requirements
 
 Functional requirements:
@@ -51,6 +63,9 @@ Functional requirements:
 - FR-011: Wireframe images are embedded inline in the spec for quick review. (Sources: CR-20260203-1038)
 - FR-012: Replace the “Advanced Setup” label with “Extras” wherever it appears in the CTA UI. (Sources: CR-20260203-1044)
 - FR-013: Playwright E2E tests are updated to validate CTA changes in both mock and live runs. (Sources: CR-20260203-1050)
+- FR-014: Stage gating hides or collapses containers without relevant content (setup, transcript, score, controls) to reduce CTA noise. (Sources: CR-20260203-1138; D-20260203-1138)
+- FR-015: Candidate Setup collapses by default after a session starts and can be re-opened via the toggle. (Sources: CR-20260203-1138; D-20260203-1138)
+- FR-016: Panels remain hidden until they have content (questions, insights, transcript, score/report, session controls). (Sources: CR-20260203-1146; D-20260203-1138)
 
 ## Edge cases
 - Missing inputs: “Start Interview” remains disabled and the reason is shown. (Verifies: FR-001, FR-004)
@@ -88,14 +103,11 @@ Stage 1 — Setup / Generate (Mobile)
 | [Job URL]                  |
 | [Generate Questions] (P)   |
 |                            |
-| Questions (placeholder)    |
-| - Q1 ...                   |
-| - Q2 ...                   |
+| Questions (hidden until    |
+| generated)                 |
 |                            |
-| Controls                   |
-| [Start Interview] (P when) |
-| [Continue] (S if resumable)|
-| [Extras] (T)               |
+| Session Controls (hidden   |
+| until questions ready)     |
 +----------------------------+
 ```
 
@@ -106,14 +118,12 @@ Stage 1 — Setup / Generate (Web)
 | 2-line intro text                                             |
 | [Inputs ready] [Questions ready]                              |
 |                                                               |
-| Candidate Setup                   | Questions (placeholder)   |
-| [Resume file] [Job file] [URL]    | - Q1 ...                  |
-| [Generate Questions] (Primary)    | - Q2 ...                  |
+| Candidate Setup                   | Questions (hidden until   |
+| [Resume file] [Job file] [URL]    | generated)                |
+| [Generate Questions] (Primary)    |                           |
 |                                                               |
-| Session Controls                                              |
-| [Start Interview] (Primary when ready)                        |
-| [Continue] (Secondary if resumable)                           |
-| [Extras] (Tertiary)                                           |
+| Session Controls (hidden until questions ready)               |
+| (Start/Continue/Extras appear after questions)                |
 +---------------------------------------------------------------+
 ```
 

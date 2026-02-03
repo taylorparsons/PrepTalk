@@ -9,6 +9,9 @@ Spec: docs/specs/20260203-cta-clarity/spec.md
 - <at most one task>
 
 ## DONE
+- [2026-02-03 12:06] T-017: Apply stage-gated panel visibility (hide transcript/score before content; collapse setup on session start). (Implements: FR-014, FR-015)
+- [2026-02-03 12:06] T-018: Update Playwright mock + live E2E for panel visibility/collapse rules. (Implements: FR-014, FR-015)
+- [2026-02-03 12:06] T-019: Update wireframes to reflect hidden panels until content exists. (Implements: FR-016)
 - [2026-02-03 10:01] T-001: Document CTA UX spec + Mermaid flow diagram and update PRD backlog. (Implements: FR-005)
 - [2026-02-03 10:11] T-006: Fix Mermaid node labels for parser compatibility. (Implements: FR-005)
 - [2026-02-03 10:17] T-007: Add ASCII CTA summary per stage to the spec. (Implements: FR-006)

@@ -29,19 +29,32 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
 
   const generateButton = page.getByTestId('generate-questions');
   const startButton = page.getByTestId('start-interview');
+  const setupPanel = page.getByTestId('setup-panel');
+  const questionsPanel = page.getByTestId('questions-panel');
+  const insightsPanel = page.getByTestId('question-insights-panel');
+  const controlsPanel = page.getByTestId('controls-panel');
+  const transcriptPanel = page.getByTestId('transcript-panel');
+  const scorePanel = page.getByTestId('score-panel');
 
   await expect(generateButton).toHaveClass(/ui-button--primary/);
   await expect(startButton).toHaveClass(/ui-button--secondary/);
   await expect(page.getByTestId('session-tools-toggle')).toHaveText('Extras');
-
-  await expect(page.locator('.ui-caption__label')).toHaveText('Captions (local, en-US)');
-  await expect(page.locator('.ui-caption__text')).toHaveText('Captions idle.');
+  await expect(questionsPanel).toBeHidden();
+  await expect(insightsPanel).toBeHidden();
+  await expect(controlsPanel).toBeHidden();
+  await expect(transcriptPanel).toBeHidden();
+  await expect(scorePanel).toBeHidden();
 
   await generateButton.click();
   await expect(page.getByTestId('question-list')).toContainText(/walk me through/i);
   await expect(startButton).toBeEnabled();
   await expect(generateButton).toHaveClass(/ui-button--secondary/);
   await expect(startButton).toHaveClass(/ui-button--primary/);
+  await expect(questionsPanel).toBeVisible();
+  await expect(insightsPanel).toBeVisible();
+  await expect(controlsPanel).toBeVisible();
+  await expect(transcriptPanel).toBeHidden();
+  await expect(scorePanel).toBeHidden();
 
   await startButton.click();
   const introText = "Hi, I'm your interview coach. Let's get started. Tell me about yourself.";
@@ -51,8 +64,11 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
   } else {
     await expect(page.getByTestId('transcript-list')).toContainText(introText);
   }
+  await expect(setupPanel).toHaveClass(/ui-panel--collapsed/);
+  await expect(transcriptPanel).toBeVisible();
 
   await page.getByTestId('stop-interview').click();
+  await expect(scorePanel).toBeVisible();
   await expect(page.getByTestId('score-value')).toHaveText('84');
   await expect(page.getByTestId('score-summary')).toContainText('Clear structure');
   await expect(page.getByTestId('restart-interview-main')).toBeEnabled();

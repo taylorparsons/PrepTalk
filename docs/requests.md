@@ -615,6 +615,27 @@ Notes:
 - Live E2E should run turn-based (same as main), not streaming.
 - Create and work on a new feature branch for CTA changes.
 
+## CR-20260203-1138
+Date: 2026-02-03 11:38
+Source: chat
+
+Request (verbatim):
+OK my bad the image shows the questions that are not filled in and the session conrols file:///Volumes/T9/code/PrepTalk/docs/specs/20260203-cta-clarity/assets/web-stage1.svg and a screen shot from the video shows [Image #1] other containers like the question help, transcript, report and controls all of which are not needed.  Let update the plan in $ralph to make sure the CTA are narrows to the CTA that has content. For example at the interview starts the container for adding a resume and job description is not needed.  That can collaps or be removed until the interview is over. I am more partial to using he collapsed contianer in case the user want to open again, for their own reason.
+
+Notes:
+- Stage gating: hide non-relevant containers; CTA should only appear with relevant content.
+- Collapse Candidate Setup after interview starts; allow user to re-open.
+
+## CR-20260203-1146
+Date: 2026-02-03 11:46
+Source: chat
+
+Request (verbatim):
+yes hidden until it exists, that can be true for all content like the report at the end of the session.
+
+Notes:
+- Hide panels until they have content (insights, transcript, score/report).
+
 ## CR-20260203-1044
 Date: 2026-02-03 10:44
 Source: chat
