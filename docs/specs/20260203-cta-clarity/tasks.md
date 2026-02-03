@@ -3,7 +3,7 @@
 Spec: docs/specs/20260203-cta-clarity/spec.md
 
 ## NEXT
-- (none)
+- T-028: Investigate and fix PDF export failures from Extras + Results. (Implements: FR-003)
 
 ## IN PROGRESS
 - <at most one task>
