@@ -44,7 +44,7 @@ Narrative:
 Acceptance scenarios:
 1. Given no questions are generated, When Stage 1 loads, Then the questions list, insights panel, and session controls are hidden. (Verifies: FR-016)
 2. Given no transcript entries exist, When Stage 1/2 loads, Then the transcript panel stays hidden until the first transcript entry arrives. (Verifies: FR-016)
-3. Given a session is active, When Stage 2 loads, Then Candidate Setup is collapsed by default and can be re-opened. (Verifies: FR-014, FR-015)
+3. Given a session is active, When Stage 2 loads, Then Candidate Setup is collapsed by default and the collapse toggle expands/re-collapses it on demand. (Verifies: FR-014, FR-015)
 4. Given scoring has started or completed, When Stage 3 loads, Then the score panel and export actions are visible; before scoring, the score panel remains hidden. (Verifies: FR-016)
 
 ## Requirements

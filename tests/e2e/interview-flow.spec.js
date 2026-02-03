@@ -46,8 +46,9 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
   await expect(scorePanel).toBeHidden();
 
   await generateButton.click();
+  await expect(startButton).toBeEnabled({ timeout: 30000 });
+  await expect(questionsPanel).toBeVisible({ timeout: 30000 });
   await expect(page.getByTestId('question-list')).toContainText(/walk me through/i);
-  await expect(startButton).toBeEnabled();
   await expect(generateButton).toHaveClass(/ui-button--secondary/);
   await expect(startButton).toHaveClass(/ui-button--primary/);
   await expect(questionsPanel).toBeVisible();
@@ -64,6 +65,12 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
   } else {
     await expect(page.getByTestId('transcript-list')).toContainText(introText);
   }
+  await expect(setupPanel).toHaveClass(/ui-panel--collapsed/);
+  const setupToggle = page.getByTestId('setup-collapse');
+  await expect(setupToggle).toBeEnabled();
+  await setupToggle.click();
+  await expect(setupPanel).not.toHaveClass(/ui-panel--collapsed/);
+  await setupToggle.click();
   await expect(setupPanel).toHaveClass(/ui-panel--collapsed/);
   await expect(transcriptPanel).toBeVisible();
 
