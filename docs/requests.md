@@ -655,3 +655,13 @@ using the app I did not see it collapse automatically or for the manual [Image #
 
 Notes:
 - Ensure Candidate Setup auto-collapses on session start and manual collapse/expand works; add tests for both.
+
+## CR-20260203-1321
+Date: 2026-02-03 13:21
+Source: chat
+
+Request (verbatim):
+I am not seeing it collapse in the video, running the app now and the container does not collapse
+
+Notes:
+- Fix auto-collapse + manual collapse visibility in the UI and update tests to verify actual hidden content.

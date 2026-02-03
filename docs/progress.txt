@@ -1419,3 +1419,31 @@ NOTES
 - Commit: `3fc439ee3d065559257106328bffc30361f53eb7`.
 - Decisions: None.
 - Risks / open questions: Need a free port or a running server to rerun E2E locally.
+
+---
+
+Session: 2026-02-03 13:22
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1321
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Make Candidate Setup collapse visually (body hidden) and add assertions for hidden inputs.
+
+DONE
+- [2026-02-03 13:22] T-022: Fix Candidate Setup collapse styling so the panel body and inputs are visually hidden. (Skills: ralph)
+- [2026-02-03 13:22] T-023: Extend Playwright tests to assert collapsed panel hides resume/job inputs. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- T-003: Implement Stage 2 CTA gating + help hint + rubric-based help surface.
+
+NOTES
+- Commands run: none (local Playwright server not reachable from this session).
+- Decisions: None.
+- Risks / open questions: Verify collapse behavior in UI and rerun E2E in a local terminal with a reachable server.

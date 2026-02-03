@@ -9,6 +9,8 @@ Spec: docs/specs/20260203-cta-clarity/spec.md
 - <at most one task>
 
 ## DONE
+- [2026-02-03 13:22] T-022: Fix Candidate Setup collapse styling so the panel body and inputs are visually hidden. (Implements: FR-014, FR-015)
+- [2026-02-03 13:22] T-023: Extend Playwright tests to assert collapsed panel hides resume/job inputs. (Implements: FR-014, FR-015)
 - [2026-02-03 12:58] T-020: Ensure Candidate Setup auto-collapses on session start and toggle expands/re-collapses reliably. (Implements: FR-014, FR-015)
 - [2026-02-03 12:58] T-021: Add Playwright assertions for auto-collapse + manual toggle behavior. (Implements: FR-014, FR-015)
 - [2026-02-03 12:06] T-017: Apply stage-gated panel visibility (hide transcript/score before content; collapse setup on session start). (Implements: FR-014, FR-015)
