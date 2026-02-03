@@ -606,3 +606,22 @@ Acceptance / test:
 - Question controls stack vertically above question text.
 - Candidate Setup can be collapsed after interview creation.
 - Main restart button appears and follows the same enable/disable rules as the drawer restart.
+
+## D-20260203-1001
+Date: 2026-02-03 10:01
+Inputs: CR-20260203-0949
+PRD: Next / backlog
+
+Decision:
+Define a stage-specific CTA hierarchy with a single primary action per state: Stage 1 promotes “Generate Questions” once inputs are complete and switches to “Start Interview” when questions are ready; Stage 2 promotes “Submit Answer” when the coach finishes speaking and keeps “Request Help” as a secondary action with a non-blocking inactivity hint; Stage 3 promotes “Restart Interview” as the primary CTA while exports are secondary.
+
+Rationale:
+This matches the user’s CTA priorities while preserving minimal-cognition rules (one primary CTA, gated by state) and keeping Stage 2 focused on live interaction.
+
+Alternatives considered:
+- Make “Export Study Guide” the primary CTA on Stage 3 (rejected: user explicitly wants restart front and center).
+- Show a persistent insights side panel during Stage 2 (rejected: conflicts with focus-mode minimalism).
+
+Acceptance / test:
+- The UI spec and Mermaid flow diagram show a single primary CTA per stage with explicit gating rules.
+- PRD backlog includes the staged CTA hierarchy update.

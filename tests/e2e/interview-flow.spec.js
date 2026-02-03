@@ -27,14 +27,23 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
     buffer: jobBuffer
   });
 
+  const generateButton = page.getByTestId('generate-questions');
+  const startButton = page.getByTestId('start-interview');
+
+  await expect(generateButton).toHaveClass(/ui-button--primary/);
+  await expect(startButton).toHaveClass(/ui-button--secondary/);
+  await expect(page.getByTestId('session-tools-toggle')).toHaveText('Extras');
+
   await expect(page.locator('.ui-caption__label')).toHaveText('Captions (local, en-US)');
   await expect(page.locator('.ui-caption__text')).toHaveText('Captions idle.');
 
-  await page.getByTestId('generate-questions').click();
+  await generateButton.click();
   await expect(page.getByTestId('question-list')).toContainText(/walk me through/i);
-  await expect(page.getByTestId('start-interview')).toBeEnabled();
+  await expect(startButton).toBeEnabled();
+  await expect(generateButton).toHaveClass(/ui-button--secondary/);
+  await expect(startButton).toHaveClass(/ui-button--primary/);
 
-  await page.getByTestId('start-interview').click();
+  await startButton.click();
   const introText = "Hi, I'm your interview coach. Let's get started. Tell me about yourself.";
   if (voiceMode === 'turn') {
     await expect(page.getByTestId('session-status')).toHaveText('Listening');
@@ -46,4 +55,8 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
   await page.getByTestId('stop-interview').click();
   await expect(page.getByTestId('score-value')).toHaveText('84');
   await expect(page.getByTestId('score-summary')).toContainText('Clear structure');
+  await expect(page.getByTestId('restart-interview-main')).toBeEnabled();
+  await expect(page.getByTestId('restart-interview-main')).toHaveClass(/ui-button--primary/);
+  await expect(page.getByTestId('export-pdf-main')).toBeEnabled();
+  await expect(page.getByTestId('export-txt-main')).toBeEnabled();
 });

@@ -61,7 +61,8 @@ These commits are used as implementation evidence for the “shipped” scope ab
 - `af3f2d4`: turn-mode timing adjustment
 
 ## Next / backlog (not shipped requirements)
-- UI: show PrepTalk name + short how-to, improve action button guidance/tooltips, rename “Advanced Setup,” add client-side question insights side panel, and allow job description URL input. (Sources: CR-20260202-1704, CR-20260202-1740, CR-20260202-1816; D-20260202-1704, D-20260202-1740, D-20260202-1816)
+- UI: show PrepTalk name + short how-to, improve action button guidance/tooltips, rename “Advanced Setup” to “Extras,” add client-side question insights side panel, and allow job description URL input. (Sources: CR-20260202-1704, CR-20260202-1740, CR-20260202-1816, CR-20260203-1044; D-20260202-1704, D-20260202-1740, D-20260202-1816)
+- CTA hierarchy: enforce a single primary action per stage with explicit gating (Stage 1 Generate → Start; Stage 2 Submit Answer primary + Request Help secondary + inactivity hint; Stage 3 Restart primary + Export secondary + scoring completion notice). (Sources: CR-20260203-0949; D-20260203-1001)
 - Turn mode: enable immediate submit after coach finishes speaking (no minimum delay) and add a resume-grounded help action (button + voice) that never fabricates and returns TTS + transcript output. (Sources: CR-20260202-1516; D-20260202-1520)
 - Record manual voice smoke-test results (`docs/testing/voice-smoke-test.md`). (Sources: CR-20260128-1409; D-20260128-1410)
 - Fill hackathon deliverables in `README.md` (demo link, write-up, 3-minute video). (Sources: CR-20260128-1409; D-20260128-1410)
