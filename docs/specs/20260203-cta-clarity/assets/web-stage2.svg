@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+  <style>
+    .frame { fill: #ffffff; stroke: #b8b8b8; stroke-width: 2; }
+    .panel { fill: #f6f6f6; stroke: #cfcfcf; stroke-width: 1.5; }
+    .title { font: 700 22px Arial, sans-serif; fill: #303030; }
+    .label { font: 600 16px Arial, sans-serif; fill: #333333; }
+    .text { font: 14px Arial, sans-serif; fill: #4a4a4a; }
+    .btn-primary { fill: #d9eef2; stroke: #1f4d5c; stroke-width: 2.5; }
+    .btn-secondary { fill: #ffffff; stroke: #5a7b86; stroke-width: 2; }
+    .btn-tertiary { fill: #ffffff; stroke: #b0b0b0; stroke-width: 1.5; }
+  </style>
+
+  <rect x="20" y="20" width="1160" height="720" class="frame"/>
+  <text x="40" y="55" class="title">Stage 2 — Live (Turn-based) (Web)</text>
+
+  <rect x="40" y="90" width="1100" height="120" class="panel"/>
+  <text x="60" y="120" class="label">Current Question</text>
+  <text x="60" y="145" class="text">Question text goes here...</text>
+
+  <rect x="40" y="220" width="1100" height="90" class="panel"/>
+  <text x="60" y="250" class="label">Pinned Insight Card (optional, collapsible)</text>
+  <text x="60" y="275" class="text">2–4 bullets max • rubric cues</text>
+
+  <rect x="40" y="325" width="1100" height="260" class="panel"/>
+  <text x="60" y="355" class="label">Transcript (primary surface)</text>
+  <text x="60" y="385" class="text">coach: ...</text>
+  <text x="60" y="410" class="text">user: ...</text>
+
+  <rect x="40" y="600" width="1100" height="120" class="panel"/>
+  <text x="60" y="630" class="label">Controls</text>
+
+  <rect x="60" y="650" width="260" height="50" rx="8" class="btn-primary"/>
+  <text x="80" y="682" class="label">Submit Answer (Primary)</text>
+
+  <rect x="340" y="650" width="220" height="50" rx="8" class="btn-secondary"/>
+  <text x="360" y="682" class="label">Request Help (Secondary)</text>
+
+  <rect x="580" y="650" width="200" height="50" rx="8" class="btn-secondary"/>
+  <text x="600" y="682" class="label">End Interview (Secondary)</text>
+
+  <rect x="800" y="650" width="140" height="50" rx="8" class="btn-tertiary"/>
+  <text x="820" y="682" class="label">Questions (T)</text>
+
+  <rect x="960" y="650" width="120" height="50" rx="8" class="btn-tertiary"/>
+  <text x="980" y="682" class="label">More (T)</text>
+</svg>

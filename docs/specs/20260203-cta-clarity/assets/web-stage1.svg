@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+  <style>
+    .frame { fill: #ffffff; stroke: #b8b8b8; stroke-width: 2; }
+    .panel { fill: #f6f6f6; stroke: #cfcfcf; stroke-width: 1.5; }
+    .title { font: 700 22px Arial, sans-serif; fill: #303030; }
+    .label { font: 600 16px Arial, sans-serif; fill: #333333; }
+    .text { font: 14px Arial, sans-serif; fill: #4a4a4a; }
+    .chip { fill: #eef4f6; stroke: #b7c3c8; stroke-width: 1; }
+    .btn-primary { fill: #d9eef2; stroke: #1f4d5c; stroke-width: 2.5; }
+    .btn-secondary { fill: #ffffff; stroke: #5a7b86; stroke-width: 2; }
+    .btn-tertiary { fill: #ffffff; stroke: #b0b0b0; stroke-width: 1.5; }
+  </style>
+
+  <rect x="20" y="20" width="1160" height="720" class="frame"/>
+  <text x="40" y="55" class="title">Stage 1 — Setup / Generate (Web)</text>
+  <text x="40" y="85" class="text">PrepTalk • 2-line intro • Setup flow</text>
+
+  <rect x="40" y="105" width="120" height="26" rx="6" class="chip"/>
+  <text x="50" y="123" class="text">Inputs ready</text>
+  <rect x="170" y="105" width="150" height="26" rx="6" class="chip"/>
+  <text x="180" y="123" class="text">Questions ready</text>
+
+  <rect x="40" y="150" width="520" height="330" class="panel"/>
+  <text x="60" y="180" class="label">Candidate Setup</text>
+  <rect x="60" y="200" width="220" height="36" class="panel"/>
+  <text x="70" y="223" class="text">Resume file</text>
+  <rect x="300" y="200" width="220" height="36" class="panel"/>
+  <text x="310" y="223" class="text">Job file</text>
+  <rect x="60" y="250" width="460" height="36" class="panel"/>
+  <text x="70" y="273" class="text">Job URL</text>
+
+  <rect x="60" y="305" width="240" height="44" rx="8" class="btn-primary"/>
+  <text x="80" y="334" class="label">Generate Questions (Primary)</text>
+
+  <rect x="600" y="150" width="540" height="330" class="panel"/>
+  <text x="620" y="180" class="label">Questions</text>
+  <text x="620" y="210" class="text">Q1 ...</text>
+  <text x="620" y="235" class="text">Q2 ...</text>
+  <text x="620" y="260" class="text">Q3 ...</text>
+
+  <rect x="40" y="510" width="1100" height="190" class="panel"/>
+  <text x="60" y="540" class="label">Session Controls</text>
+  <rect x="60" y="565" width="280" height="50" rx="8" class="btn-primary"/>
+  <text x="80" y="597" class="label">Start Interview (Primary when ready)</text>
+  <rect x="360" y="565" width="200" height="50" rx="8" class="btn-secondary"/>
+  <text x="380" y="597" class="label">Continue (Secondary)</text>
+  <rect x="580" y="565" width="160" height="50" rx="8" class="btn-tertiary"/>
+  <text x="600" y="597" class="label">Extras (T)</text>
+</svg>

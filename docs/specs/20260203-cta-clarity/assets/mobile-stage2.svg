@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="460" height="900" viewBox="0 0 460 900">
+  <style>
+    .frame { fill: #ffffff; stroke: #b8b8b8; stroke-width: 2; }
+    .panel { fill: #f6f6f6; stroke: #cfcfcf; stroke-width: 1.5; }
+    .title { font: 700 18px Arial, sans-serif; fill: #303030; }
+    .label { font: 600 14px Arial, sans-serif; fill: #333333; }
+    .text { font: 12px Arial, sans-serif; fill: #4a4a4a; }
+    .btn-primary { fill: #d9eef2; stroke: #1f4d5c; stroke-width: 2.5; }
+    .btn-secondary { fill: #ffffff; stroke: #5a7b86; stroke-width: 2; }
+    .btn-tertiary { fill: #ffffff; stroke: #b0b0b0; stroke-width: 1.5; }
+  </style>
+
+  <rect x="10" y="10" width="440" height="880" class="frame"/>
+  <text x="24" y="40" class="title">Stage 2 — Live (Mobile)</text>
+
+  <rect x="24" y="60" width="412" height="110" class="panel"/>
+  <text x="40" y="85" class="label">Current Question</text>
+  <text x="40" y="110" class="text">Question text goes here...</text>
+
+  <rect x="24" y="180" width="412" height="80" class="panel"/>
+  <text x="40" y="205" class="label">Pinned Insight (optional)</text>
+  <text x="40" y="228" class="text">2–4 bullets</text>
+
+  <rect x="24" y="270" width="412" height="260" class="panel"/>
+  <text x="40" y="295" class="label">Transcript</text>
+  <text x="40" y="320" class="text">coach: ...</text>
+  <text x="40" y="343" class="text">user: ...</text>
+
+  <rect x="24" y="540" width="412" height="240" class="panel"/>
+  <text x="40" y="565" class="label">Controls</text>
+  <rect x="40" y="585" width="240" height="44" rx="8" class="btn-primary"/>
+  <text x="55" y="613" class="label">Submit Answer (P)</text>
+  <rect x="40" y="635" width="220" height="40" rx="8" class="btn-secondary"/>
+  <text x="55" y="661" class="label">Request Help (S)</text>
+  <rect x="40" y="682" width="200" height="40" rx="8" class="btn-secondary"/>
+  <text x="55" y="708" class="label">End Interview (S)</text>
+  <rect x="40" y="730" width="160" height="34" rx="8" class="btn-tertiary"/>
+  <text x="55" y="753" class="label">Questions (T)</text>
+  <rect x="210" y="730" width="120" height="34" rx="8" class="btn-tertiary"/>
+  <text x="225" y="753" class="label">More (T)</text>
+</svg>
