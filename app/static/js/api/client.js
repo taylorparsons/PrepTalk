@@ -15,17 +15,26 @@ async function handleResponse(response) {
     return response.json();
   }
 
-  let detail = 'Request failed';
+  let detail = response.statusText || 'Request failed';
   try {
-    const payload = await response.json();
-    if (payload?.detail) {
-      detail = payload.detail;
+    const payloadText = await response.text();
+    if (payloadText) {
+      try {
+        const payload = JSON.parse(payloadText);
+        if (payload?.detail) {
+          detail = payload.detail;
+        } else {
+          detail = payloadText;
+        }
+      } catch (error) {
+        detail = payloadText;
+      }
     }
   } catch (error) {
     // Ignore parsing errors and fall back to status text.
   }
 
-  throw new Error(detail || response.statusText);
+  throw new Error(detail || response.statusText || 'Request failed');
 }
 
 export async function createInterview({ resumeFile, jobFile, jobUrl, roleTitle }) {
