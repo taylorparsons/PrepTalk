@@ -66,12 +66,16 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
     await expect(page.getByTestId('transcript-list')).toContainText(introText);
   }
   await expect(setupPanel).toHaveClass(/ui-panel--collapsed/);
+  const resumeInput = page.getByTestId('resume-file');
+  await expect(resumeInput).toBeHidden();
   const setupToggle = page.getByTestId('setup-collapse');
   await expect(setupToggle).toBeEnabled();
   await setupToggle.click();
   await expect(setupPanel).not.toHaveClass(/ui-panel--collapsed/);
+  await expect(resumeInput).toBeVisible();
   await setupToggle.click();
   await expect(setupPanel).toHaveClass(/ui-panel--collapsed/);
+  await expect(resumeInput).toBeHidden();
   await expect(transcriptPanel).toBeVisible();
 
   await page.getByTestId('stop-interview').click();
