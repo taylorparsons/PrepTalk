@@ -153,6 +153,97 @@ Encouragement:"""
     return _call_gemini(api_key, model, prompt)
 
 
+def _normalize_match(text: str) -> str:
+    return " ".join(str(text or "").lower().split())
+
+
+def _filter_resume_evidence(evidence: list[str], resume_text: str) -> list[str]:
+    if not evidence:
+        return []
+    resume_norm = _normalize_match(resume_text)
+    filtered: list[str] = []
+    for item in evidence:
+        snippet = str(item or "").strip()
+        if not snippet:
+            continue
+        if _normalize_match(snippet) in resume_norm:
+            filtered.append(snippet)
+    return filtered
+
+
+def generate_turn_help(
+    *,
+    api_key: str,
+    model: str,
+    role_title: str | None,
+    focus_areas: list[str] | None,
+    resume_text: str,
+    job_text: str,
+    question_text: str,
+    answer_text: str | None
+) -> dict:
+    if not (resume_text or "").strip():
+        return {
+            "draft_answer": "",
+            "evidence": [],
+            "missing_info": ["Resume text is missing or empty."]
+        }
+    title = role_title or "the target role"
+    focus = ", ".join(focus_areas or []) or "clarity, relevance, impact"
+    prompt = f"""You are an interview coach. The candidate asked for help. Return JSON only.
+
+Rules:
+- Never make up facts not explicitly stated in the resume.
+- Evidence snippets must be exact, verbatim phrases from the resume.
+- The draft answer must include the evidence snippets verbatim.
+- If the resume lacks relevant evidence, set draft_answer to "" and explain the missing info.
+
+Role: {title}
+Focus areas: {focus}
+
+Job description (excerpt):
+{job_text or 'No job description available.'}
+
+Resume (excerpt):
+{resume_text or 'No resume available.'}
+
+Question:
+{question_text or 'No question provided.'}
+
+Candidate draft (optional):
+{answer_text or 'No draft provided.'}
+
+Return JSON with keys:
+- draft_answer: string
+- evidence: array of strings (verbatim resume snippets)
+- missing_info: array of strings
+"""
+    text = _call_gemini(api_key, model, prompt)
+    payload = _extract_json(text) or {}
+    draft = str(payload.get("draft_answer") or "").strip()
+    evidence = _filter_resume_evidence(_coerce_list(payload.get("evidence")), resume_text)
+    missing = _coerce_list(payload.get("missing_info"))
+    if not evidence or not draft:
+        return {
+            "draft_answer": "",
+            "evidence": [],
+            "missing_info": missing or ["Insufficient resume evidence for a grounded draft."]
+        }
+    draft_norm = _normalize_match(draft)
+    for snippet in evidence:
+        if _normalize_match(snippet) not in draft_norm:
+            return {
+                "draft_answer": "",
+                "evidence": [],
+                "missing_info": missing or ["Draft did not include resume evidence."]
+            }
+    return {
+        "draft_answer": draft,
+        "evidence": evidence,
+        "missing_info": missing
+    }
+
+
 def _extract_json(text: str) -> dict | None:
     if not text:
         return None

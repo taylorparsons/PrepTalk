@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { buildVoiceLayout } from '../../app/static/js/ui.js';
 import {
   sendVoiceFeedback,
+  sendVoiceHelp,
   sendVoiceIntro,
   sendVoiceTurn,
   sendVoiceTurnCompletion
@@ -19,6 +20,9 @@ vi.mock('../../app/static/js/api/client.js', () => ({
   scoreInterview: vi.fn(),
   sendVoiceFeedback: vi.fn().mockResolvedValue({
     feedback: { role: 'coach_feedback', text: 'Nice structure.' }
+  }),
+  sendVoiceHelp: vi.fn().mockResolvedValue({
+    help: { role: 'coach_feedback', text: 'Lead with a resume-backed win.' }
   }),
   sendVoiceIntro: vi.fn().mockResolvedValue({
     coach: { role: 'coach', text: 'Welcome! What brings you here today?' }
@@ -66,6 +70,7 @@ describe('turn end delay', () => {
     window.SpeechRecognition = MockSpeechRecognition;
     window.webkitSpeechRecognition = MockSpeechRecognition;
     sendVoiceFeedback.mockClear();
+    sendVoiceHelp.mockClear();
     sendVoiceIntro.mockClear();
     sendVoiceTurnCompletion.mockClear();
     sendVoiceTurn.mockClear();
@@ -82,7 +87,7 @@ describe('turn end delay', () => {
     document.body.innerHTML = '';
   });
 
-  it('enables submit after the configured delay', async () => {
+  it('enables submit immediately after a draft answer', async () => {
     const layout = buildVoiceLayout();
     document.body.appendChild(layout);
 
@@ -101,14 +106,6 @@ describe('turn end delay', () => {
     recognition.onresult({ resultIndex: 0, results: [result] });
 
     expect(sendVoiceTurn).not.toHaveBeenCalled();
-
-    vi.advanceTimersByTime(999);
-    expect(sendVoiceTurn).not.toHaveBeenCalled();
-    expect(sendVoiceTurnCompletion).not.toHaveBeenCalled();
-
-    vi.advanceTimersByTime(1);
-    await flushAsync();
-    expect(sendVoiceTurnCompletion).toHaveBeenCalledTimes(1);
 
     const submitButton = document.querySelector('[data-testid="submit-turn"]');
     expect(submitButton).not.toBeNull();
@@ -141,9 +138,6 @@ describe('turn end delay', () => {
     const result = { 0: { transcript: 'I started by...' }, isFinal: true, length: 1 };
     recognition.onresult({ resultIndex: 0, results: [result] });
 
-    vi.advanceTimersByTime(1000);
-    await flushAsync();
-    expect(sendVoiceTurnCompletion).toHaveBeenCalledTimes(1);
     const submitButton = document.querySelector('[data-testid="submit-turn"]');
     expect(submitButton).not.toBeNull();
     expect(submitButton?.disabled).toBe(false);
@@ -223,5 +217,28 @@ describe('turn end delay', () => {
       })
     );
     expect(state.transcript.some((entry) => entry.role === 'coach_feedback')).toBe(true);
+  });
+
+  it('requests help from the coach when the help button is pressed', async () => {
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const state = window.__e2eState;
+    state.interviewId = 'interview-1';
+
+    const startButton = document.querySelector('[data-testid="start-interview"]');
+    startButton.disabled = false;
+    startButton.click();
+    await flushAsync();
+
+    const recognition = window.__lastRecognition;
+    const result = { 0: { transcript: 'Draft response' }, isFinal: true, length: 1 };
+    recognition.onresult({ resultIndex: 0, results: [result] });
+    const helpButton = document.querySelector('[data-testid="help-turn"]');
+    expect(helpButton).not.toBeNull();
+    helpButton.click();
+    await flushAsync();
+
+    expect(sendVoiceHelp).toHaveBeenCalledTimes(1);
   });
 });
