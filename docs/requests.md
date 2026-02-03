@@ -715,3 +715,13 @@ I found a bug the in [Image #1] the pdf export is returning an error
 
 Notes:
 - Fix PDF export error handling in the Extras drawer and add test coverage.
+
+## CR-20260203-1428
+Date: 2026-02-03 14:28
+Source: chat
+
+Request (verbatim):
+Export PDF is still failing from Extras and from the report at the end of the interview
+
+Notes:
+- Fix PDF export so it succeeds from both Extras and the results panel.

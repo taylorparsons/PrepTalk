@@ -31,7 +31,7 @@ Voice-first interview practice app for the Gemini hackathon. (Sources: CR-202601
 - FR-APP-003: The system supports a turn-based voice mode with completion checks and optional TTS. (Sources: CR-20260128-1409; D-20260128-1410; CR-20260130-1445; D-20260130-1445)
 - FR-APP-004: The app persists interview session state per user/interview as JSON under `app/session_store/<user_id>/<interview_id>.json`. (Sources: CR-20260128-1409; D-20260128-1410)
 - FR-APP-005: The app exports a study guide in PDF and TXT formats. (Sources: CR-20260128-1409; D-20260128-1410)
-- FR-APP-006: Export failures surface the server error detail in the UI to aid troubleshooting. (Sources: CR-20260203-1424)
+- FR-APP-006: Export failures surface the server error detail in the UI to aid troubleshooting, and PDF export remains compatible with legacy `fpdf` installs. (Sources: CR-20260203-1424, CR-20260203-1428; D-20260203-1428)
 
 ## Non-functional requirements (shipped)
 - NFR-APP-001: The repo supports local development via `./run.sh` scripts (install, run UI, unit tests, e2e). (Sources: CR-20260128-1409; D-20260128-1410)
