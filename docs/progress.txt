@@ -847,3 +847,94 @@ NOTES
 - Tests: Not run (not requested).
 - Decisions: D-20260202-1520
 - Risks / open questions: None noted.
+
+---
+
+Session: 2026-02-02 17:04
+Agent: Codex CLI
+Model: (unknown)
+Skills: ralph, frontend-component-system
+Feature: 20260202-ui-guidance
+Input: CR-20260202-1704
+Decisions: D-20260202-1704
+Spec: docs/specs/20260202-ui-guidance/spec.md
+Tasks: docs/specs/20260202-ui-guidance/tasks.md
+Goal: Improve UI guidance/affordances, add question insights side panel, and support job URL input.
+
+DONE
+- 
+
+IN PROGRESS
+- T-001: Add PrepTalk header + instructions and rename Advanced Setup UI copy. (Skills: ralph, frontend-component-system)
+
+NEXT
+- T-002: Add disabled-state guidance, tooltips, and enabled button styling for turn actions.
+- T-003: Add question insights side panel and client-side rubric/resume pointer logic.
+- T-004: Add job description URL option in setup + server fetch/extract + response excerpts.
+- T-005: Update AGENTS.md with app name + purpose and add tests.
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'`
+- Decisions: D-20260202-1704
+- Risks / open questions: None noted.
+
+---
+
+Session: 2026-02-02 17:20
+Agent: Codex CLI
+Model: (unknown)
+Skills: ralph, frontend-component-system
+Feature: 20260202-ui-guidance
+Input: CR-20260202-1720
+Decisions: D-20260202-1720
+Spec: docs/specs/20260202-ui-guidance/spec.md
+Tasks: docs/specs/20260202-ui-guidance/tasks.md
+Goal: Add pin-able question insights, expand PrepTalk intro/how-to, and prefer job URL with file fallback.
+
+DONE
+- 
+
+IN PROGRESS
+- T-001: Update UI intro/instructions, add pin-able insights panel, and adjust job URL/file handling. (Skills: ralph, frontend-component-system)
+
+NEXT
+- T-002: Add disabled-state guidance, tooltips, and enabled button styling for turn actions.
+- T-003: Add question insights side panel and client-side rubric/resume pointer logic.
+- T-004: Add job description URL option in setup + server fetch/extract + response excerpts.
+- T-005: Update AGENTS.md with app name + purpose and add tests.
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'`
+- Decisions: D-20260202-1720
+- Risks / open questions: None noted.
+
+---
+
+Session: 2026-02-02 17:48
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, frontend-component-system
+Feature: 20260202-ui-guidance
+Input: CR-20260202-1740
+Decisions: D-20260202-1704, D-20260202-1720, D-20260202-1740
+Spec: docs/specs/20260202-ui-guidance/spec.md
+Tasks: docs/specs/20260202-ui-guidance/tasks.md
+Goal: Implement PrepTalk UI guidance, question insights, job URL warnings, and supporting tests/docs.
+
+DONE
+- [2026-02-02 17:48] T-001: Add PrepTalk header + intro/how-to guidance and rename Advanced Setup UI copy. (Skills: ralph, frontend-component-system)
+- [2026-02-02 17:48] T-002: Add disabled-state guidance, tooltips, and enabled button styling for turn actions. (Skills: ralph, frontend-component-system)
+- [2026-02-02 17:48] T-003: Add question insights side panel with hover + pin interactions and client-side rubric/resume pointer logic. (Skills: ralph, frontend-component-system)
+- [2026-02-02 17:48] T-004: Add job description URL option in setup + server fetch/extract + URL-over-file fallback + response excerpts + warning on URL failure. (Skills: ralph)
+- [2026-02-02 17:48] T-005: Update AGENTS.md with app name + purpose and add tests. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `./.venv/bin/python -m pytest tests/test_api_interviews.py -q` -> 13 passed; `./run.sh test` -> 56 passed (warned about --localstorage-file path).
+- Decisions: Default insights to question 1, surface job URL failure warnings, and update intro copy with a positive tone.
+- Risks / open questions: None.

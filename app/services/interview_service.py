@@ -49,7 +49,9 @@ def prepare_interview(
         "questions": record.questions,
         "focus_areas": record.focus_areas,
         "question_statuses": list(record.question_statuses),
-        "adapter": record.adapter
+        "adapter": record.adapter,
+        "resume_excerpt": (resume_text or "")[:1200] or None,
+        "job_excerpt": (job_text or "")[:1200] or None
     }
 
 

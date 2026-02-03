@@ -41,6 +41,19 @@ update to use this exact version for voice gemini-2.5-flash-native-audio-preview
 Notes:
 - Interpret “voice” as the default turn-mode TTS model unless otherwise specified.
 
+## CR-20260202-1720
+Date: 2026-02-02 17:20
+Source: chat
+
+Request (verbatim):
+1. yes pin click
+2. yes keep support documents, but let a URL address to be added by the user in which if you can reach it you will that in place of the document for the Job Decrtiption
+3. Creat an introduction of what the app does and then details how to use it. Getting Set up with resume and job details, Generate will create the questions, the user can optionaly addd more questions in the advanced setup and then starting the coach and how to user the buttons notes on when they are inactive as it is not live voice but turn based.
+
+Notes:
+- Add pin interaction in question insights and expand intro/how-to guidance.
+- Prefer job URL if reachable; keep file support as fallback.
+
 ## CR-20260129-1228
 Date: 2026-01-29 12:28
 Source: chat
@@ -427,3 +440,45 @@ User $ralph and $create plan to address this
 Notes:
 - Add a help action (button + voice) and allow immediate submit after coach finishes speaking.
 - Help responses must be grounded in resume content with no fabrication.
+
+## CR-20260202-1704
+Date: 2026-02-02 17:04
+Source: chat
+
+Request (verbatim):
+The buttons in the UI show gray symbol when they are disabled [Image #1], it would be better if they also said wait for the coach to finish talking to use.  They need more information why they are disabled.  The buttons need ot change color for when they are available.  If they are available the test on mouse over should help the users with what they are for.  The More button should be called advanced setup.
+
+the app is missing a name of what it is, and instructions how to use it. The app is called PreTalk, it is designed to create contextual questions for an interview. 
+
+user $create-plan and $ralph to hande these request also I need this information to be added to the AGENT.md file so that the codex when started can know this information
+
+1. PrepTalk needs to be down in the UI not just in the tab of the browser 
+2. draft 2-3 step version and some more information on the advanced setup 
+3. be creative use the $frontend-component-system  for making it user friendly 
+
+4. I have one more larger ask, more help full information for each question to be available in the UI when the users mouse goes over the questions that will share the inner rubic why the question is being asked, pointers frm their resume that can be used to tell the story.  There could be an adcanced screen that opens so the user can read it while that are crafting the interview.
+
+1. client side view
+2. side panel that stays open 
+3. add one more feature that allows the user the option to paste in a URL to the live job decription in place of the file of the job description is they chose that option
+
+Notes:
+- Add visible app name + short usage instructions to the UI and AGENTS.md.
+- Improve disabled button guidance, enabled styling, and tooltips.
+- Rename “More” to “Advanced Setup” and add explanatory text.
+- Add question hover insights + persistent side panel with rubric and resume pointers computed client-side.
+- Add job description URL input as an alternative to file upload.
+
+## CR-20260202-1740
+Date: 2026-02-02 17:40
+Source: chat
+
+Request (verbatim):
+1. first question
+2. yes a warning always if a user action did not work 
+3 yes I drafted my goals but help the user if I missed something fill it is give it an positive personality
+
+Notes:
+- Default the insights panel to the first question after generation.
+- Show a warning whenever a user action (like a job URL fetch) fails, even if a fallback succeeds.
+- Use a positive, supportive tone in the intro/how-to copy and fill in any missing guidance.

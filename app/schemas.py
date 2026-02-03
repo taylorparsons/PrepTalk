@@ -20,6 +20,9 @@ class InterviewCreateResponse(BaseModel):
     focus_areas: list[str]
     question_statuses: list[QuestionStatusEntry] = Field(default_factory=list)
     adapter: str
+    resume_excerpt: str | None = None
+    job_excerpt: str | None = None
+    job_url_warning: str | None = None
 
 
 class LiveSessionRequest(BaseModel):
