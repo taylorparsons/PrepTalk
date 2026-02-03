@@ -695,3 +695,23 @@ make sure the run play wright
 
 Notes:
 - Run Playwright E2E (mock + live) and report output.
+
+## CR-20260203-1422
+Date: 2026-02-03 14:22
+Source: chat
+
+Request (verbatim):
+ok now run the live playright and make sure it is going to generate a report
+
+Notes:
+- Run Playwright live E2E and confirm HTML report output.
+
+## CR-20260203-1424
+Date: 2026-02-03 14:24
+Source: chat
+
+Request (verbatim):
+I found a bug the in [Image #1] the pdf export is returning an error
+
+Notes:
+- Fix PDF export error handling in the Extras drawer and add test coverage.

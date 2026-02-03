@@ -1561,3 +1561,56 @@ NOTES
 - Commands run: `E2E_LIVE=0 PLAYWRIGHT_HTML_REPORT=playwright-report-mock npx playwright test --reporter=html --output test-results-mock` -> 1 passed, 6 skipped.
 - Reports: `playwright-report-mock/` (open with `npx playwright show-report playwright-report-mock`).
 - Commit: `55d6ae608554f0617189ec6d1526c87dbfe66182`.
+
+---
+
+Session: 2026-02-03 14:22
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1422
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Run Playwright live E2E and generate the HTML report.
+
+DONE
+- [2026-02-03 14:22] T-027: Run Playwright live E2E and record report output. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- Investigate live-turn E2E failure and rerun live suite if required.
+
+NOTES
+- Commands run: `set -a; source .env; set +a; E2E_LIVE=1 PLAYWRIGHT_HTML_REPORT=playwright-report-live npx playwright test --reporter=html --output test-results-live` -> 1 failed, 1 passed, 6 skipped.
+- Failure: `tests/e2e/live-turn-interview.spec.js` expected transcript to contain "Hello from the e2e test." but transcript only had coach messages (missing resume details).
+- Report: `playwright-report-live/` (open with `npx playwright show-report playwright-report-live`).
+
+---
+
+Session: 2026-02-03 14:24
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260203-export-error-detail
+Input: CR-20260203-1424
+Decisions: (none)
+Spec: docs/specs/20260203-export-error-detail/spec.md
+Tasks: docs/specs/20260203-export-error-detail/tasks.md
+Goal: Surface PDF export error details and add E2E coverage.
+
+DONE
+- [2026-02-03 14:24] T-001: Surface non-JSON export errors in the client and add a test id to export help text. (Skills: ralph)
+- [2026-02-03 14:24] T-002: Add Playwright coverage for export error messaging. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `npx playwright test tests/e2e/export-error.spec.js` -> 1 passed.

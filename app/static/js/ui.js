@@ -2657,6 +2657,7 @@ function buildSessionToolsDrawer(state, ui, config) {
 
   const exportHelp = document.createElement('p');
   exportHelp.className = 'ui-field__help';
+  exportHelp.setAttribute('data-testid', 'export-help');
   exportHelp.textContent = 'Enabled after transcript exists.';
 
   exportSection.appendChild(exportLabel);
