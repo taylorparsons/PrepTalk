@@ -131,6 +131,10 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
 
   await page.getByTestId('stop-interview').click();
   await expect(scorePanel).toBeVisible();
+  await expect(controlsPanel).toBeHidden();
+  await expect(questionsPanel).toBeHidden();
+  await expect(insightsPanel).toBeHidden();
+  await expect(transcriptPanel).toBeHidden();
   await expect(page.getByTestId('score-value')).not.toHaveText('--', {
     timeout: isLive ? 60000 : 10000
   });

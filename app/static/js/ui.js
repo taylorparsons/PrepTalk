@@ -3565,7 +3565,8 @@ export function buildVoiceLayout() {
     const canRestart = hasInterview && state.sessionStarted && !state.sessionActive;
     const hasScore = Boolean(state.score);
     const showScore = hasScore || state.scorePending;
-    const showControls = hasQuestions || state.sessionActive;
+    const inResults = showScore && !state.sessionActive;
+    const showControls = (hasQuestions || state.sessionActive) && !inResults;
     const restartPrimary = hasScore && !state.sessionActive;
     const nameValue = ui.sessionNameInput?.value.trim() || '';
     const questionValue = ui.customQuestionInput?.value.trim() || '';
@@ -3622,17 +3623,20 @@ export function buildVoiceLayout() {
       state.setupAutoCollapsed = true;
     }
 
+    const showQuestions = hasQuestions && !inResults;
+    const showTranscript = hasTranscript && !inResults;
+
     if (ui.questionRow) {
-      ui.questionRow.hidden = !hasQuestions;
+      ui.questionRow.hidden = !showQuestions;
     }
     if (ui.questionsPanel) {
-      ui.questionsPanel.hidden = !hasQuestions;
+      ui.questionsPanel.hidden = !showQuestions;
     }
     if (ui.insightsPanel) {
-      ui.insightsPanel.hidden = !hasQuestions;
+      ui.insightsPanel.hidden = !showQuestions;
     }
     if (ui.transcriptPanel) {
-      ui.transcriptPanel.hidden = !hasTranscript;
+      ui.transcriptPanel.hidden = !showTranscript;
     }
     if (ui.scorePanel) {
       ui.scorePanel.hidden = !showScore;
