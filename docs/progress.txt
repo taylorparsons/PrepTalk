@@ -1416,5 +1416,6 @@ NEXT
 NOTES
 - Commands run: `npm run test:e2e` -> failed (mock flow start-interview never enabled).
 - Commands run: `E2E_LIVE=0 npm run test:e2e` -> failed to start web server (port bind error on 8129).
+- Commit: `3fc439ee3d065559257106328bffc30361f53eb7`.
 - Decisions: None.
 - Risks / open questions: Need a free port or a running server to rerun E2E locally.
