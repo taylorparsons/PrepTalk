@@ -665,3 +665,13 @@ I am not seeing it collapse in the video, running the app now and the container 
 
 Notes:
 - Fix auto-collapse + manual collapse visibility in the UI and update tests to verify actual hidden content.
+
+## CR-20260203-1328
+Date: 2026-02-03 13:28
+Source: chat
+
+Request (verbatim):
+lets keep going stage 2
+
+Notes:
+- Implement Stage 2 CTA gating, inactivity help hint, and rubric-based help surface with tests.

@@ -41,6 +41,7 @@ const CAPTION_MAX_CHARS = 240;
 const LIVE_COACH_SPEAK_DELAY_MS = 700;
 const TURN_SUBMIT_COMMAND_PHRASES = ['submit my answer', 'how did i do'];
 const TURN_HELP_COMMAND_PHRASES = ['help me', 'coach help', 'request help', 'help with this answer'];
+const TURN_HELP_HINT_DELAY_MS = 12000;
 const COACH_QUESTION_PATTERN = /\b(what|why|how|tell me|can you|could you|describe|walk me|give me|share|would you)\b/i;
 const QUESTION_STATUS_OPTIONS = [
   { value: 'not_started', label: 'Not started' },
@@ -1149,6 +1150,77 @@ function buildControlsPanel(state, ui, config) {
     return stripCommandSuffix(value, TURN_HELP_COMMAND_PHRASES);
   }
 
+  function resolveCurrentQuestionText() {
+    const lastQuestion = (state.lastCoachQuestion || '').trim();
+    if (lastQuestion) {
+      return lastQuestion;
+    }
+    if (Number.isInteger(state.askedQuestionIndex)) {
+      const indexed = state.questions[state.askedQuestionIndex];
+      if (indexed) {
+        return indexed;
+      }
+    }
+    return state.questions[0] || '';
+  }
+
+  function renderTurnRubric() {
+    if (!ui.turnRubric || !ui.turnRubricList) {
+      return;
+    }
+    const questionText = resolveCurrentQuestionText();
+    if (!questionText) {
+      ui.turnRubric.hidden = true;
+      return;
+    }
+    const rubric = buildQuestionRubric(questionText);
+    const items = Array.isArray(rubric.rubric) ? rubric.rubric.slice(0, 3) : [];
+    ui.turnRubricList.innerHTML = '';
+    items.forEach((item) => {
+      const li = document.createElement('li');
+      li.textContent = item;
+      ui.turnRubricList.appendChild(li);
+    });
+    ui.turnRubric.hidden = !state.turnRubricVisible;
+  }
+
+  function setTurnRubricVisible(value) {
+    state.turnRubricVisible = value;
+    renderTurnRubric();
+  }
+
+  function clearTurnHelpHintTimer() {
+    if (state.turnHelpHintTimer) {
+      clearTimeout(state.turnHelpHintTimer);
+      state.turnHelpHintTimer = null;
+    }
+  }
+
+  function resetTurnHelpHint() {
+    clearTurnHelpHintTimer();
+    state.turnHelpHintVisible = false;
+  }
+
+  function scheduleTurnHelpHint() {
+    if (!isTurnMode() || !state.sessionActive || !state.turnAwaitingAnswer || state.turnSpeaking) {
+      resetTurnHelpHint();
+      return;
+    }
+    if (state.turnHelpHintTimer || state.turnHelpHintVisible) {
+      return;
+    }
+    state.turnHelpHintTimer = window.setTimeout(() => {
+      state.turnHelpHintTimer = null;
+      const hasAnswer = String(state.captionDraftText || state.captionFinalText || '').trim().length > 0;
+      if (!state.turnAwaitingAnswer || state.turnSpeaking || hasAnswer) {
+        return;
+      }
+      state.turnHelpHintVisible = true;
+      setTurnRubricVisible(true);
+      updateTurnSubmitUI();
+    }, TURN_HELP_HINT_DELAY_MS);
+  }
+
   function updateTurnSubmitUI() {
     const showRow = isTurnMode() && state.sessionActive;
     if (ui.turnActionsRow) {
@@ -1167,6 +1239,8 @@ function buildControlsPanel(state, ui, config) {
       }
       ui.submitTurnButton.classList.remove('ui-button--ready');
       ui.helpTurnButton?.classList.remove('ui-button--ready');
+      resetTurnHelpHint();
+      setTurnRubricVisible(false);
       return;
     }
     const hasAnswer = String(state.captionDraftText || state.captionFinalText || '').trim().length > 0;
@@ -1197,16 +1271,26 @@ function buildControlsPanel(state, ui, config) {
     }
 
     if (ui.turnHelp) {
+      if (hasAnswer && state.turnHelpHintVisible) {
+        state.turnHelpHintVisible = false;
+      }
       if (state.turnSpeaking) {
         ui.turnHelp.textContent = 'Coach is speaking. Wait to request help or submit your answer.';
       } else if (!state.turnAwaitingAnswer) {
         ui.turnHelp.textContent = 'Waiting for the next coach question.';
-      } else if (!hasAnswer) {
-        ui.turnHelp.textContent = 'Start answering to enable Submit. Help is available as soon as the coach finishes speaking.';
       } else if (state.turnHelpPending) {
         ui.turnHelp.textContent = 'Fetching help...';
+      } else if (!hasAnswer && state.turnHelpHintVisible) {
+        ui.turnHelp.textContent = 'Need a nudge? Use Request Help for a rubric-based tip.';
+      } else if (!hasAnswer) {
+        ui.turnHelp.textContent = 'Start answering to enable Submit. Help is available as soon as the coach finishes speaking.';
       } else {
         ui.turnHelp.textContent = 'Ready when you are. Request help or submit your answer.';
+      }
+      if (state.turnAwaitingAnswer && !state.turnSpeaking && !hasAnswer) {
+        scheduleTurnHelpHint();
+      } else {
+        resetTurnHelpHint();
       }
     }
   }
@@ -1224,6 +1308,8 @@ function buildControlsPanel(state, ui, config) {
     updateStatusPill(statusPill, { label: 'Thinking', tone: 'info' });
     state.turnAwaitingAnswer = false;
     state.turnReadyToSubmit = false;
+    resetTurnHelpHint();
+    setTurnRubricVisible(false);
     resetTurnCompletionTracking();
     stopSpeechRecognition();
     state.captionFinalText = '';
@@ -1738,6 +1824,8 @@ function buildControlsPanel(state, ui, config) {
     }
     const cleanedAnswer = (answer || state.captionDraftText || state.captionFinalText || '').trim();
     state.turnHelpPending = true;
+    resetTurnHelpHint();
+    setTurnRubricVisible(true);
     updateTurnSubmitUI();
     sendClientEvent(state, 'turn_help', { status: source });
     updateStatusPill(statusPill, { label: 'Helping', tone: 'info' });
@@ -1796,6 +1884,9 @@ function buildControlsPanel(state, ui, config) {
       ui.updateSessionToolsState?.();
       state.turnAwaitingAnswer = coachHasQuestion(response.coach.text);
       state.lastCoachQuestion = state.turnAwaitingAnswer ? response.coach.text : '';
+      resetTurnHelpHint();
+      setTurnRubricVisible(false);
+      state.turnAwaitingStartedAt = state.turnAwaitingAnswer ? Date.now() : null;
       resetTurnCompletionTracking();
       updateTurnSubmitUI();
       await playCoachReply({
@@ -1836,6 +1927,9 @@ function buildControlsPanel(state, ui, config) {
       ui.updateSessionToolsState?.();
       state.turnAwaitingAnswer = coachHasQuestion(response.coach.text);
       state.lastCoachQuestion = state.turnAwaitingAnswer ? response.coach.text : '';
+      resetTurnHelpHint();
+      setTurnRubricVisible(false);
+      state.turnAwaitingStartedAt = state.turnAwaitingAnswer ? Date.now() : null;
       resetTurnCompletionTracking();
       updateTurnSubmitUI();
       await playCoachReply({
@@ -1876,6 +1970,8 @@ function buildControlsPanel(state, ui, config) {
     state.turnRequestActive = false;
     state.turnHelpPending = false;
     state.turnSpeaking = false;
+    resetTurnHelpHint();
+    setTurnRubricVisible(false);
     cancelLiveCoachSpeech();
     state.liveAudioSeen = false;
     state.lastSpokenCoachText = '';
@@ -2279,6 +2375,7 @@ function buildControlsPanel(state, ui, config) {
     state.turnQueue = [];
     state.turnRequestActive = false;
     state.turnSpeaking = false;
+    updateTurnSubmitUI();
     stopButton.disabled = true;
     state.scorePending = true;
     updateStatusPill(statusPill, { label: 'Scoring', tone: 'info' });
@@ -2364,6 +2461,21 @@ function buildControlsPanel(state, ui, config) {
   turnHelp.setAttribute('data-testid', 'turn-help');
   turnHelp.textContent = 'Waiting for the coach.';
 
+  const turnRubric = document.createElement('div');
+  turnRubric.className = 'ui-turn-rubric';
+  turnRubric.setAttribute('data-testid', 'turn-rubric');
+  turnRubric.hidden = true;
+
+  const turnRubricTitle = document.createElement('div');
+  turnRubricTitle.className = 'ui-turn-rubric__title';
+  turnRubricTitle.textContent = 'Answer rubric';
+
+  const turnRubricList = document.createElement('ul');
+  turnRubricList.className = 'ui-turn-rubric__list';
+
+  turnRubric.appendChild(turnRubricTitle);
+  turnRubric.appendChild(turnRubricList);
+
   const toolsRow = document.createElement('div');
   toolsRow.className = 'ui-controls__row ui-controls__row--tools';
   toolsRow.appendChild(sessionToolsButton);
@@ -2380,6 +2492,7 @@ function buildControlsPanel(state, ui, config) {
   content.appendChild(actionsRow);
   content.appendChild(turnActionsRow);
   content.appendChild(turnHelp);
+  content.appendChild(turnRubric);
   content.appendChild(toolsRow);
   content.appendChild(restartRow);
 
@@ -2392,6 +2505,8 @@ function buildControlsPanel(state, ui, config) {
   ui.submitTurnButton = submitTurnButton;
   ui.turnActionsRow = turnActionsRow;
   ui.turnHelp = turnHelp;
+  ui.turnRubric = turnRubric;
+  ui.turnRubricList = turnRubricList;
   ui.sessionToolsToggle = sessionToolsButton;
   ui.restartButtonMain = restartMainButton;
   ui.restartMainHelp = restartMainHelp;
@@ -2965,6 +3080,10 @@ export function buildVoiceLayout() {
     turnAnswerStartedAt: null,
     turnCompletionLastCheckAt: 0,
     turnCompletionPending: false,
+    turnAwaitingStartedAt: null,
+    turnHelpHintTimer: null,
+    turnHelpHintVisible: false,
+    turnRubricVisible: false,
     liveAudioSeen: false,
     liveCoachPendingText: '',
     liveCoachSpeakTimer: null,

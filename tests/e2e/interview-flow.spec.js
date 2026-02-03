@@ -77,6 +77,14 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
   await expect(setupPanel).toHaveClass(/ui-panel--collapsed/);
   await expect(resumeInput).toBeHidden();
   await expect(transcriptPanel).toBeVisible();
+  const helpTurn = page.getByTestId('help-turn');
+  const submitTurn = page.getByTestId('submit-turn');
+  const turnHelp = page.getByTestId('turn-help');
+  await expect(helpTurn).toBeEnabled({ timeout: 20000 });
+  await expect(submitTurn).toBeDisabled();
+  await expect(turnHelp).toContainText(/Need a nudge/i, { timeout: 20000 });
+  await helpTurn.click();
+  await expect(page.getByTestId('turn-rubric')).toBeVisible();
 
   await page.getByTestId('stop-interview').click();
   await expect(scorePanel).toBeVisible();

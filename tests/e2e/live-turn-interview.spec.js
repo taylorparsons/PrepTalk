@@ -108,6 +108,15 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
   await expect(setupPanel).toHaveClass(/ui-panel--collapsed/);
   await expect(resumeInput).toBeHidden();
 
+  const helpTurn = page.getByTestId('help-turn');
+  const submitTurn = page.getByTestId('submit-turn');
+  const turnHelp = page.getByTestId('turn-help');
+  await expect(helpTurn).toBeEnabled({ timeout: 20000 });
+  await expect(submitTurn).toBeDisabled();
+  await expect(turnHelp).toContainText(/Need a nudge/i, { timeout: 20000 });
+  await helpTurn.click();
+  await expect(page.getByTestId('turn-rubric')).toBeVisible();
+
   await page.waitForFunction(() => Boolean(window.__e2eQueueTurn));
   await page.evaluate(() => window.__e2eQueueTurn?.('Hello from the e2e test.'));
 
