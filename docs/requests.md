@@ -685,3 +685,13 @@ work on stage 3 as well and i wil test together
 
 Notes:
 - Implement Stage 3 results focus updates alongside Stage 2; update tests.
+
+## CR-20260203-1342
+Date: 2026-02-03 13:42
+Source: chat
+
+Request (verbatim):
+make sure the run play wright
+
+Notes:
+- Run Playwright E2E (mock + live) and report output.
