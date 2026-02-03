@@ -48,6 +48,26 @@ def test_create_interview_returns_questions():
     assert payload["question_statuses"]
 
 
+def test_create_interview_warns_on_job_url_failure(monkeypatch):
+    def _fail_fetch(*_args, **_kwargs):
+        raise ValueError("Job description URL must start with http or https.")
+
+    monkeypatch.setattr("app.api.fetch_url_text", _fail_fetch)
+
+    client = TestClient(app)
+    files = {
+        "resume": ("resume.pdf", _pdf_bytes("Resume"), "application/pdf"),
+        "job_description": ("job.pdf", _pdf_bytes("Job"), "application/pdf")
+    }
+    data = {"job_description_url": "https://example.com/job"}
+    response = client.post("/api/interviews", files=files, data=data)
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["interview_id"]
+    assert payload["job_url_warning"]
+
+
 def test_live_session_returns_mock_transcript():
     client = TestClient(app)
     interview_id = _create_interview(client)
