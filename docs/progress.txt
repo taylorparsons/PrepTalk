@@ -1642,3 +1642,28 @@ NEXT
 NOTES
 - Commands run: `./.venv/bin/python -m pytest tests/test_pdf_service.py -q` -> 1 passed (10 warnings).
 - Commit: `160d20cf242e8edf1a77e442844a92e18d3d5cdb`.
+
+---
+
+Session: 2026-02-03 15:00
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1500
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Document unresolved PDF export failure in CTA docs for follow-up.
+
+DONE
+- [2026-02-03 15:00] Add PDF export failure note to CTA spec and task list. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- T-028: Investigate and fix PDF export failures from Extras + Results.
+
+NOTES
+- Commands run: none.

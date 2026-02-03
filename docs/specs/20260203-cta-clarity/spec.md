@@ -75,6 +75,9 @@ Functional requirements:
 - Missing inputs: “Start Interview” remains disabled and the reason is shown. (Verifies: FR-001, FR-004)
 - Inactivity during Stage 2: help hint appears without interrupting transcript or submit flow. (Verifies: FR-002)
 
+## Known issues / follow-ups
+- PDF export still fails from Extras and Results in some environments. Track and resolve later. (Sources: CR-20260203-1500)
+
 ## CTA Summary (ASCII)
 Stage 1 (Setup)
 - Primary: Generate Questions → Start Interview (after questions ready)

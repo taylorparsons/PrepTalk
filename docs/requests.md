@@ -725,3 +725,13 @@ Export PDF is still failing from Extras and from the report at the end of the in
 
 Notes:
 - Fix PDF export so it succeeds from both Extras and the results panel.
+
+## CR-20260203-1500
+Date: 2026-02-03 15:00
+Source: chat
+
+Request (verbatim):
+the pdf export is still broken add the to the cta docs so I can come back and fix it later
+
+Notes:
+- Document the unresolved PDF export failure in CTA docs for follow-up.
