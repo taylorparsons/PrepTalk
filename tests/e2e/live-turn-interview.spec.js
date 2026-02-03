@@ -63,12 +63,21 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
     buffer: jobBuffer
   });
 
-  await page.getByTestId('generate-questions').click();
-  await expect(page.getByTestId('start-interview')).toBeEnabled({
+  const generateButton = page.getByTestId('generate-questions');
+  const startButton = page.getByTestId('start-interview');
+
+  await expect(generateButton).toHaveClass(/ui-button--primary/);
+  await expect(startButton).toHaveClass(/ui-button--secondary/);
+  await expect(page.getByTestId('session-tools-toggle')).toHaveText('Extras');
+
+  await generateButton.click();
+  await expect(startButton).toBeEnabled({
     timeout: isLive ? 30000 : 10000
   });
+  await expect(generateButton).toHaveClass(/ui-button--secondary/);
+  await expect(startButton).toHaveClass(/ui-button--primary/);
 
-  await page.getByTestId('start-interview').click();
+  await startButton.click();
   await expect(page.getByTestId('session-status')).toHaveText(/Welcoming|Listening/);
   await expect(page.getByTestId('session-status')).toHaveText('Listening', { timeout: 60000 });
 
@@ -87,4 +96,8 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
   await expect(page.getByTestId('score-value')).not.toHaveText('--', {
     timeout: isLive ? 60000 : 10000
   });
+  await expect(page.getByTestId('restart-interview-main')).toBeEnabled();
+  await expect(page.getByTestId('restart-interview-main')).toHaveClass(/ui-button--primary/);
+  await expect(page.getByTestId('export-pdf-main')).toBeEnabled();
+  await expect(page.getByTestId('export-txt-main')).toBeEnabled();
 });

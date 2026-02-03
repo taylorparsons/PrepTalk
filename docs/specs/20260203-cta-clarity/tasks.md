@@ -1,0 +1,26 @@
+# Tasks: 20260203-cta-clarity
+
+Spec: docs/specs/20260203-cta-clarity/spec.md
+
+## NEXT
+- T-003: Implement Stage 2 CTA gating + help hint + rubric-based help surface. (Implements: FR-002, FR-004)
+
+## IN PROGRESS
+- <at most one task>
+
+## DONE
+- [2026-02-03 10:01] T-001: Document CTA UX spec + Mermaid flow diagram and update PRD backlog. (Implements: FR-005)
+- [2026-02-03 10:11] T-006: Fix Mermaid node labels for parser compatibility. (Implements: FR-005)
+- [2026-02-03 10:17] T-007: Add ASCII CTA summary per stage to the spec. (Implements: FR-006)
+- [2026-02-03 10:22] T-008: Add ASCII wireframes in code blocks for stages 1–3. (Implements: FR-007)
+- [2026-02-03 10:24] T-009: Add mobile + web ASCII wireframes per stage. (Implements: FR-008)
+- [2026-02-03 10:27] T-010: Clarify wireframe CTA key and heading. (Implements: FR-008)
+- [2026-02-03 10:30] T-011: Create web-view wireframe images for stages 1–3. (Implements: FR-009)
+- [2026-02-03 10:34] T-012: Create mobile-view wireframe images for stages 1–3. (Implements: FR-010)
+- [2026-02-03 10:38] T-013: Embed wireframe images inline in the spec for quick review. (Implements: FR-011)
+- [2026-02-03 10:44] T-014: Update CTA docs and wireframes to use the “Extras” label. (Implements: FR-012)
+- [2026-02-03 10:54] T-002: Implement Stage 1 CTA gating and primary CTA switching. (Implements: FR-001, FR-004)
+- [2026-02-03 10:54] T-004: Implement Stage 3 results CTA emphasis (restart primary, export secondary) + scoring notice. (Implements: FR-003, FR-004)
+- [2026-02-03 10:54] T-005: Add/update automated tests for CTA hierarchy across stages. (Implements: FR-001, FR-002, FR-003, FR-004)
+- [2026-02-03 10:54] T-015: Rename “Advanced Setup” to “Extras” in UI labels and tests. (Implements: FR-012)
+- [2026-02-03 10:54] T-016: Update Playwright mock + live E2E to validate CTA labels/states for stages 1–3. (Implements: FR-013)

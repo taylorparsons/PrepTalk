@@ -236,6 +236,17 @@ function updateButtonLabel(button, label) {
   }
 }
 
+const BUTTON_VARIANTS = ['primary', 'secondary', 'ghost', 'danger'];
+
+function setButtonVariant(button, variant) {
+  if (!button) return;
+  const normalized = BUTTON_VARIANTS.includes(variant) ? variant : 'primary';
+  BUTTON_VARIANTS.forEach((value) => {
+    button.classList.remove(`ui-button--${value}`);
+  });
+  button.classList.add(`ui-button--${normalized}`);
+}
+
 export function formatCount(value) {
   return typeof value === 'number' ? String(value) : '0';
 }
@@ -424,7 +435,7 @@ function buildAppHeader() {
   steps.className = 'ui-hero__steps';
   [
     'Upload your resume and job details (file or URL).',
-    'Generate questions, then add optional extras in Advanced Setup.',
+    'Generate questions, then open Extras for optional actions.',
     'Start the coach, then use Help or Submit after the coach finishes speaking.'
   ].forEach((step) => {
     const li = document.createElement('li');
@@ -438,7 +449,7 @@ function buildAppHeader() {
 
   const callout = document.createElement('div');
   callout.className = 'ui-hero__callout';
-  callout.textContent = 'Advanced Setup lets you revisit past sessions, add custom questions, and export study guides.';
+  callout.textContent = 'Extras lets you revisit past sessions, add custom questions, and export study guides.';
 
   wrapper.appendChild(eyebrow);
   wrapper.appendChild(title);
@@ -621,6 +632,9 @@ function renderScore(ui, score) {
     ui.scoreSummary.textContent = 'Complete a session to view scoring insights.';
     ui.scoreStrengths.innerHTML = '';
     ui.scoreImprovements.innerHTML = '';
+    if (ui.scoreNotice) {
+      ui.scoreNotice.textContent = 'Score will appear after you end the session.';
+    }
     return;
   }
 
@@ -640,6 +654,10 @@ function renderScore(ui, score) {
     li.textContent = item;
     ui.scoreImprovements.appendChild(li);
   });
+
+  if (ui.scoreNotice) {
+    ui.scoreNotice.textContent = 'Score ready. Export PDF/TXT or restart when you are ready.';
+  }
 }
 
 function coercePcm16(payload) {
@@ -693,17 +711,26 @@ function buildSetupPanel(state, ui) {
 
   const generateButton = createButton({
     label: 'Generate Questions',
-    variant: 'secondary',
+    variant: 'primary',
     size: 'md',
     disabled: true,
     attrs: { 'data-testid': 'generate-questions' }
   });
+
+  function updateSetupCtas() {
+    const hasQuestions = Boolean(state.interviewId) && state.questions.length > 0;
+    setButtonVariant(generateButton, hasQuestions ? 'secondary' : 'primary');
+    if (ui.startButton) {
+      setButtonVariant(ui.startButton, hasQuestions ? 'primary' : 'secondary');
+    }
+  }
 
   function updateGenerateState() {
     const resumeReady = resumeField.input.files.length > 0;
     const jobReady = jobField.input.files.length > 0
       || String(jobUrlField.input.value || '').trim().length > 0;
     generateButton.disabled = !(resumeReady && jobReady);
+    ui.updateSetupCtas?.();
   }
 
   resumeField.input.addEventListener('change', updateGenerateState);
@@ -763,6 +790,7 @@ function buildSetupPanel(state, ui) {
       );
       ui.resetSessionState?.();
       ui.startButton.disabled = false;
+      ui.updateSetupCtas?.();
       if (result.job_url_warning) {
         status.className = 'ui-field__warning';
         status.textContent = 'Questions ready. The job URL could not be reached, so we used the uploaded file.';
@@ -803,6 +831,7 @@ function buildSetupPanel(state, ui) {
   ui.jobUrlInput = jobUrlField.input;
   ui.setupStatus = status;
   ui.generateButton = generateButton;
+  ui.updateSetupCtas = updateSetupCtas;
 
   const panel = createPanel({
     title: 'Candidate Setup',
@@ -916,7 +945,7 @@ function buildControlsPanel(state, ui, config) {
   });
 
   const sessionToolsButton = createButton({
-    label: 'Advanced Setup',
+    label: 'Extras',
     variant: 'ghost',
     size: 'sm',
     attrs: {
@@ -1851,6 +1880,7 @@ function buildControlsPanel(state, ui, config) {
     renderScore(ui, null);
     updateTurnSubmitUI();
     ui.updateSessionToolsState?.();
+    ui.updateSetupCtas?.();
   }
 
   function resolveModelInput(input, fallback) {
@@ -2343,6 +2373,7 @@ function buildControlsPanel(state, ui, config) {
   ui.applyVoiceOutputMode = applyVoiceOutputMode;
   ui.resetSessionState = resetSessionState;
   updateTurnSubmitUI();
+  ui.updateSetupCtas?.();
 
   return createPanel({
     title: 'Session Controls',
@@ -2372,11 +2403,11 @@ function buildSessionToolsDrawer(state, ui, config) {
 
   const title = document.createElement('h3');
   title.className = 'ui-drawer__title';
-  title.textContent = 'Advanced Setup';
+  title.textContent = 'Extras';
 
   const subtitle = document.createElement('p');
   subtitle.className = 'ui-drawer__subtitle';
-  subtitle.textContent = 'Go deeper: load a past session, add custom questions, and export study guides.';
+  subtitle.textContent = 'Optional actions: load a past session, add custom questions, and export study guides.';
 
   const closeButton = createButton({
     label: 'Close',
@@ -2756,6 +2787,10 @@ function buildScorePanel(ui) {
   scoreValue.className = 'ui-score__value';
   scoreValue.setAttribute('data-testid', 'score-value');
 
+  const scoreNotice = document.createElement('div');
+  scoreNotice.className = 'ui-field__help';
+  scoreNotice.textContent = 'Score will appear after you end the session.';
+
   const scoreSummary = document.createElement('div');
   scoreSummary.className = 'ui-score__summary ui-markdown';
 
@@ -2773,20 +2808,53 @@ function buildScorePanel(ui) {
   const improvementsList = document.createElement('ul');
   improvementsList.className = 'ui-score__list';
 
+  const exportActions = document.createElement('div');
+  exportActions.className = 'ui-inline ui-score__actions';
+
+  const exportPdfMain = createButton({
+    label: 'Export PDF',
+    variant: 'secondary',
+    size: 'sm',
+    disabled: true,
+    attrs: { 'data-testid': 'export-pdf-main' }
+  });
+
+  const exportTxtMain = createButton({
+    label: 'Export TXT',
+    variant: 'secondary',
+    size: 'sm',
+    disabled: true,
+    attrs: { 'data-testid': 'export-txt-main' }
+  });
+
+  const exportMainHelp = document.createElement('p');
+  exportMainHelp.className = 'ui-field__help';
+  exportMainHelp.textContent = 'Exports are enabled once a transcript exists.';
+
+  exportActions.appendChild(exportPdfMain);
+  exportActions.appendChild(exportTxtMain);
+
   const container = document.createElement('div');
   container.className = 'ui-score';
   container.setAttribute('data-testid', 'score-summary');
   container.appendChild(scoreValue);
+  container.appendChild(scoreNotice);
   container.appendChild(scoreSummary);
   container.appendChild(strengthsLabel);
   container.appendChild(strengthsList);
   container.appendChild(improvementsLabel);
   container.appendChild(improvementsList);
+  container.appendChild(exportActions);
+  container.appendChild(exportMainHelp);
 
   ui.scoreValue = scoreValue;
+  ui.scoreNotice = scoreNotice;
   ui.scoreSummary = scoreSummary;
   ui.scoreStrengths = strengthsList;
   ui.scoreImprovements = improvementsList;
+  ui.exportPdfMain = exportPdfMain;
+  ui.exportTxtMain = exportTxtMain;
+  ui.exportMainHelp = exportMainHelp;
 
   renderScore(ui, null);
 
@@ -3334,6 +3402,8 @@ export function buildVoiceLayout() {
     const hasInterview = Boolean(state.interviewId);
     const hasTranscript = state.transcript.length > 0;
     const canRestart = hasInterview && state.sessionStarted && !state.sessionActive;
+    const hasScore = Boolean(state.score);
+    const restartPrimary = hasScore && !state.sessionActive;
     const nameValue = ui.sessionNameInput?.value.trim() || '';
     const questionValue = ui.customQuestionInput?.value.trim() || '';
     const selectedSession = ui.sessionSelect?.value || '';
@@ -3354,11 +3424,20 @@ export function buildVoiceLayout() {
     if (ui.exportTranscript) {
       ui.exportTranscript.disabled = !(hasInterview && hasTranscript);
     }
+    if (ui.exportPdfMain) {
+      ui.exportPdfMain.disabled = !(hasInterview && hasTranscript);
+    }
+    if (ui.exportTxtMain) {
+      ui.exportTxtMain.disabled = !(hasInterview && hasTranscript);
+    }
     if (ui.restartButton) {
       ui.restartButton.disabled = !canRestart;
     }
     if (ui.restartButtonMain) {
       ui.restartButtonMain.disabled = !canRestart;
+    }
+    if (ui.restartButtonMain) {
+      setButtonVariant(ui.restartButtonMain, restartPrimary ? 'primary' : 'ghost');
     }
     if (ui.exportTranscript) {
       updateButtonLabel(ui.exportTranscript, exportFormat === 'txt' ? 'Export TXT' : 'Export PDF');
@@ -3370,11 +3449,17 @@ export function buildVoiceLayout() {
         ui.setSetupCollapsed(false);
       }
     }
+    ui.updateSetupCtas?.();
 
     if (ui.exportHelp) {
       ui.exportHelp.textContent = hasTranscript
         ? `Downloads the study guide ${exportFormat === 'txt' ? 'text file' : 'PDF'}.`
         : 'Enabled after transcript exists.';
+    }
+    if (ui.exportMainHelp) {
+      ui.exportMainHelp.textContent = hasTranscript
+        ? 'Export your study guide as PDF or TXT.'
+        : 'Exports are enabled once a transcript exists.';
     }
     if (ui.restartHelp) {
       ui.restartHelp.textContent = state.sessionActive
@@ -3483,10 +3568,9 @@ export function buildVoiceLayout() {
     void handleCustomQuestion({ jump: true });
   });
 
-  ui.exportTranscript?.addEventListener('click', async () => {
+  async function downloadStudyGuideFile(format, { onSuccess, onError } = {}) {
     if (!state.interviewId) return;
     try {
-      const format = ui.exportFormat?.value || 'pdf';
       const blob = await downloadStudyGuide({ interviewId: state.interviewId, format });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -3496,10 +3580,60 @@ export function buildVoiceLayout() {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      ui.exportHelp.textContent = 'Download started.';
+      if (typeof onSuccess === 'function') {
+        onSuccess();
+      }
     } catch (error) {
-      ui.exportHelp.textContent = error.message || 'Unable to export PDF.';
+      if (typeof onError === 'function') {
+        onError(error);
+      }
     }
+  }
+
+  ui.exportTranscript?.addEventListener('click', async () => {
+    const format = ui.exportFormat?.value || 'pdf';
+    await downloadStudyGuideFile(format, {
+      onSuccess: () => {
+        if (ui.exportHelp) {
+          ui.exportHelp.textContent = 'Download started.';
+        }
+      },
+      onError: (error) => {
+        if (ui.exportHelp) {
+          ui.exportHelp.textContent = error?.message || 'Unable to export PDF.';
+        }
+      }
+    });
+  });
+
+  ui.exportPdfMain?.addEventListener('click', async () => {
+    await downloadStudyGuideFile('pdf', {
+      onSuccess: () => {
+        if (ui.exportMainHelp) {
+          ui.exportMainHelp.textContent = 'Download started.';
+        }
+      },
+      onError: (error) => {
+        if (ui.exportMainHelp) {
+          ui.exportMainHelp.textContent = error?.message || 'Unable to export PDF.';
+        }
+      }
+    });
+  });
+
+  ui.exportTxtMain?.addEventListener('click', async () => {
+    await downloadStudyGuideFile('txt', {
+      onSuccess: () => {
+        if (ui.exportMainHelp) {
+          ui.exportMainHelp.textContent = 'Download started.';
+        }
+      },
+      onError: (error) => {
+        if (ui.exportMainHelp) {
+          ui.exportMainHelp.textContent = error?.message || 'Unable to export TXT.';
+        }
+      }
+    });
   });
 
   async function handleRestart() {

@@ -504,3 +504,123 @@ Notes:
 - Stack question controls vertically to reduce whitespace.
 - Make Candidate Setup collapsible once a session/interview exists.
 - Add a main restart button near Session Controls (keep Advanced Setup version).
+
+## CR-20260203-0949
+Date: 2026-02-03 09:49
+Source: chat
+
+Request (verbatim):
+$minimalist-voice-ux-enforcer with with  $ralph to create an update to this app to imrove the call to action
+
+Notes:
+- Stage 1 CTA emphasis: upload resume/job, generate questions, start interview (start gated by inputs).
+- Stage 2 CTA emphasis: turn-based controls, request help button, rubric-based help info when not responding.
+- Stage 3 CTA emphasis: score creation/notification, export PDF/TXT, restart session as the most prominent action.
+- Provide a Mermaid flow diagram for the CTA flow across all stages.
+
+## CR-20260203-1011
+Date: 2026-02-03 10:11
+Source: chat
+
+Request (verbatim):
+fix the mermai error so it renders Parse error on line 4:
+...[Generate Questions (Primary)]    C[Que
+-----------------------^
+Expecting 'SQE', 'DOUBLECIRCLEEND', 'PE', '-)', 'STADIUMEND', 'SUBROUTINEEND', 'PIPE', 'CYLINDEREND', 'DIAMOND_STOP', 'TAGEND', 'TRAPEND', 'INVTRAPEND', 'UNICODE_TEXT', 'TEXT', 'TAGSTART', got 'PS'
+
+Notes:
+
+## CR-20260203-1017
+Date: 2026-02-03 10:17
+Source: chat
+
+Request (verbatim):
+ok the mermaid renders, now can you add using ascii text when each stage the  primary cta and sub cta in the spec so I can be sure we are going in the shared direction
+
+Notes:
+
+## CR-20260203-1022
+Date: 2026-02-03 10:22
+Source: chat
+
+Request (verbatim):
+$minimalist-voice-ux-enforcer add ascii text in code blocks to I can see the wire frames for each stage
+
+Notes:
+
+## CR-20260203-1024
+Date: 2026-02-03 10:24
+Source: chat
+
+Request (verbatim):
+try again show the mobile and web view of the stages CTA and add to the spec.md for this
+
+Notes:
+
+## CR-20260203-1027
+Date: 2026-02-03 10:27
+Source: chat
+
+Request (verbatim):
+I want the write frames add to the spec I do not see it can you do that I only see this [Image #1]
+
+Notes:
+
+## CR-20260203-1030
+Date: 2026-02-03 10:30
+Source: chat
+
+Request (verbatim):
+I see them now can you create an image for the web view for each stage ?
+
+Notes:
+
+## CR-20260203-1034
+Date: 2026-02-03 10:34
+Source: chat
+
+Request (verbatim):
+add the mobile views now
+
+Notes:
+
+## CR-20260203-1038
+Date: 2026-02-03 10:38
+Source: chat
+
+Request (verbatim):
+update the spec so I can see the images in context
+
+Notes:
+
+## CR-20260203-1050
+Date: 2026-02-03 10:50
+Source: chat
+
+Request (verbatim):
+$ralph this CTA change needs to include updated playright end2end for both mock and live testings
+
+Notes:
+
+## CR-20260203-1054
+Date: 2026-02-03 10:54
+Source: chat
+
+Request (verbatim):
+1. yes turn based live 
+2. same as used on main. 
+3. lets put these changes on a new feature branch
+
+Notes:
+- Live E2E should run turn-based (same as main), not streaming.
+- Create and work on a new feature branch for CTA changes.
+
+## CR-20260203-1044
+Date: 2026-02-03 10:44
+Source: chat
+
+Request (verbatim):
+6
+
+Notes:
+- User selected label option 6 from provided list: rename “Advanced Setup” to “Extras”.

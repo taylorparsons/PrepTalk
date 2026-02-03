@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+  <style>
+    .frame { fill: #ffffff; stroke: #b8b8b8; stroke-width: 2; }
+    .panel { fill: #f6f6f6; stroke: #cfcfcf; stroke-width: 1.5; }
+    .title { font: 700 22px Arial, sans-serif; fill: #303030; }
+    .label { font: 600 16px Arial, sans-serif; fill: #333333; }
+    .text { font: 14px Arial, sans-serif; fill: #4a4a4a; }
+    .chip { fill: #eef4f6; stroke: #b7c3c8; stroke-width: 1; }
+    .btn-primary { fill: #d9eef2; stroke: #1f4d5c; stroke-width: 2.5; }
+    .btn-secondary { fill: #ffffff; stroke: #5a7b86; stroke-width: 2; }
+    .btn-tertiary { fill: #ffffff; stroke: #b0b0b0; stroke-width: 1.5; }
+  </style>
+
+  <rect x="20" y="20" width="1160" height="720" class="frame"/>
+  <text x="40" y="55" class="title">Stage 3 — Results / Export (Web)</text>
+
+  <rect x="40" y="90" width="1100" height="240" class="panel"/>
+  <text x="60" y="120" class="label">Score Summary</text>
+  <rect x="60" y="135" width="130" height="26" rx="6" class="chip"/>
+  <text x="70" y="153" class="text">Score ready</text>
+  <text x="60" y="185" class="text">Strengths, focus areas, next steps...</text>
+
+  <rect x="40" y="350" width="1100" height="120" class="panel"/>
+  <text x="60" y="380" class="label">Actions</text>
+  <rect x="60" y="400" width="260" height="50" rx="8" class="btn-primary"/>
+  <text x="80" y="432" class="label">Restart Interview (Primary)</text>
+  <rect x="340" y="400" width="200" height="50" rx="8" class="btn-secondary"/>
+  <text x="360" y="432" class="label">Export PDF (Secondary)</text>
+  <rect x="560" y="400" width="200" height="50" rx="8" class="btn-secondary"/>
+  <text x="580" y="432" class="label">Export TXT (Secondary)</text>
+
+  <rect x="40" y="490" width="1100" height="200" class="panel"/>
+  <text x="60" y="520" class="label">Transcript (collapsed)</text>
+  <rect x="60" y="545" width="160" height="40" rx="8" class="btn-tertiary"/>
+  <text x="80" y="572" class="label">View Transcript (T)</text>
+  <rect x="240" y="545" width="140" height="40" rx="8" class="btn-tertiary"/>
+  <text x="260" y="572" class="label">Extras (T)</text>
+</svg>

@@ -968,3 +968,335 @@ NOTES
 - Commands run: `./run.sh test` -> 57 passed (warned about --localstorage-file path).
 - Decisions: Format focus areas on the client, stack question controls vertically, enable setup collapse once interview exists, and mirror restart in main controls.
 - Risks / open questions: None.
+
+---
+
+Session: 2026-02-03 10:01
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, minimalist-voice-ux-enforcer
+Feature: 20260203-cta-clarity
+Input: CR-20260203-0949
+Decisions: D-20260203-1001
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Define CTA hierarchy across stages and document the flow diagram.
+
+DONE
+- [2026-02-03 10:01] T-001: Document CTA UX spec + Mermaid flow diagram and update PRD backlog. (Skills: ralph, minimalist-voice-ux-enforcer)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- T-002: Implement Stage 1 CTA gating and primary CTA switching. (Skills: ralph, minimalist-voice-ux-enforcer)
+- T-003: Implement Stage 2 CTA gating + help hint + rubric-based help surface. (Skills: ralph, minimalist-voice-ux-enforcer)
+- T-004: Implement Stage 3 results CTA emphasis (restart primary, export secondary) + scoring notice. (Skills: ralph, minimalist-voice-ux-enforcer)
+- T-005: Add/update automated tests for CTA hierarchy across stages. (Skills: ralph, minimalist-voice-ux-enforcer)
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'` -> 2026-02-03 10:01.
+- Decisions: D-20260203-1001.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-03 10:11
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, minimalist-voice-ux-enforcer
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1011
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Fix Mermaid flow diagram parsing.
+
+DONE
+- [2026-02-03 10:11] T-006: Fix Mermaid node labels for parser compatibility. (Skills: ralph, minimalist-voice-ux-enforcer)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'` -> 2026-02-03 10:11.
+- Decisions: None.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-03 10:50
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1050
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Add E2E test requirements for CTA changes (mock + live).
+
+DONE
+- [2026-02-03 10:50] T-016: Add Playwright mock + live E2E update task and requirement to spec. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'` -> 2026-02-03 10:50.
+- Decisions: None.
+- Risks / open questions: Live E2E currently skips in main because live streaming is dev-only; confirm whether to assert turn-based live or enable dev mode for test runs.
+
+---
+
+Session: 2026-02-03 10:54
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1054
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Implement CTA changes + Extras label and update Playwright mock/live checks on a feature branch.
+
+DONE
+- [2026-02-03 10:54] T-002: Implement Stage 1 CTA gating and primary CTA switching. (Skills: ralph)
+- [2026-02-03 10:54] T-004: Implement Stage 3 results CTA emphasis (restart primary, export secondary) + scoring notice. (Skills: ralph)
+- [2026-02-03 10:54] T-005: Add/update automated tests for CTA hierarchy across stages. (Skills: ralph)
+- [2026-02-03 10:54] T-015: Rename “Advanced Setup” to “Extras” in UI labels and tests. (Skills: ralph)
+- [2026-02-03 10:54] T-016: Update Playwright mock + live E2E to validate CTA labels/states for stages 1–3. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- T-003: Implement Stage 2 CTA gating + help hint + rubric-based help surface. (Skills: ralph)
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'` -> 2026-02-03 10:54; `git checkout -b cta-extras-e2e` (required elevated permission); `npm run test:e2e` -> 2 passed, 5 skipped (live specs skipped); `set -a; source .env; set +a; E2E_LIVE=1 npm run test:e2e` -> 2 passed, 5 skipped (live streaming specs skipped).
+- Branch: `cta-extras-e2e`.
+- Decisions: None.
+- Risks / open questions: Stage 2 inactivity hint still uses existing guidance text (no timer-based nudge yet).
+
+---
+
+Session: 2026-02-03 10:44
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, minimalist-voice-ux-enforcer
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1044
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Rename “Advanced Setup” to “Extras” in CTA specs and wireframes.
+
+DONE
+- [2026-02-03 10:44] T-014: Update CTA docs and wireframes to use the “Extras” label. (Skills: ralph, minimalist-voice-ux-enforcer)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'` -> 2026-02-03 10:44.
+- Decisions: None.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-03 10:38
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, minimalist-voice-ux-enforcer
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1038
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Embed wireframe images inline in the spec for context.
+
+DONE
+- [2026-02-03 10:38] T-013: Embed wireframe images inline in the spec for quick review. (Skills: ralph, minimalist-voice-ux-enforcer)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'` -> 2026-02-03 10:38.
+- Decisions: None.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-03 10:34
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, minimalist-voice-ux-enforcer
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1034
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Create mobile-view wireframe images for each stage.
+
+DONE
+- [2026-02-03 10:34] T-012: Create mobile-view wireframe images for stages 1–3. (Skills: ralph, minimalist-voice-ux-enforcer)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'` -> 2026-02-03 10:34.
+- Decisions: None.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-03 10:30
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, minimalist-voice-ux-enforcer
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1030
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Create web-view wireframe images for each stage.
+
+DONE
+- [2026-02-03 10:30] T-011: Create web-view wireframe images for stages 1–3. (Skills: ralph, minimalist-voice-ux-enforcer)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'` -> 2026-02-03 10:30.
+- Decisions: None.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-03 10:27
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, minimalist-voice-ux-enforcer
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1027
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Make wireframe section easier to find and interpret.
+
+DONE
+- [2026-02-03 10:27] T-010: Clarify wireframe CTA key and heading. (Skills: ralph, minimalist-voice-ux-enforcer)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'` -> 2026-02-03 10:27.
+- Decisions: None.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-03 10:24
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, minimalist-voice-ux-enforcer
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1024
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Add mobile + web ASCII wireframes for each stage.
+
+DONE
+- [2026-02-03 10:24] T-009: Add mobile + web ASCII wireframes per stage. (Skills: ralph, minimalist-voice-ux-enforcer)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'` -> 2026-02-03 10:24.
+- Decisions: None.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-03 10:22
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, minimalist-voice-ux-enforcer
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1022
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Add ASCII wireframes in code blocks for each stage.
+
+DONE
+- [2026-02-03 10:22] T-008: Add ASCII wireframes in code blocks for stages 1–3. (Skills: ralph, minimalist-voice-ux-enforcer)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'` -> 2026-02-03 10:22.
+- Decisions: None.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-03 10:17
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, minimalist-voice-ux-enforcer
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1017
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Add ASCII CTA summary per stage to confirm direction.
+
+DONE
+- [2026-02-03 10:17] T-007: Add ASCII CTA summary per stage to the spec. (Skills: ralph, minimalist-voice-ux-enforcer)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'` -> 2026-02-03 10:17.
+- Decisions: None.
+- Risks / open questions: None.
