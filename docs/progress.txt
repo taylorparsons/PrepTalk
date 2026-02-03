@@ -1532,4 +1532,5 @@ NEXT
 NOTES
 - Commands run: `E2E_LIVE=0 PLAYWRIGHT_HTML_REPORT=playwright-report-mock npx playwright test --reporter=html --output test-results-mock` -> failed (webServer could not bind to 0.0.0.0:8129; operation not permitted).
 - Commands run: `set -a; source .env; set +a; E2E_LIVE=1 PLAYWRIGHT_HTML_REPORT=playwright-report-live npx playwright test --reporter=html --output test-results-live` -> failed (webServer could not bind to 0.0.0.0:8129; operation not permitted).
+- Commit: `35a4e0df6debd04653fd0cd2a36f1ccad17d5bb4`.
 - Risks / open questions: Need local run with a bindable port to generate the HTML reports.
