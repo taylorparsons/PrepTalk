@@ -1082,6 +1082,7 @@ NEXT
 NOTES
 - Commands run: `date '+%Y-%m-%d %H:%M'` -> 2026-02-03 10:54; `git checkout -b cta-extras-e2e` (required elevated permission); `npm run test:e2e` -> 2 passed, 5 skipped (live specs skipped); `set -a; source .env; set +a; E2E_LIVE=1 npm run test:e2e` -> 2 passed, 5 skipped (live streaming specs skipped).
 - Branch: `cta-extras-e2e`.
+- Commit: 548e7bd95d0d27c03b59528bfd1f89fbe12c1523.
 - Decisions: None.
 - Risks / open questions: Stage 2 inactivity hint still uses existing guidance text (no timer-based nudge yet).
 
