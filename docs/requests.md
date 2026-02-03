@@ -675,3 +675,13 @@ lets keep going stage 2
 
 Notes:
 - Implement Stage 2 CTA gating, inactivity help hint, and rubric-based help surface with tests.
+
+## CR-20260203-1335
+Date: 2026-02-03 13:35
+Source: chat
+
+Request (verbatim):
+work on stage 3 as well and i wil test together
+
+Notes:
+- Implement Stage 3 results focus updates alongside Stage 2; update tests.

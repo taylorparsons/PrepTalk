@@ -1476,3 +1476,32 @@ NOTES
 - Decisions: Use 12s inactivity hint and rubric card sourced from current question.
 - Commit: `29201b823c9ef4b8e9ec42de76ea51af4241b969`.
 - Risks / open questions: Re-run mock + live E2E locally to validate inactivity hint + rubric card behavior.
+
+---
+
+Session: 2026-02-03 13:38
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1335
+Decisions: D-20260203-1335
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Hide non-results panels during Stage 3 and add E2E assertions.
+
+DONE
+- [2026-02-03 13:38] T-024: Hide questions/insights/transcript/controls during Stage 3 results view. (Skills: ralph)
+- [2026-02-03 13:38] T-025: Update Playwright tests to assert Stage 3 panel hiding. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `date "+%Y-%m-%d %H:%M"` -> 2026-02-03 13:38
+- Decisions: Hide non-results panels during Stage 3 results focus (D-20260203-1335).
+- Tests: Not run in this session (run Playwright mock + live locally).
+- Risks / open questions: Verify Stage 3 panel hiding in mock + live E2E.

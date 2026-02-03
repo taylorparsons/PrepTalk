@@ -663,3 +663,20 @@ Alternatives considered:
 Acceptance / test:
 - E2E asserts Submit/Help CTA gating, auto-collapse, and that the rubric card becomes visible on help click and is hidden when collapsed.
 - UI shows a single-line hint pointing to Request Help after inactivity.
+
+## D-20260203-1335
+Date: 2026-02-03 13:35
+Inputs: CR-20260203-1335
+PRD: Next / backlog
+
+Decision:
+When Stage 3 (score pending or complete) is active and the session is not running, hide question/insights/transcript/controls panels to keep the results view focused on the score + export/restart CTAs.
+
+Rationale:
+Stage 3 is a results-only moment; hiding non-results panels reduces distraction while keeping exports and restart front and center.
+
+Alternatives considered:
+- Leave questions/transcript visible after scoring (rejected: increases clutter and competes with results CTAs).
+
+Acceptance / test:
+- E2E asserts questions/insights/transcript/controls panels are hidden after stop + score, while score panel remains visible.
