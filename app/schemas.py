@@ -74,6 +74,21 @@ class VoiceFeedbackResponse(BaseModel):
     feedback: TranscriptEntry
 
 
+class VoiceHelpRequest(BaseModel):
+    interview_id: str
+    question: str = Field(min_length=1)
+    answer: str | None = None
+    text_model: str | None = None
+    tts_model: str | None = None
+
+
+class VoiceHelpResponse(BaseModel):
+    interview_id: str
+    help: TranscriptEntry
+    help_audio: str | None = None
+    help_audio_mime: str | None = None
+
+
 class VoiceTurnCompletionRequest(BaseModel):
     interview_id: str
     question: str = Field(min_length=1)

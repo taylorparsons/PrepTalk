@@ -815,3 +815,34 @@ NOTES
 - Decisions: D-20260202-1424.
 - Commit: be13ceb33505f8e7e83c3883ef5a08bc20d41c72; 79f9d347bc8429e687e8f941e233667da63a9289; 1b19a5bc17d3a60ab68043402553bf8bc43c554a
 - Risks / open questions: No auth; user IDs are client-side and can be spoofed.
+
+---
+
+Session: 2026-02-02 15:20
+Agent: Codex CLI
+Model: (unknown)
+Skills: ralph, create-plan
+Feature: 20260202-turn-help
+Input: CR-20260202-1516
+Decisions: D-20260202-1520
+Spec: docs/specs/20260202-turn-help/spec.md
+Tasks: docs/specs/20260202-turn-help/tasks.md
+Goal: Enable immediate turn submit after coach speech and add resume-grounded help (button + voice) with TTS + transcript output.
+
+DONE
+- [2026-02-02 15:33] T-001: Update turn-mode submit gating and add help button/voice command in UI. (Skills: ralph)
+- [2026-02-02 15:33] T-002: Add help endpoint + service wiring with TTS output. (Skills: ralph)
+- [2026-02-02 15:33] T-003: Add resume-grounded help prompt + evidence validation with safe fallback. (Skills: ralph)
+- [2026-02-02 15:33] T-004: Add/update automated tests for submit gating and help behavior. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'`, `rg`, `sed`, `git status --short`, `git add -A`, `git diff --cached --stat`, `python3 /Users/taylorparsons/.codex/skills/ralph/scripts/commit_with_traceability.py ...` (failed), `git commit ...` (failed).
+- Tests: Not run (not requested).
+- Decisions: D-20260202-1520
+- Risks / open questions: Unable to create `.git/index.lock` prevented local commit creation.

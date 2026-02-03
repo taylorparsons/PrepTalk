@@ -99,7 +99,7 @@ Cloud Run deployment notes: `docs/cloud-run-deploy.md`.
 5. Export study guide as PDF or TXT.
 
 Turn mode confirmation:
-- In `VOICE_MODE=turn`, after the minimum answer window, the UI checks Gemini for completion. If confidence meets the threshold, it prompts “Are you done?” and waits for **Submit Answer** or **Continue Speaking** before sending the turn.
+- In `VOICE_MODE=turn`, **Submit Answer** is available as soon as the coach finishes speaking and the candidate has draft text. The UI still checks Gemini for completion in the background to assess attempted/complete status.
 
 ## Question Tracking
 - Each question has a status: not_started, started, answered.

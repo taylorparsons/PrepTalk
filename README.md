@@ -78,7 +78,7 @@ APP_API_BASE=/api
 PORT=8000
 ```
 
-Turn mode flow: after you’ve been answering for the configured window, the app asks Gemini whether the response looks attempted or complete. Only then does the UI prompt “Are you done?” and enable **Submit Answer** or **Continue Speaking**.
+Turn mode flow: the UI enables **Submit Answer** as soon as the coach finishes speaking and there is draft text. Completion checks still run in the background to assess whether the response looks attempted or complete.
 
 ## AI Studio setup
 
