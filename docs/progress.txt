@@ -1474,4 +1474,5 @@ NEXT
 NOTES
 - Commands run: none (Playwright server not reachable from this session).
 - Decisions: Use 12s inactivity hint and rubric card sourced from current question.
+- Commit: `29201b823c9ef4b8e9ec42de76ea51af4241b969`.
 - Risks / open questions: Re-run mock + live E2E locally to validate inactivity hint + rubric card behavior.
