@@ -9,6 +9,8 @@ Spec: docs/specs/20260203-cta-clarity/spec.md
 - <at most one task>
 
 ## DONE
+- [2026-02-03 12:58] T-020: Ensure Candidate Setup auto-collapses on session start and toggle expands/re-collapses reliably. (Implements: FR-014, FR-015)
+- [2026-02-03 12:58] T-021: Add Playwright assertions for auto-collapse + manual toggle behavior. (Implements: FR-014, FR-015)
 - [2026-02-03 12:06] T-017: Apply stage-gated panel visibility (hide transcript/score before content; collapse setup on session start). (Implements: FR-014, FR-015)
 - [2026-02-03 12:06] T-018: Update Playwright mock + live E2E for panel visibility/collapse rules. (Implements: FR-014, FR-015)
 - [2026-02-03 12:06] T-019: Update wireframes to reflect hidden panels until content exists. (Implements: FR-016)

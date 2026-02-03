@@ -1389,3 +1389,32 @@ NOTES
 - Commit: `1d3f7c70583fa59510ecd3eb05325f5cc3aa258c`.
 - Decisions: None.
 - Risks / open questions: None.
+
+---
+
+Session: 2026-02-03 12:58
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1253
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Fix Candidate Setup auto-collapse + manual toggle and test coverage.
+
+DONE
+- [2026-02-03 12:58] T-020: Ensure Candidate Setup auto-collapses on session start and toggle expands/re-collapses reliably. (Skills: ralph)
+- [2026-02-03 12:58] T-021: Add Playwright assertions for auto-collapse + manual toggle behavior. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- T-003: Implement Stage 2 CTA gating + help hint + rubric-based help surface.
+
+NOTES
+- Commands run: `npm run test:e2e` -> failed (mock flow start-interview never enabled).
+- Commands run: `E2E_LIVE=0 npm run test:e2e` -> failed to start web server (port bind error on 8129).
+- Decisions: None.
+- Risks / open questions: Need a free port or a running server to rerun E2E locally.

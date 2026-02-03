@@ -645,3 +645,13 @@ Request (verbatim):
 
 Notes:
 - User selected label option 6 from provided list: rename “Advanced Setup” to “Extras”.
+
+## CR-20260203-1253
+Date: 2026-02-03 12:53
+Source: chat
+
+Request (verbatim):
+using the app I did not see it collapse automatically or for the manual [Image #1] fix the UI and the test so all actions in the spec and the user action are tested.
+
+Notes:
+- Ensure Candidate Setup auto-collapses on session start and manual collapse/expand works; add tests for both.

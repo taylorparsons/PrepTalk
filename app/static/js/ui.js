@@ -2212,6 +2212,10 @@ function buildControlsPanel(state, ui, config) {
     state.captionFinalText = '';
     state.captionDraftText = '';
     state.turnReadyToSubmit = false;
+    if (ui.setSetupCollapsed && !state.setupAutoCollapsed) {
+      ui.setSetupCollapsed(true);
+      state.setupAutoCollapsed = true;
+    }
     updateTurnSubmitUI();
 
     if (turnMode) {
