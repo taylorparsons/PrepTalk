@@ -1615,3 +1615,29 @@ NEXT
 NOTES
 - Commands run: `npx playwright test tests/e2e/export-error.spec.js` -> 1 passed.
 - Commit: `a906a000cd88404489f8b159c7ff5c3c3bbe626f`.
+
+---
+
+Session: 2026-02-03 14:28
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260203-export-error-detail
+Input: CR-20260203-1428
+Decisions: D-20260203-1428
+Spec: docs/specs/20260203-export-error-detail/spec.md
+Tasks: docs/specs/20260203-export-error-detail/tasks.md
+Goal: Make PDF export compatible with legacy fpdf installs.
+
+DONE
+- [2026-02-03 14:28] T-003: Allow PDF export without `fpdf.enums` by using legacy line-break handling. (Skills: ralph)
+- [2026-02-03 14:28] T-004: Add unit coverage for PDF export fallback behavior. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `./.venv/bin/python -m pytest tests/test_pdf_service.py -q` -> 1 passed (10 warnings).

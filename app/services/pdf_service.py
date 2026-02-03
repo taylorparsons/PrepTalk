@@ -4,9 +4,12 @@ from typing import Iterable
 
 try:
     from fpdf import FPDF
-    from fpdf.enums import XPos, YPos
 except ImportError:
     FPDF = None
+
+try:
+    from fpdf.enums import XPos, YPos
+except Exception:
     XPos = None
     YPos = None
 

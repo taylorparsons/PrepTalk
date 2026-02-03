@@ -680,3 +680,21 @@ Alternatives considered:
 
 Acceptance / test:
 - E2E asserts questions/insights/transcript/controls panels are hidden after stop + score, while score panel remains visible.
+
+## D-20260203-1428
+Date: 2026-02-03 14:28
+Inputs: CR-20260203-1428
+PRD: Core requirements (export)
+
+Decision:
+Allow PDF export to work with older `fpdf` installs by decoupling the `fpdf.enums` import and falling back to legacy `ln=True` cell behavior when enums are unavailable.
+
+Rationale:
+Some environments resolve `fpdf` without `fpdf.enums`, which currently triggers a false "fpdf2 required" error and breaks PDF exports. Falling back preserves export functionality without forcing a dependency reinstall.
+
+Alternatives considered:
+- Force reinstall/upgrade of `fpdf2` (rejected: brittle for users running the app from an existing venv).
+- Remove PDF export entirely when enums are missing (rejected: conflicts with the export requirement).
+
+Acceptance / test:
+- Unit test verifies PDF generation succeeds when enums are absent (skips if `fpdf` missing).
