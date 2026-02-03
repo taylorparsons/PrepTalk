@@ -1503,5 +1503,6 @@ NEXT
 NOTES
 - Commands run: `date "+%Y-%m-%d %H:%M"` -> 2026-02-03 13:38
 - Decisions: Hide non-results panels during Stage 3 results focus (D-20260203-1335).
+- Commit: `bcf1dedf209ffdb7df490c4f84d64f67e38cd4de`.
 - Tests: Not run in this session (run Playwright mock + live locally).
 - Risks / open questions: Verify Stage 3 panel hiding in mock + live E2E.
