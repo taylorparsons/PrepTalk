@@ -245,6 +245,16 @@ body {
   margin-bottom: 16px;
 }
 
+.ui-panel__header--actions {
+  grid-template-columns: 1fr auto;
+  align-items: start;
+}
+
+.ui-panel__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .ui-panel__title {
   font-size: 20px;
   margin: 0;
@@ -347,9 +357,9 @@ body {
 
 .ui-question {
   display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
 }
 
 .ui-question__text {
@@ -359,9 +369,10 @@ body {
 
 .ui-question__controls {
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  order: -1;
 }
 
 .ui-question__select {
@@ -448,6 +459,23 @@ body {
   display: grid;
   gap: 4px;
   font-size: 13px;
+}
+
+.ui-insights__list--focus {
+  padding-left: 0;
+}
+
+.ui-insights__focus-item {
+  list-style: none;
+}
+
+.ui-insights__focus-title {
+  font-weight: 600;
+}
+
+.ui-insights__focus-description {
+  color: var(--ui-color-muted);
+  font-size: 12px;
 }
 
 .ui-insights__empty-item {
@@ -766,6 +794,11 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.ui-controls__restart {
+  display: grid;
+  gap: 6px;
 }
 
 .ui-turn-help {

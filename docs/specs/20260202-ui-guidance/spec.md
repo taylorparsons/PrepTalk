@@ -2,8 +2,8 @@
 
 Status: Done
 Created: 2026-02-02 17:04
-Inputs: CR-20260202-1704, CR-20260202-1720, CR-20260202-1740
-Decisions: D-20260202-1704, D-20260202-1720, D-20260202-1740
+Inputs: CR-20260202-1704, CR-20260202-1720, CR-20260202-1740, CR-20260202-1816
+Decisions: D-20260202-1704, D-20260202-1720, D-20260202-1740, D-20260202-1816
 
 ## Summary
 - Surface PrepTalk’s name and usage guidance in the UI, improve action button affordances, add a pin-able question insights panel, and allow a job-description URL input with file fallback.
@@ -34,6 +34,7 @@ Acceptance scenarios:
 1. Given the questions list, When the user hovers a question, Then a persistent side panel shows the rubric/focus areas and resume pointers. (Verifies: FR-004)
 2. Given the insights panel, When the user clicks a question to pin it, Then the panel stays locked on that question until cleared. (Verifies: FR-004)
 3. Given questions are generated, When the UI updates, Then the insights panel defaults to the first question. (Verifies: FR-007)
+4. Given focus areas include structured details, When insights render, Then the focus areas are formatted as a title plus description instead of raw JSON text. (Verifies: FR-009)
 
 ### US4: Flexible Job Description Input (Priority: P1)
 Narrative:
@@ -43,6 +44,20 @@ Acceptance scenarios:
 1. Given the setup panel, When a valid URL is entered, Then questions can be generated without a job file. (Verifies: FR-005)
 2. Given both a URL and file are provided, When the URL is reachable, Then the URL is used in place of the file; otherwise the file is used. (Verifies: FR-005)
 3. Given a URL fetch fails but a file fallback succeeds, When the UI updates, Then the user sees a warning that the URL could not be reached. (Verifies: FR-008)
+
+### US5: Cleaner Main Workspace (Priority: P2)
+Narrative:
+- As a candidate, I want to collapse the setup panel after starting, so I can focus on the interview content.
+
+Acceptance scenarios:
+1. Given an interview has been created, When the user clicks Collapse Setup, Then the Candidate Setup panel body hides and can be expanded again. (Verifies: FR-010)
+
+### US6: Quick Restart Access (Priority: P2)
+Narrative:
+- As a candidate, I want a restart action in the main controls, so I can reset without opening Advanced Setup.
+
+Acceptance scenarios:
+1. Given a completed session, When the user views Session Controls, Then a Restart button is visible and enabled under the same conditions as Advanced Setup. (Verifies: FR-011)
 
 ## Requirements
 
@@ -55,6 +70,9 @@ Functional requirements:
 - FR-006: AGENTS.md documents the PrepTalk name and purpose. (Sources: CR-20260202-1704; D-20260202-1704)
 - FR-007: The question insights panel defaults to the first generated question after questions load. (Sources: CR-20260202-1740; D-20260202-1740)
 - FR-008: When a job URL fails but a file fallback succeeds, the setup panel surfaces a warning about the failed URL fetch. (Sources: CR-20260202-1740; D-20260202-1740)
+- FR-009: Focus areas render as formatted title + description blocks instead of raw JSON strings. (Sources: CR-20260202-1816; D-20260202-1816)
+- FR-010: Candidate Setup can be collapsed once an interview exists. (Sources: CR-20260202-1816; D-20260202-1816)
+- FR-011: A Restart Interview button is available in the main Session Controls area, mirroring the Advanced Setup restart rules. (Sources: CR-20260202-1816; D-20260202-1816)
 
 ## Edge cases
 - If no resume pointers match a question, show “No matching resume lines found.” (Verifies: FR-004)

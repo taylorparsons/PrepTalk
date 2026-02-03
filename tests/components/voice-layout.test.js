@@ -28,6 +28,7 @@ describe('voice layout', () => {
         'Score Summary'
       ])
     );
+    expect(layout.querySelector('[data-testid="restart-interview-main"]')).toBeTruthy();
   });
 
   it('mounts the layout into a root container', () => {
@@ -58,7 +59,12 @@ describe('voice layout', () => {
     const state = window.__e2eState;
     const ui = window.__e2eUi;
     state.questions = ['Tell me about a project you led.'];
-    state.focusAreas = ['Leadership', 'Execution'];
+    state.focusAreas = [
+      {
+        area: 'Technical Depth in Distributed Systems & AI',
+        description: 'Assess the ability to discuss architectural trade-offs.'
+      }
+    ];
     state.resumeExcerpt = 'Led a cross-functional team to launch X.\nImproved metrics by 25%.';
     state.jobExcerpt = 'Seeking a leader who can drive delivery.';
 
@@ -66,7 +72,34 @@ describe('voice layout', () => {
 
     expect(ui.insightsQuestion.textContent).toContain('project you led');
     expect(ui.insightsPin.hidden).toBe(true);
-    expect(ui.insightsFocus.textContent).toContain('Leadership');
+    expect(ui.insightsFocus.textContent).toContain('Technical Depth in Distributed Systems & AI');
+    expect(ui.insightsFocus.textContent).toContain('architectural trade-offs');
+
+    delete window.__E2E__;
+    delete window.__e2eState;
+    delete window.__e2eUi;
+  });
+
+  it('enables candidate setup collapse after interview creation', () => {
+    window.__E2E__ = true;
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const state = window.__e2eState;
+    const ui = window.__e2eUi;
+
+    expect(ui.setupCollapse.disabled).toBe(true);
+
+    state.interviewId = 'abc-123';
+    ui.updateSessionToolsState();
+
+    expect(ui.setupCollapse.disabled).toBe(false);
+
+    ui.setupCollapse.click();
+    expect(ui.setupBody.hidden).toBe(true);
+
+    ui.setupCollapse.click();
+    expect(ui.setupBody.hidden).toBe(false);
 
     delete window.__E2E__;
     delete window.__e2eState;
