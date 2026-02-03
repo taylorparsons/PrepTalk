@@ -842,6 +842,7 @@ function buildSetupPanel(state, ui) {
     content,
     attrs: { 'data-testid': 'setup-panel' }
   });
+  const panelBody = panel.querySelector('.ui-panel__body');
 
   const header = panel.querySelector('.ui-panel__header');
   if (header) {
@@ -856,6 +857,9 @@ function buildSetupPanel(state, ui) {
   function setSetupCollapsed(value) {
     setupCollapsed = value;
     content.hidden = setupCollapsed;
+    if (panelBody) {
+      panelBody.hidden = setupCollapsed;
+    }
     panel.classList.toggle('ui-panel--collapsed', setupCollapsed);
     updateButtonLabel(collapseButton, setupCollapsed ? 'Expand setup' : 'Collapse setup');
   }

@@ -277,6 +277,19 @@ body {
   padding-top: 14px;
 }
 
+.ui-panel--collapsed .ui-panel__body,
+.ui-panel--collapsed .ui-panel__footer {
+  display: none;
+}
+
+.ui-panel--collapsed .ui-panel__subtitle {
+  display: none;
+}
+
+.ui-panel--collapsed .ui-panel__header {
+  margin-bottom: 0;
+}
+
 .ui-field {
   display: grid;
   gap: 6px;
