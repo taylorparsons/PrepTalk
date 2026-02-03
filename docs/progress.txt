@@ -1506,3 +1506,30 @@ NOTES
 - Commit: `bcf1dedf209ffdb7df490c4f84d64f67e38cd4de`.
 - Tests: Not run in this session (run Playwright mock + live locally).
 - Risks / open questions: Verify Stage 3 panel hiding in mock + live E2E.
+
+---
+
+Session: 2026-02-03 13:42
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1342
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Run Playwright mock + live E2E and capture reports.
+
+DONE
+- [2026-02-03 13:42] Attempt Playwright mock + live runs. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- Re-run Playwright mock + live locally where the web server can bind to the port.
+
+NOTES
+- Commands run: `E2E_LIVE=0 PLAYWRIGHT_HTML_REPORT=playwright-report-mock npx playwright test --reporter=html --output test-results-mock` -> failed (webServer could not bind to 0.0.0.0:8129; operation not permitted).
+- Commands run: `set -a; source .env; set +a; E2E_LIVE=1 PLAYWRIGHT_HTML_REPORT=playwright-report-live npx playwright test --reporter=html --output test-results-live` -> failed (webServer could not bind to 0.0.0.0:8129; operation not permitted).
+- Risks / open questions: Need local run with a bindable port to generate the HTML reports.
