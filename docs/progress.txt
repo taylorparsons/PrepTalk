@@ -1534,3 +1534,29 @@ NOTES
 - Commands run: `set -a; source .env; set +a; E2E_LIVE=1 PLAYWRIGHT_HTML_REPORT=playwright-report-live npx playwright test --reporter=html --output test-results-live` -> failed (webServer could not bind to 0.0.0.0:8129; operation not permitted).
 - Commit: `35a4e0df6debd04653fd0cd2a36f1ccad17d5bb4`.
 - Risks / open questions: Need local run with a bindable port to generate the HTML reports.
+
+---
+
+Session: 2026-02-03 13:56
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1342
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Run Playwright mock only (user requested no live run).
+
+DONE
+- [2026-02-03 13:56] Run Playwright mock E2E and generate HTML report. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- Live E2E run was skipped per user request.
+
+NOTES
+- Commands run: `E2E_LIVE=0 PLAYWRIGHT_HTML_REPORT=playwright-report-mock npx playwright test --reporter=html --output test-results-mock` -> 1 passed, 6 skipped.
+- Reports: `playwright-report-mock/` (open with `npx playwright show-report playwright-report-mock`).
