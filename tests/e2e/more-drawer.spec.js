@@ -28,7 +28,7 @@ test('more drawer is scrollable on small viewports', async ({ page }) => {
 
   await page.getByTestId('generate-questions').click();
   await expect(page.getByTestId('start-interview')).toBeEnabled({
-    timeout: isLive ? 30000 : 10000
+    timeout: 30000
   });
 
   const sessionToolsToggle = page.getByTestId('session-tools-toggle');

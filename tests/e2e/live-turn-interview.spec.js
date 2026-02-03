@@ -97,6 +97,12 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
   await expect(page.getByTestId('session-status')).toHaveText(/Welcoming|Listening/);
   await expect(page.getByTestId('session-status')).toHaveText('Listening', { timeout: 60000 });
   await expect(setupPanel).toHaveClass(/ui-panel--collapsed/);
+  const setupToggle = page.getByTestId('setup-collapse');
+  await expect(setupToggle).toBeEnabled();
+  await setupToggle.click();
+  await expect(setupPanel).not.toHaveClass(/ui-panel--collapsed/);
+  await setupToggle.click();
+  await expect(setupPanel).toHaveClass(/ui-panel--collapsed/);
 
   await page.waitForFunction(() => Boolean(window.__e2eQueueTurn));
   await page.evaluate(() => window.__e2eQueueTurn?.('Hello from the e2e test.'));
