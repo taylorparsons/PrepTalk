@@ -61,6 +61,7 @@ These commits are used as implementation evidence for the “shipped” scope ab
 - `af3f2d4`: turn-mode timing adjustment
 
 ## Next / backlog (not shipped requirements)
+- Turn mode: enable immediate submit after coach finishes speaking (no minimum delay) and add a resume-grounded help action (button + voice) that never fabricates and returns TTS + transcript output. (Sources: CR-20260202-1516; D-20260202-1520)
 - Record manual voice smoke-test results (`docs/testing/voice-smoke-test.md`). (Sources: CR-20260128-1409; D-20260128-1410)
 - Fill hackathon deliverables in `README.md` (demo link, write-up, 3-minute video). (Sources: CR-20260128-1409; D-20260128-1410)
 - Submission polish: use Gemini 3 for interview generation/scoring and Gemini 2.5 Flash for turn-based coaching; prefer server TTS in turn mode to reduce robotic output. (Sources: CR-20260129-0938; D-20260129-0938, D-20260129-0942)

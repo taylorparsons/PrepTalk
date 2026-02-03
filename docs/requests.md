@@ -407,3 +407,23 @@ I think I found a security issue https://preptalk-west-cz47ti6tbq-uw.a.run.app/ 
 
 Notes:
 - Address session isolation on the shared endpoint without full user auth.
+
+## CR-20260202-1516
+Date: 2026-02-02 15:16
+Source: chat
+
+Request (verbatim):
+I need help planning out how the User flow for the following 
+1. talking back to the coach, right now after I speak some time goes by before I can submit an answer.  
+2. in addition to the submit answer I want another button to request help with the answer
+2.1 when either asking for help verbally or using button it is important that the suggested answers tightly align with the resume the user has submitted do not make anything up, "Never makeup" the answer when helping it does not help. 
+
+User $ralph and $create plan to address this
+
+1. It can be pressed as soon as the Coach is not talking
+2. voiced via TTS and shown in the transcript
+3. No I want to remove the minimum delay, they do not even have speak.
+
+Notes:
+- Add a help action (button + voice) and allow immediate submit after coach finishes speaking.
+- Help responses must be grounded in resume content with no fabrication.

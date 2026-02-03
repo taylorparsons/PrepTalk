@@ -16,6 +16,8 @@ from .schemas import (
     VoiceIntroResponse,
     VoiceFeedbackRequest,
     VoiceFeedbackResponse,
+    VoiceHelpRequest,
+    VoiceHelpResponse,
     VoiceTurnCompletionRequest,
     VoiceTurnCompletionResponse,
     VoiceTurnRequest,
@@ -327,6 +329,58 @@ async def voice_feedback(request: Request, payload: VoiceFeedbackRequest):
         log_interview_id,
         _duration_ms(start),
         len(feedback_text)
+    )
+
+    return response
+
+
+@router.post("/voice/help", response_model=VoiceHelpResponse)
+async def voice_help(request: Request, payload: VoiceHelpRequest):
+    user_id = _get_user_id(request)
+    log_user_id = short_id(user_id)
+    log_interview_id = short_id(payload.interview_id)
+    start = time.perf_counter()
+
+    logger.info(
+        "event=voice_help status=start user_id=%s interview_id=%s answer_len=%s",
+        log_user_id,
+        log_interview_id,
+        len(payload.answer or "")
+    )
+
+    try:
+        response = interview_service.run_voice_help(
+            payload.interview_id,
+            payload.question,
+            payload.answer,
+            user_id,
+            text_model=payload.text_model,
+            tts_model=payload.tts_model
+        )
+    except KeyError as exc:
+        logger.warning(
+            "event=voice_help status=not_found user_id=%s interview_id=%s duration_ms=%s",
+            log_user_id,
+            log_interview_id,
+            _duration_ms(start)
+        )
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (RuntimeError, ValueError) as exc:
+        logger.exception(
+            "event=voice_help status=error user_id=%s interview_id=%s duration_ms=%s",
+            log_user_id,
+            log_interview_id,
+            _duration_ms(start)
+        )
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    help_text = response.get("help", {}).get("text", "")
+    logger.info(
+        "event=voice_help status=complete user_id=%s interview_id=%s duration_ms=%s response_len=%s",
+        log_user_id,
+        log_interview_id,
+        _duration_ms(start),
+        len(help_text)
     )
 
     return response

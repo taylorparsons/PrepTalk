@@ -95,6 +95,28 @@ def test_voice_turn_appends_transcript_entries(monkeypatch):
     assert transcript[1]["role"] == "coach"
 
 
+def test_voice_help_appends_transcript_entry():
+    client = TestClient(app)
+    interview_id = _create_interview(client)
+
+    response = client.post(
+        "/api/voice/help",
+        json={
+            "interview_id": interview_id,
+            "question": "Tell me about yourself"
+        }
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["help"]["role"] == "coach_feedback"
+    assert payload["help"]["text"]
+
+    summary_response = client.get(f"/api/interviews/{interview_id}")
+    assert summary_response.status_code == 200
+    transcript = summary_response.json()["transcript"]
+    assert transcript[-1]["role"] == "coach_feedback"
+
 
 def test_score_returns_summary_and_transcript():
     client = TestClient(app)

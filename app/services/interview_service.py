@@ -9,7 +9,7 @@ from ..logging_config import get_logger, short_id
 from ..settings import load_settings
 from .adapters import get_adapter
 from .document_text import DocumentInput, extract_document_text
-from .gemini_text import generate_coach_reply, generate_turn_feedback, evaluate_turn_completion
+from .gemini_text import generate_coach_reply, generate_turn_feedback, generate_turn_help, evaluate_turn_completion
 from .gemini_tts import generate_tts_audio_with_fallbacks
 from .live_context import build_live_system_prompt
 from .mock_data import MOCK_VOICE_REPLY, MOCK_VOICE_FEEDBACK, build_mock_tts_audio
@@ -100,6 +100,51 @@ def _latest_coach_prompt(record) -> str:
         if entry.get("role") == "coach":
             return (entry.get("text") or "").strip()
     return ""
+
+
+def _limit_help_items(items: list[str], limit: int = 3, max_len: int = 140) -> list[str]:
+    output: list[str] = []
+    for item in items:
+        cleaned = (item or "").strip()
+        if not cleaned:
+            continue
+        if len(cleaned) > max_len:
+            cleaned = f"{cleaned[:max_len].rstrip()}..."
+        output.append(cleaned)
+        if len(output) >= limit:
+            break
+    return output
+
+
+def _format_help_text(payload: dict) -> str:
+    draft = (payload.get("draft_answer") or "").strip()
+    evidence = _limit_help_items(list(payload.get("evidence") or []))
+    missing = _limit_help_items(list(payload.get("missing_info") or []), limit=2, max_len=160)
+
+    if not draft:
+        if not evidence:
+            message = (
+                "I couldn't find resume details to ground a draft answer. "
+                "Share 2-3 relevant resume bullets and I'll help."
+            )
+            if missing:
+                message = f"{message} Missing details: {'; '.join(missing)}"
+            return message
+        lines = "\n".join(f"- {item}" for item in evidence)
+        message = f"Use these resume facts to answer in your own words:\n{lines}"
+        if missing:
+            missing_block = "\n".join(f"- {item}" for item in missing)
+            message = f"{message}\n\nMissing details:\n{missing_block}"
+        return message
+
+    message = f"Resume-grounded draft:\n{draft}"
+    if evidence:
+        lines = "\n".join(f"- {item}" for item in evidence)
+        message = f"{message}\n\nEvidence used:\n{lines}"
+    if missing:
+        missing_block = "\n".join(f"- {item}" for item in missing)
+        message = f"{message}\n\nMissing details:\n{missing_block}"
+    return f"{message}\n\nAnswer in your own words."
 
 
 def run_voice_intro(
@@ -353,6 +398,117 @@ def run_voice_feedback(
     return {
         "interview_id": interview_id,
         "feedback": feedback_entry
+    }
+
+
+def run_voice_help(
+    interview_id: str,
+    question_text: str,
+    answer_text: str | None = None,
+    user_id: str | None = None,
+    text_model: str | None = None,
+    tts_model: str | None = None
+) -> dict:
+    record = store.get(interview_id, user_id)
+    if not record:
+        raise KeyError("Interview not found")
+
+    cleaned_question = (question_text or "").strip()
+    cleaned_answer = (answer_text or "").strip()
+    if not cleaned_question:
+        raise ValueError("Question text is required")
+
+    text_model_override = (text_model or "").strip() or None
+    tts_model_override = (tts_model or "").strip() or None
+
+    adapter = get_adapter()
+    if adapter.name == "gemini":
+        if not getattr(adapter, "api_key", None):
+            raise RuntimeError("GEMINI_API_KEY or GOOGLE_API_KEY is required for the Gemini adapter.")
+        help_payload = generate_turn_help(
+            api_key=adapter.api_key,
+            model=text_model_override or adapter.settings.text_model,
+            role_title=record.role_title,
+            focus_areas=list(record.focus_areas or []),
+            resume_text=record.resume_text or "",
+            job_text=record.job_text or "",
+            question_text=cleaned_question,
+            answer_text=cleaned_answer or None
+        )
+    else:
+        help_payload = {
+            "draft_answer": "",
+            "evidence": [],
+            "missing_info": ["Help is available when resume details are provided."]
+        }
+
+    help_text = _format_help_text(help_payload)
+    help_cleaned = (help_text or "").strip() or "Share a resume detail and I'll help."
+    help_entry = {
+        "role": "coach_feedback",
+        "text": help_cleaned,
+        "timestamp": _now_iso()
+    }
+    store.append_transcript_entry(interview_id, help_entry, user_id)
+
+    audio_payload = None
+    audio_mime = None
+    settings = getattr(adapter, "settings", None) or load_settings()
+    if settings.voice_tts_enabled and settings.voice_output_mode != "browser":
+        try:
+            if adapter.name == "gemini":
+                if not getattr(adapter, "api_key", None):
+                    raise RuntimeError("GEMINI_API_KEY or GOOGLE_API_KEY is required for Gemini TTS.")
+                models = list(getattr(settings, "voice_tts_models", ())) or [settings.voice_tts_model]
+                if tts_model_override:
+                    models = [tts_model_override, *[model for model in models if model != tts_model_override]]
+                wait_ms = getattr(settings, "voice_tts_wait_ms", 0)
+                audio_bytes = None
+                if wait_ms > 0:
+                    future = _TTS_EXECUTOR.submit(
+                        generate_tts_audio_with_fallbacks,
+                        api_key=adapter.api_key,
+                        models=models,
+                        text=help_cleaned,
+                        voice_name=settings.voice_tts_voice or None,
+                        language_code=settings.voice_tts_language or None,
+                        timeout_ms=getattr(settings, "voice_tts_timeout_ms", None)
+                    )
+                    try:
+                        audio_bytes, audio_mime, _ = future.result(timeout=wait_ms / 1000)
+                    except FutureTimeout:
+                        future.cancel()
+                        logger.warning(
+                            "event=voice_help_tts status=timeout interview_id=%s user_id=%s wait_ms=%s",
+                            short_id(interview_id),
+                            short_id(user_id),
+                            wait_ms
+                        )
+                else:
+                    audio_bytes, audio_mime, _ = generate_tts_audio_with_fallbacks(
+                        api_key=adapter.api_key,
+                        models=models,
+                        text=help_cleaned,
+                        voice_name=settings.voice_tts_voice or None,
+                        language_code=settings.voice_tts_language or None,
+                        timeout_ms=getattr(settings, "voice_tts_timeout_ms", None)
+                    )
+            else:
+                audio_bytes, audio_mime = build_mock_tts_audio()
+            if audio_bytes:
+                audio_payload = base64.b64encode(audio_bytes).decode("ascii")
+        except Exception:
+            logger.exception(
+                "event=voice_help_tts status=error interview_id=%s user_id=%s",
+                short_id(interview_id),
+                short_id(user_id)
+            )
+
+    return {
+        "interview_id": interview_id,
+        "help": help_entry,
+        "help_audio": audio_payload,
+        "help_audio_mime": audio_mime
     }
 
 

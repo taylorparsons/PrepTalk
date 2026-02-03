@@ -13,6 +13,7 @@ import {
   logClientEvent,
   restartInterview,
   scoreInterview,
+  sendVoiceHelp,
   sendVoiceFeedback,
   sendVoiceIntro,
   sendVoiceTurnCompletion,
@@ -39,6 +40,7 @@ const AUDIO_ACTIVITY_THRESHOLD = 0.02;
 const CAPTION_MAX_CHARS = 240;
 const LIVE_COACH_SPEAK_DELAY_MS = 700;
 const TURN_SUBMIT_COMMAND_PHRASES = ['submit my answer', 'how did i do'];
+const TURN_HELP_COMMAND_PHRASES = ['help me', 'coach help', 'request help', 'help with this answer'];
 const COACH_QUESTION_PATTERN = /\b(what|why|how|tell me|can you|could you|describe|walk me|give me|share|would you)\b/i;
 const QUESTION_STATUS_OPTIONS = [
   { value: 'not_started', label: 'Not started' },
@@ -566,6 +568,19 @@ function buildControlsPanel(state, ui, config) {
     }
   });
 
+  const helpTurnButton = createButton({
+    label: 'Request Help',
+    variant: 'secondary',
+    size: 'md',
+    disabled: true,
+    attrs: {
+      'data-testid': 'help-turn'
+    },
+    onClick: () => {
+      void requestTurnHelp({ source: 'button' });
+    }
+  });
+
   const sessionToolsButton = createButton({
     label: 'More',
     variant: 'ghost',
@@ -721,13 +736,13 @@ function buildControlsPanel(state, ui, config) {
       .trim();
   }
 
-  function stripSubmitCommandSuffix(value) {
+  function stripCommandSuffix(value, phrases = []) {
     const original = String(value || '').trim();
     if (!original) {
       return { text: '', command: null };
     }
     const lowered = normalizeTurnText(original);
-    for (const phrase of TURN_SUBMIT_COMMAND_PHRASES) {
+    for (const phrase of phrases) {
       const normalizedPhrase = normalizeTurnText(phrase);
       if (!normalizedPhrase) continue;
       if (!lowered.endsWith(normalizedPhrase)) continue;
@@ -740,6 +755,14 @@ function buildControlsPanel(state, ui, config) {
     return { text: original, command: null };
   }
 
+  function stripSubmitCommandSuffix(value) {
+    return stripCommandSuffix(value, TURN_SUBMIT_COMMAND_PHRASES);
+  }
+
+  function stripHelpCommandSuffix(value) {
+    return stripCommandSuffix(value, TURN_HELP_COMMAND_PHRASES);
+  }
+
   function updateTurnSubmitUI() {
     const showRow = isTurnMode() && state.sessionActive;
     if (ui.turnActionsRow) {
@@ -750,10 +773,17 @@ function buildControlsPanel(state, ui, config) {
     }
     if (!showRow) {
       ui.submitTurnButton.disabled = true;
+      if (ui.helpTurnButton) {
+        ui.helpTurnButton.disabled = true;
+      }
       return;
     }
     const hasAnswer = String(state.captionDraftText || state.captionFinalText || '').trim().length > 0;
-    ui.submitTurnButton.disabled = !(state.turnAwaitingAnswer && hasAnswer && state.turnReadyToSubmit);
+    const canInteract = state.turnAwaitingAnswer && !state.turnSpeaking;
+    ui.submitTurnButton.disabled = !(canInteract && hasAnswer);
+    if (ui.helpTurnButton) {
+      ui.helpTurnButton.disabled = !(canInteract && !state.turnHelpPending);
+    }
   }
 
   function submitTurnAnswer({ source = 'manual' } = {}) {
@@ -900,13 +930,23 @@ function buildControlsPanel(state, ui, config) {
       }
       if (finalText) {
         const merged = mergeTranscriptText(state.captionFinalText || '', finalText);
-        const stripped = stripSubmitCommandSuffix(merged);
-        state.captionFinalText = stripped.text;
-        if (stripped.command) {
+        const helpStripped = stripHelpCommandSuffix(merged);
+        if (helpStripped.command) {
+          state.captionFinalText = helpStripped.text;
+          updateTurnSubmitUI();
+          void requestTurnHelp({
+            answer: helpStripped.text,
+            source: `voice_command:${normalizeTurnText(helpStripped.command).replace(/\s+/g, '_')}`
+          });
+          return;
+        }
+        const submitStripped = stripSubmitCommandSuffix(merged);
+        state.captionFinalText = submitStripped.text;
+        if (submitStripped.command) {
           state.turnReadyToSubmit = true;
           updateTurnSubmitUI();
-          if ((stripped.text || '').trim().length > 0) {
-            submitTurnAnswer({ source: `voice_command:${normalizeTurnText(stripped.command).replace(/\s+/g, '_')}` });
+          if ((submitStripped.text || '').trim().length > 0) {
+            submitTurnAnswer({ source: `voice_command:${normalizeTurnText(submitStripped.command).replace(/\s+/g, '_')}` });
             return;
           }
         }
@@ -961,7 +1001,8 @@ function buildControlsPanel(state, ui, config) {
     }
   }
 
-  function stopSpeechRecognition() {
+  function stopSpeechRecognition(options = {}) {
+    const { preserveCaptions = false } = options || {};
     state.speechRecognitionEnabled = false;
     clearTurnCompletionTimer();
     if (state.speechRecognitionRestartTimer) {
@@ -976,18 +1017,22 @@ function buildControlsPanel(state, ui, config) {
       }
     }
     state.speechRecognitionActive = false;
-    state.captionFinalText = '';
-    state.captionDraftText = '';
-    setCaptionText('Captions idle.');
+    if (!preserveCaptions) {
+      state.captionFinalText = '';
+      state.captionDraftText = '';
+      setCaptionText('Captions idle.');
+    }
   }
 
   function cancelSpeechSynthesis() {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
       state.turnSpeaking = false;
+      updateTurnSubmitUI();
       return;
     }
     window.speechSynthesis.cancel();
     state.turnSpeaking = false;
+    updateTurnSubmitUI();
   }
 
   function decodeBase64Audio(base64) {
@@ -1002,16 +1047,18 @@ function buildControlsPanel(state, ui, config) {
     return buffer;
   }
 
-  async function playCoachAudio(base64, mimeType) {
+  async function playCoachAudio(base64, mimeType, options = {}) {
     const audioBytes = decodeBase64Audio(base64);
     if (!audioBytes || audioBytes.length === 0 || typeof Audio === 'undefined') {
       return false;
     }
+    const { preserveCaptions = false } = options || {};
 
     return new Promise((resolve) => {
       cancelSpeechSynthesis();
       state.turnSpeaking = true;
-      stopSpeechRecognition();
+      updateTurnSubmitUI();
+      stopSpeechRecognition({ preserveCaptions });
 
       const blob = new Blob([audioBytes], { type: mimeType || 'audio/wav' });
       const url = URL.createObjectURL(blob);
@@ -1028,6 +1075,7 @@ function buildControlsPanel(state, ui, config) {
         audio.src = '';
         URL.revokeObjectURL(url);
         state.turnSpeaking = false;
+        updateTurnSubmitUI();
         if (state.sessionActive && !state.isMuted) {
           startSpeechRecognition();
         }
@@ -1059,13 +1107,17 @@ function buildControlsPanel(state, ui, config) {
     return new Promise((resolve) => {
       cancelSpeechSynthesis();
       state.turnSpeaking = true;
+      updateTurnSubmitUI();
       if (!preserveCaptions) {
         stopSpeechRecognition();
+      } else {
+        stopSpeechRecognition({ preserveCaptions: true });
       }
       const utterance = new SpeechSynthesisUtterance(reply);
       utterance.lang = state.voiceTtsLanguage || 'en-US';
       utterance.onend = () => {
         state.turnSpeaking = false;
+        updateTurnSubmitUI();
         if (restartRecognition && state.sessionActive && !state.isMuted) {
           startSpeechRecognition();
         }
@@ -1073,6 +1125,7 @@ function buildControlsPanel(state, ui, config) {
       };
       utterance.onerror = () => {
         state.turnSpeaking = false;
+        updateTurnSubmitUI();
         if (restartRecognition && state.sessionActive && !state.isMuted) {
           startSpeechRecognition();
         }
@@ -1082,15 +1135,15 @@ function buildControlsPanel(state, ui, config) {
     });
   }
 
-  async function playCoachReply({ text, audio, audioMime } = {}) {
+  async function playCoachReply({ text, audio, audioMime, preserveCaptions = false } = {}) {
     const reply = (text || '').trim();
     const outputMode = normalizeVoiceOutputMode(state.voiceOutputMode);
     let played = false;
     if (audio && outputMode !== 'browser') {
-      played = await playCoachAudio(audio, audioMime);
+      played = await playCoachAudio(audio, audioMime, { preserveCaptions });
     }
     if (!played && reply) {
-      await speakCoachReply(reply);
+      await speakCoachReply(reply, { preserveCaptions });
     }
   }
 
@@ -1244,6 +1297,55 @@ function buildControlsPanel(state, ui, config) {
     }
   }
 
+  async function requestTurnHelp({ question, answer, source = 'manual' } = {}) {
+    if (!isTurnMode() || !state.sessionActive || !state.interviewId || state.turnSpeaking) {
+      return;
+    }
+    if (!state.turnAwaitingAnswer) {
+      return;
+    }
+    if (state.turnHelpPending) {
+      return;
+    }
+    const cleanedQuestion = (question || state.lastCoachQuestion || '').trim();
+    if (!cleanedQuestion) {
+      return;
+    }
+    const cleanedAnswer = (answer || state.captionDraftText || state.captionFinalText || '').trim();
+    state.turnHelpPending = true;
+    updateTurnSubmitUI();
+    sendClientEvent(state, 'turn_help', { status: source });
+    updateStatusPill(statusPill, { label: 'Helping', tone: 'info' });
+    try {
+      const response = await sendVoiceHelp({
+        interviewId: state.interviewId,
+        question: cleanedQuestion,
+        answer: cleanedAnswer || undefined,
+        textModel: state.textModel,
+        ttsModel: state.ttsModel
+      });
+      if (response?.help) {
+        appendTranscriptEntry(state, response.help);
+        renderTranscript(ui.transcriptList, state.transcript);
+        ui.updateSessionToolsState?.();
+        await playCoachReply({
+          text: response.help.text,
+          audio: response.help_audio,
+          audioMime: response.help_audio_mime,
+          preserveCaptions: true
+        });
+      }
+    } catch (error) {
+      updateStatusPill(statusPill, { label: 'Help error', tone: 'danger' });
+    } finally {
+      state.turnHelpPending = false;
+      if (state.sessionActive && !state.turnSpeaking) {
+        updateStatusPill(statusPill, { label: 'Listening', tone: 'info' });
+      }
+      updateTurnSubmitUI();
+    }
+  }
+
   async function processVoiceTurnQueue() {
     if (!state.sessionActive || state.turnRequestActive || state.turnSpeaking) {
       return;
@@ -1346,6 +1448,7 @@ function buildControlsPanel(state, ui, config) {
     cancelLiveCoachSpeech();
     state.turnQueue = [];
     state.turnRequestActive = false;
+    state.turnHelpPending = false;
     state.turnSpeaking = false;
     cancelLiveCoachSpeech();
     state.liveAudioSeen = false;
@@ -1806,6 +1909,7 @@ function buildControlsPanel(state, ui, config) {
 
   const turnActionsRow = document.createElement('div');
   turnActionsRow.className = 'ui-controls__row';
+  turnActionsRow.appendChild(helpTurnButton);
   turnActionsRow.appendChild(submitTurnButton);
 
   const toolsRow = document.createElement('div');
@@ -1824,6 +1928,7 @@ function buildControlsPanel(state, ui, config) {
   ui.stopButton = stopButton;
   ui.muteButton = muteButton;
   ui.bargeInToggle = bargeInButton;
+  ui.helpTurnButton = helpTurnButton;
   ui.submitTurnButton = submitTurnButton;
   ui.turnActionsRow = turnActionsRow;
   ui.sessionToolsToggle = sessionToolsButton;
@@ -2242,6 +2347,7 @@ export function buildVoiceLayout() {
     geminiReconnectTimer: null,
     turnQueue: [],
     turnRequestActive: false,
+    turnHelpPending: false,
     turnSpeaking: false,
     turnAnswerStartedAt: null,
     turnCompletionLastCheckAt: 0,

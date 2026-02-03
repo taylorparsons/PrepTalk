@@ -504,3 +504,22 @@ Alternatives considered:
 Acceptance / test:
 - New browser sessions receive a unique user ID stored in localStorage.
 - API calls send `X-User-Id` with the stored user ID by default.
+
+## D-20260202-1520
+Date: 2026-02-02 15:20
+Inputs: CR-20260202-1516
+PRD: Next / backlog
+
+Decision:
+Enable manual submit immediately after coach speech ends (no minimum delay), while still requiring non-empty answer text to submit. Add a dedicated help action (button + voice command) that returns TTS + transcript help grounded in resume evidence; if no relevant resume evidence is found, return a safe fallback instead of fabricating.
+
+Rationale:
+The request is to remove the delay and ensure help never makes up details. Keeping a non-empty answer requirement avoids server validation errors, and evidence-gated help provides a concrete guardrail against hallucinations.
+
+Alternatives considered:
+- Allow empty submit to skip a question (rejected: requires a new “skip” flow and server changes not requested).
+- Provide help without evidence validation (rejected: violates the “never make up” requirement).
+
+Acceptance / test:
+- Submit is enabled as soon as the coach finishes speaking when a question is awaiting an answer and there is any transcript text.
+- Help responses include resume evidence snippets and fall back to “insufficient resume detail” messaging when evidence is missing.

@@ -99,6 +99,22 @@ export async function sendVoiceFeedback({ interviewId, question, answer, textMod
   return handleResponse(response);
 }
 
+export async function sendVoiceHelp({ interviewId, question, answer, textModel, ttsModel }) {
+  const response = await fetch(`${getApiBase()}/voice/help`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
+    body: JSON.stringify({
+      interview_id: interviewId,
+      question,
+      answer,
+      text_model: textModel,
+      tts_model: ttsModel
+    })
+  });
+
+  return handleResponse(response);
+}
+
 export async function sendVoiceTurnCompletion({ interviewId, question, answer, textModel }) {
   const response = await fetch(`${getApiBase()}/voice/turn/completion`, {
     method: 'POST',
