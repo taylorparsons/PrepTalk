@@ -625,3 +625,22 @@ Alternatives considered:
 Acceptance / test:
 - The UI spec and Mermaid flow diagram show a single primary CTA per stage with explicit gating rules.
 - PRD backlog includes the staged CTA hierarchy update.
+
+## D-20260203-1138
+Date: 2026-02-03 11:38
+Inputs: CR-20260203-1138
+PRD: Next / backlog
+
+Decision:
+Apply stricter stage gating so only panels with relevant content are shown. When an interview starts, the Candidate Setup panel collapses by default (but remains accessible via the collapse toggle) to keep focus on live session content.
+
+Rationale:
+The user wants the UI to surface only content-relevant CTAs and containers; collapsing setup reduces cognitive load while preserving access if needed.
+
+Alternatives considered:
+- Remove Candidate Setup entirely during Stage 2 (rejected: user prefers collapsible access).
+- Keep all panels visible and rely on visual hierarchy (rejected: user wants irrelevant containers hidden).
+
+Acceptance / test:
+- Stage 1 hides transcript/score panels until a session starts; Stage 2 hides or collapses setup by default; Stage 3 focuses on score + exports with setup collapsed.
+- Playwright mock + live turn-based E2E assert setup is collapsed after session start and transcript/score visibility matches stage.

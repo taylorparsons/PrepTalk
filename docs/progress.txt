@@ -1088,6 +1088,63 @@ NOTES
 
 ---
 
+Session: 2026-02-03 11:38
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1138
+Decisions: D-20260203-1138
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Tighten stage gating so only content-relevant panels/CTAs show and collapse setup after session starts.
+
+DONE
+- [2026-02-03 11:38] Update CTA spec + PRD backlog for stage-gated visibility and collapsible setup. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- T-017: Apply stage-gated panel visibility (hide transcript/score before content; collapse setup on session start). (Skills: ralph)
+- T-018: Update Playwright mock + live E2E for panel visibility/collapse rules. (Skills: ralph)
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'` -> 2026-02-03 11:38.
+- Decisions: D-20260203-1138.
+- Risks / open questions: Confirm whether question insights panel should be hidden until questions exist.
+
+---
+
+Session: 2026-02-03 11:46
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1146
+Decisions: D-20260203-1138
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Confirm panels remain hidden until content exists (insights, transcript, score).
+
+DONE
+- [2026-02-03 11:46] Update spec requirements and acceptance for hidden-until-content panels. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- T-017: Apply stage-gated panel visibility (hide transcript/score before content; collapse setup on session start). (Skills: ralph)
+- T-018: Update Playwright mock + live E2E for panel visibility/collapse rules. (Skills: ralph)
+- T-019: Update wireframes to reflect hidden panels until content exists. (Skills: ralph)
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'` -> 2026-02-03 11:46.
+- Decisions: D-20260203-1138.
+- Risks / open questions: None.
+
+---
+
 Session: 2026-02-03 10:44
 Agent: Codex CLI
 Model: GPT-5
@@ -1299,5 +1356,35 @@ NEXT
 
 NOTES
 - Commands run: `date '+%Y-%m-%d %H:%M'` -> 2026-02-03 10:17.
+- Decisions: None.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-03 12:06
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1138, CR-20260203-1146
+Decisions: D-20260203-1138
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Enforce stage-gated panel visibility, update wireframes, and validate E2E coverage.
+
+DONE
+- [2026-02-03 12:06] T-017: Apply stage-gated panel visibility (hide transcript/score before content; collapse setup on session start). (Skills: ralph)
+- [2026-02-03 12:06] T-018: Update Playwright mock + live E2E for panel visibility/collapse rules. (Skills: ralph)
+- [2026-02-03 12:06] T-019: Update wireframes to reflect hidden panels until content exists. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- T-003: Implement Stage 2 CTA gating + help hint + rubric-based help surface.
+
+NOTES
+- Commands run: `npm run test:e2e` -> 2 passed, 5 skipped.
+- Commands run: `set -a; source .env; set +a; E2E_LIVE=1 npm run test:e2e` -> 2 passed, 5 skipped.
 - Decisions: None.
 - Risks / open questions: None.

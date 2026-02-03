@@ -65,10 +65,21 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
 
   const generateButton = page.getByTestId('generate-questions');
   const startButton = page.getByTestId('start-interview');
+  const setupPanel = page.getByTestId('setup-panel');
+  const questionsPanel = page.getByTestId('questions-panel');
+  const insightsPanel = page.getByTestId('question-insights-panel');
+  const controlsPanel = page.getByTestId('controls-panel');
+  const transcriptPanel = page.getByTestId('transcript-panel');
+  const scorePanel = page.getByTestId('score-panel');
 
   await expect(generateButton).toHaveClass(/ui-button--primary/);
   await expect(startButton).toHaveClass(/ui-button--secondary/);
   await expect(page.getByTestId('session-tools-toggle')).toHaveText('Extras');
+  await expect(questionsPanel).toBeHidden();
+  await expect(insightsPanel).toBeHidden();
+  await expect(controlsPanel).toBeHidden();
+  await expect(transcriptPanel).toBeHidden();
+  await expect(scorePanel).toBeHidden();
 
   await generateButton.click();
   await expect(startButton).toBeEnabled({
@@ -76,10 +87,16 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
   });
   await expect(generateButton).toHaveClass(/ui-button--secondary/);
   await expect(startButton).toHaveClass(/ui-button--primary/);
+  await expect(questionsPanel).toBeVisible();
+  await expect(insightsPanel).toBeVisible();
+  await expect(controlsPanel).toBeVisible();
+  await expect(transcriptPanel).toBeHidden();
+  await expect(scorePanel).toBeHidden();
 
   await startButton.click();
   await expect(page.getByTestId('session-status')).toHaveText(/Welcoming|Listening/);
   await expect(page.getByTestId('session-status')).toHaveText('Listening', { timeout: 60000 });
+  await expect(setupPanel).toHaveClass(/ui-panel--collapsed/);
 
   await page.waitForFunction(() => Boolean(window.__e2eQueueTurn));
   await page.evaluate(() => window.__e2eQueueTurn?.('Hello from the e2e test.'));
@@ -87,12 +104,14 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
   await expect(page.getByTestId('transcript-list')).toContainText('Hello from the e2e test.', {
     timeout: 20000
   });
+  await expect(transcriptPanel).toBeVisible();
   await expect.poll(
     () => page.locator('.ui-transcript__row--coach').count(),
     { timeout: 60000 }
   ).toBeGreaterThan(0);
 
   await page.getByTestId('stop-interview').click();
+  await expect(scorePanel).toBeVisible();
   await expect(page.getByTestId('score-value')).not.toHaveText('--', {
     timeout: isLive ? 60000 : 10000
   });

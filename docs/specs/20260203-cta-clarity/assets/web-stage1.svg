@@ -2,6 +2,7 @@
   <style>
     .frame { fill: #ffffff; stroke: #b8b8b8; stroke-width: 2; }
     .panel { fill: #f6f6f6; stroke: #cfcfcf; stroke-width: 1.5; }
+    .panel-hidden { fill: #ffffff; stroke: #d0d0d0; stroke-width: 1.5; stroke-dasharray: 6 4; }
     .title { font: 700 22px Arial, sans-serif; fill: #303030; }
     .label { font: 600 16px Arial, sans-serif; fill: #333333; }
     .text { font: 14px Arial, sans-serif; fill: #4a4a4a; }
@@ -32,18 +33,11 @@
   <rect x="60" y="305" width="240" height="44" rx="8" class="btn-primary"/>
   <text x="80" y="334" class="label">Generate Questions (Primary)</text>
 
-  <rect x="600" y="150" width="540" height="330" class="panel"/>
-  <text x="620" y="180" class="label">Questions</text>
-  <text x="620" y="210" class="text">Q1 ...</text>
-  <text x="620" y="235" class="text">Q2 ...</text>
-  <text x="620" y="260" class="text">Q3 ...</text>
+  <rect x="600" y="150" width="540" height="330" class="panel-hidden"/>
+  <text x="620" y="180" class="label">Questions (hidden until generated)</text>
+  <text x="620" y="210" class="text">Panel appears once questions exist.</text>
 
-  <rect x="40" y="510" width="1100" height="190" class="panel"/>
-  <text x="60" y="540" class="label">Session Controls</text>
-  <rect x="60" y="565" width="280" height="50" rx="8" class="btn-primary"/>
-  <text x="80" y="597" class="label">Start Interview (Primary when ready)</text>
-  <rect x="360" y="565" width="200" height="50" rx="8" class="btn-secondary"/>
-  <text x="380" y="597" class="label">Continue (Secondary)</text>
-  <rect x="580" y="565" width="160" height="50" rx="8" class="btn-tertiary"/>
-  <text x="600" y="597" class="label">Extras (T)</text>
+  <rect x="40" y="510" width="1100" height="190" class="panel-hidden"/>
+  <text x="60" y="540" class="label">Session Controls (hidden until questions ready)</text>
+  <text x="60" y="570" class="text">Start/Continue/Extras appear after questions.</text>
 </svg>
