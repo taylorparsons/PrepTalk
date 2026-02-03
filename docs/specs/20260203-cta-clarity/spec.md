@@ -27,7 +27,8 @@ Narrative:
 
 Acceptance scenarios:
 1. Given the coach finishes speaking and the user has entered any answer text, When Stage 2 is active, Then “Submit Answer” is the primary CTA and “Request Help” is a secondary action. (Verifies: FR-002, FR-004)
-2. Given the user is inactive for a short period, When Stage 2 is active, Then a non-blocking hint points to the help action without changing the primary CTA. (Verifies: FR-002, FR-004)
+2. Given the user is inactive for a short period, When Stage 2 is active, Then a non-blocking hint points to the help action without changing the primary CTA. (Verifies: FR-002, FR-004, FR-017)
+3. Given the user clicks “Request Help,” When Stage 2 is active, Then a compact rubric card appears with 2–3 bullets based on the current question. (Verifies: FR-017)
 
 ### US3: Stage 3 results emphasis (Priority: P1)
 Narrative:
@@ -66,6 +67,7 @@ Functional requirements:
 - FR-014: Stage gating hides or collapses containers without relevant content (setup, transcript, score, controls) to reduce CTA noise. (Sources: CR-20260203-1138; D-20260203-1138)
 - FR-015: Candidate Setup collapses by default after a session starts and can be re-opened via the toggle. (Sources: CR-20260203-1138; D-20260203-1138)
 - FR-016: Panels remain hidden until they have content (questions, insights, transcript, score/report, session controls). (Sources: CR-20260203-1146; D-20260203-1138)
+- FR-017: Stage 2 shows a non-blocking help hint after brief inactivity and surfaces a compact rubric card when help is requested. (Sources: CR-20260203-1328; D-20260203-1328)
 
 ## Edge cases
 - Missing inputs: “Start Interview” remains disabled and the reason is shown. (Verifies: FR-001, FR-004)

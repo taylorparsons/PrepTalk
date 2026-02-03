@@ -644,3 +644,22 @@ Alternatives considered:
 Acceptance / test:
 - Stage 1 hides transcript/score panels until a session starts; Stage 2 hides or collapses setup by default; Stage 3 focuses on score + exports with setup collapsed.
 - Playwright mock + live turn-based E2E assert setup is collapsed after session start and transcript/score visibility matches stage.
+
+## D-20260203-1328
+Date: 2026-02-03 13:28
+Inputs: CR-20260203-1328
+PRD: Next / backlog
+
+Decision:
+Implement Stage 2 help guidance as a non-blocking hint after 12s of inactivity while awaiting an answer, and show a compact “Answer rubric” card sourced from the current question (last coach question, else asked question) when the hint triggers or the user clicks Request Help.
+
+Rationale:
+A short inactivity window provides gentle guidance without interrupting turn-based flow. Using the locally-derived rubric keeps help grounded and immediate without extra model calls.
+
+Alternatives considered:
+- Always show rubric during Stage 2 (rejected: too visually noisy for focus mode).
+- Only show rubric after server help returns (rejected: adds latency and requires a model call).
+
+Acceptance / test:
+- E2E asserts Submit/Help CTA gating, auto-collapse, and that the rubric card becomes visible on help click and is hidden when collapsed.
+- UI shows a single-line hint pointing to Request Help after inactivity.

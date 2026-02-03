@@ -1448,3 +1448,30 @@ NOTES
 - Commit: `f7a11d726870c983e6dcda179a555154aa014695`.
 - Decisions: None.
 - Risks / open questions: Verify collapse behavior in UI and rerun E2E in a local terminal with a reachable server.
+
+---
+
+Session: 2026-02-03 13:32
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260203-cta-clarity
+Input: CR-20260203-1328
+Decisions: D-20260203-1328
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Implement Stage 2 help hint + rubric surface and tighten CTA gating tests.
+
+DONE
+- [2026-02-03 13:32] T-003: Implement Stage 2 CTA gating + help hint + rubric-based help surface. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: none (Playwright server not reachable from this session).
+- Decisions: Use 12s inactivity hint and rubric card sourced from current question.
+- Risks / open questions: Re-run mock + live E2E locally to validate inactivity hint + rubric card behavior.
