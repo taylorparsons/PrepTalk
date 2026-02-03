@@ -38,7 +38,7 @@ from .schemas import (
 )
 from .services import interview_service
 from .services.log_metrics import build_log_summary
-from .services.document_text import DocumentInput, is_supported_document
+from .services.document_text import DocumentInput, fetch_url_text, is_supported_document
 from .settings import load_settings
 
 router = APIRouter(prefix="/api")
@@ -81,37 +81,83 @@ def _safe_log_value(value: str | None, limit: int = 120) -> str:
 async def create_interview(
     request: Request,
     resume: UploadFile = File(...),
-    job_description: UploadFile = File(...),
+    job_description: UploadFile | None = File(default=None),
+    job_description_url: str | None = Form(default=None),
     role_title: str | None = Form(default=None)
 ):
-    if not _is_supported(resume) or not _is_supported(job_description):
+    if not _is_supported(resume):
         raise HTTPException(
             status_code=400,
-            detail="Resume and job description must be PDF, DOCX, or TXT files."
+            detail="Resume must be a PDF, DOCX, or TXT file."
+        )
+    if not job_description and not job_description_url:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide a job description file or a job description URL."
+        )
+    if job_description and not _is_supported(job_description):
+        raise HTTPException(
+            status_code=400,
+            detail="Job description must be a PDF, DOCX, or TXT file when uploading a file."
         )
 
     resume_bytes = await resume.read()
-    job_bytes = await job_description.read()
+    job_bytes = b""
+    job_doc: DocumentInput | None = None
+    job_url_clean = (job_description_url or "").strip()
+    job_url_error: str | None = None
+    job_url_status: int | None = None
+    if job_url_clean:
+        try:
+            job_text = fetch_url_text(job_url_clean, max_chars=4000)
+            job_bytes = job_text.encode("utf-8")
+            job_doc = DocumentInput(
+                data=job_bytes,
+                filename="job_description.txt",
+                content_type="text/plain"
+            )
+        except ValueError as exc:
+            job_url_error = str(exc)
+            job_url_status = 400
+        except Exception:
+            job_url_error = "Unable to fetch job description URL."
+            job_url_status = 503
+    if not job_doc and job_description:
+        if job_url_error:
+            logger.warning(
+                "event=interview_create status=job_url_fallback user_id=%s reason=%s",
+                short_id(_get_user_id(request)),
+                _safe_log_value(job_url_error)
+            )
+        job_bytes = await job_description.read()
+        job_doc = DocumentInput(
+            data=job_bytes,
+            filename=job_description.filename,
+            content_type=job_description.content_type
+        )
     resume_doc = DocumentInput(
         data=resume_bytes,
         filename=resume.filename,
         content_type=resume.content_type
     )
-    job_doc = DocumentInput(
-        data=job_bytes,
-        filename=job_description.filename,
-        content_type=job_description.content_type
-    )
+    if not job_doc:
+        if job_url_error and job_url_status:
+            raise HTTPException(status_code=job_url_status, detail=job_url_error)
+        raise HTTPException(
+            status_code=400,
+            detail="Job description could not be processed."
+        )
     user_id = _get_user_id(request)
     log_user_id = short_id(user_id)
     start = time.perf_counter()
 
     logger.info(
-        "event=interview_create status=start user_id=%s resume_bytes=%s job_bytes=%s role_title_present=%s",
+        "event=interview_create status=start user_id=%s resume_bytes=%s job_bytes=%s role_title_present=%s job_url_present=%s",
         log_user_id,
         len(resume_bytes),
         len(job_bytes),
-        bool(role_title)
+        bool(role_title),
+        bool(job_url_clean)
     )
 
     try:
@@ -134,6 +180,9 @@ async def create_interview(
         _duration_ms(start),
         payload.get("adapter")
     )
+
+    if job_url_error:
+        payload["job_url_warning"] = job_url_error
 
     return payload
 

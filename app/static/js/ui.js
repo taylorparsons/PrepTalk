@@ -51,6 +51,170 @@ const QUESTION_STATUS_LOOKUP = new Map(
   QUESTION_STATUS_OPTIONS.map((option) => [option.value, option.label])
 );
 
+const INSIGHT_STOPWORDS = new Set([
+  'about',
+  'after',
+  'again',
+  'also',
+  'and',
+  'any',
+  'are',
+  'been',
+  'before',
+  'can',
+  'could',
+  'describe',
+  'did',
+  'for',
+  'from',
+  'give',
+  'have',
+  'how',
+  'into',
+  'just',
+  'like',
+  'more',
+  'most',
+  'share',
+  'should',
+  'tell',
+  'that',
+  'the',
+  'their',
+  'them',
+  'then',
+  'this',
+  'through',
+  'was',
+  'were',
+  'what',
+  'when',
+  'where',
+  'which',
+  'why',
+  'with',
+  'would',
+  'your',
+  'you'
+]);
+
+function extractInsightKeywords(question) {
+  const cleaned = String(question || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!cleaned) {
+    return [];
+  }
+  const tokens = cleaned.split(' ')
+    .filter((token) => token.length > 3 && !INSIGHT_STOPWORDS.has(token));
+  return Array.from(new Set(tokens)).slice(0, 8);
+}
+
+function splitExcerptLines(text) {
+  return String(text || '')
+    .split(/\r?\n+/)
+    .map((line) => line.replace(/\s+/g, ' ').trim())
+    .filter((line) => line.length > 3);
+}
+
+function pickInsightLines(text, question, maxItems = 3) {
+  const lines = splitExcerptLines(text);
+  if (lines.length === 0) {
+    return [];
+  }
+  const keywords = extractInsightKeywords(question);
+  if (keywords.length === 0) {
+    return lines.slice(0, maxItems);
+  }
+  const scored = lines.map((line) => {
+    const lower = line.toLowerCase();
+    let score = 0;
+    keywords.forEach((token) => {
+      if (lower.includes(token)) {
+        score += 1;
+      }
+    });
+    return { line, score };
+  });
+  scored.sort((a, b) => b.score - a.score);
+  const best = scored.filter((entry) => entry.score > 0).map((entry) => entry.line);
+  const fallback = scored.map((entry) => entry.line);
+  const selected = (best.length > 0 ? best : fallback).slice(0, maxItems);
+  return Array.from(new Set(selected));
+}
+
+function buildQuestionRubric(question) {
+  const text = String(question || '').toLowerCase();
+  if (text.includes('tell me about yourself')) {
+    return {
+      why: 'They want a concise narrative that connects your background to the role.',
+      rubric: [
+        'Open with your current role or focus area.',
+        'Highlight 2-3 experiences that match the job description.',
+        'Close with why this role is the next step.'
+      ]
+    };
+  }
+  if (text.includes('why') && (text.includes('role') || text.includes('company') || text.includes('team'))) {
+    return {
+      why: 'They want to understand your motivation and role fit.',
+      rubric: [
+        'Reference a specific need from the job description.',
+        'Connect your resume evidence to that need.',
+        'Share what you want to learn or grow into here.'
+      ]
+    };
+  }
+  if (/(challenge|difficult|conflict|disagree|pushback)/.test(text)) {
+    return {
+      why: 'They are evaluating problem solving and how you handle tension.',
+      rubric: [
+        'Use STAR: situation, task, action, result.',
+        'Emphasize the decision you made and why.',
+        'Quantify the outcome if possible.'
+      ]
+    };
+  }
+  if (/(lead|leadership|manage|mentor|stakeholder)/.test(text)) {
+    return {
+      why: 'They want evidence of leadership and collaboration.',
+      rubric: [
+        'Name the team or partners involved.',
+        'Highlight how you aligned people or drove decisions.',
+        'Share the impact on delivery or outcomes.'
+      ]
+    };
+  }
+  if (/(design|architecture|system|technical|build|implement)/.test(text)) {
+    return {
+      why: 'They want to assess technical depth and decision making.',
+      rubric: [
+        'Frame the problem and constraints clearly.',
+        'Explain the trade-offs you considered.',
+        'Close with measurable impact or learnings.'
+      ]
+    };
+  }
+  return {
+    why: 'They want evidence that your experience aligns with the role requirements.',
+    rubric: [
+      'Lead with a clear example from your resume.',
+      'Focus on actions you took and the outcome.',
+      'Tie your answer back to the job needs.'
+    ]
+  };
+}
+
+function buildQuestionRenderOptions(ui, state) {
+  return {
+    onHover: ui.onQuestionHover,
+    onPin: ui.onQuestionPin,
+    pinnedIndex: state.questionInsightsPinnedIndex
+  };
+}
+
 function updateStatusPill(pill, { label, tone }) {
   const toneValue = STATUS_TONES.includes(tone) ? tone : 'neutral';
   pill.classList.forEach((className) => {
@@ -193,6 +357,35 @@ function createFileField({ id, label, helpText, testId }) {
   return { wrapper, input, help };
 }
 
+function createTextField({ id, label, helpText, placeholder, testId, type = 'text' }) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'ui-field';
+
+  const labelEl = document.createElement('label');
+  labelEl.className = 'ui-field__label';
+  labelEl.setAttribute('for', id);
+  labelEl.textContent = label;
+
+  const input = document.createElement('input');
+  input.className = 'ui-field__input';
+  input.type = type;
+  input.id = id;
+  if (placeholder) {
+    input.placeholder = placeholder;
+  }
+  input.setAttribute('data-testid', testId);
+
+  const help = document.createElement('p');
+  help.className = 'ui-field__help';
+  help.textContent = helpText;
+
+  wrapper.appendChild(labelEl);
+  wrapper.appendChild(input);
+  wrapper.appendChild(help);
+
+  return { wrapper, input, help };
+}
+
 function mergeTranscriptText(previous, incoming) {
   const prev = previous || '';
   const next = (incoming || '').trim();
@@ -209,6 +402,52 @@ function mergeTranscriptText(previous, incoming) {
     return `${prev}${next}`;
   }
   return `${prev} ${next}`;
+}
+
+function buildAppHeader() {
+  const wrapper = document.createElement('section');
+  wrapper.className = 'ui-hero';
+
+  const eyebrow = document.createElement('div');
+  eyebrow.className = 'ui-hero__eyebrow';
+  eyebrow.textContent = 'PrepTalk • Contextual Interview Coach';
+
+  const title = document.createElement('h1');
+  title.className = 'ui-hero__title';
+  title.textContent = 'PrepTalk';
+
+  const subtitle = document.createElement('p');
+  subtitle.className = 'ui-hero__subtitle';
+  subtitle.textContent = 'PrepTalk helps you practice with contextual interview questions built from your resume and job description, then coaches you through a focused, turn-based session.';
+
+  const steps = document.createElement('ol');
+  steps.className = 'ui-hero__steps';
+  [
+    'Upload your resume and job details (file or URL).',
+    'Generate questions, then add optional extras in Advanced Setup.',
+    'Start the coach, then use Help or Submit after the coach finishes speaking.'
+  ].forEach((step) => {
+    const li = document.createElement('li');
+    li.textContent = step;
+    steps.appendChild(li);
+  });
+
+  const note = document.createElement('div');
+  note.className = 'ui-hero__note';
+  note.textContent = 'PrepTalk is turn-based (not live). Help/Submit become active once the coach finishes speaking.';
+
+  const callout = document.createElement('div');
+  callout.className = 'ui-hero__callout';
+  callout.textContent = 'Advanced Setup lets you revisit past sessions, add custom questions, and export study guides.';
+
+  wrapper.appendChild(eyebrow);
+  wrapper.appendChild(title);
+  wrapper.appendChild(subtitle);
+  wrapper.appendChild(steps);
+  wrapper.appendChild(note);
+  wrapper.appendChild(callout);
+
+  return wrapper;
 }
 
 export function appendTranscriptEntry(state, entry) {
@@ -273,22 +512,34 @@ export function normalizeQuestionStatuses(questions, statuses) {
   return output;
 }
 
-export function renderQuestions(list, questions, statuses, placeholder, onStatusChange) {
+export function renderQuestions(list, questions, statuses, placeholder, onStatusChange, options = {}) {
   list.innerHTML = '';
   if (!questions || questions.length === 0) {
     list.appendChild(placeholder);
     return;
   }
 
+  const { onHover, onPin, pinnedIndex } = options || {};
+
   questions.forEach((question, index) => {
     const statusEntry = statuses[index] || { status: 'not_started' };
     const statusValue = QUESTION_STATUS_LOOKUP.has(statusEntry.status)
       ? statusEntry.status
       : 'not_started';
+    const isPinned = Number.isInteger(pinnedIndex) && pinnedIndex === index;
 
     const li = document.createElement('li');
     li.className = `ui-list__item ui-question ui-question--${statusValue}`;
+    li.classList.toggle('ui-question--pinned', isPinned);
     li.dataset.index = String(index);
+    li.tabIndex = 0;
+
+    if (typeof onHover === 'function') {
+      li.addEventListener('mouseenter', () => onHover(index));
+      li.addEventListener('mouseleave', () => onHover(null));
+      li.addEventListener('focus', () => onHover(index));
+      li.addEventListener('blur', () => onHover(null));
+    }
 
     const text = document.createElement('div');
     text.className = 'ui-question__text';
@@ -296,6 +547,23 @@ export function renderQuestions(list, questions, statuses, placeholder, onStatus
 
     const controls = document.createElement('div');
     controls.className = 'ui-question__controls';
+
+    const pinButton = createButton({
+      label: isPinned ? 'Pinned' : 'Pin',
+      variant: 'ghost',
+      size: 'sm',
+      disabled: !onPin,
+      attrs: {
+        'data-testid': `question-pin-${index}`,
+        'aria-pressed': String(isPinned),
+        title: isPinned ? 'Unpin this question' : 'Pin this question'
+      },
+      onClick: (event) => {
+        event.stopPropagation();
+        onPin?.(index);
+      }
+    });
+    pinButton.classList.add('ui-question__pin');
 
     const select = document.createElement('select');
     select.className = 'ui-question__select';
@@ -311,6 +579,7 @@ export function renderQuestions(list, questions, statuses, placeholder, onStatus
       onStatusChange?.(index, select.value);
     });
 
+    controls.appendChild(pinButton);
     controls.appendChild(select);
     li.appendChild(text);
     li.appendChild(controls);
@@ -396,9 +665,18 @@ function buildSetupPanel(state, ui) {
 
   const jobField = createFileField({
     id: 'job-file',
-    label: 'Job Description (PDF)',
-    helpText: 'Add the role description (PDF, DOCX, or TXT).',
+    label: 'Job Description (file)',
+    helpText: 'Upload the role description (PDF, DOCX, or TXT). If a URL is reachable, it overrides this file.',
     testId: 'job-file'
+  });
+
+  const jobUrlField = createTextField({
+    id: 'job-url',
+    label: 'Job Description URL',
+    helpText: 'Paste a public job posting URL (HTML, PDF, or DOCX). If reachable, it replaces the uploaded file.',
+    placeholder: 'https://company.com/careers/role',
+    testId: 'job-url',
+    type: 'url'
   });
 
   const status = document.createElement('p');
@@ -414,12 +692,15 @@ function buildSetupPanel(state, ui) {
   });
 
   function updateGenerateState() {
-    const ready = resumeField.input.files.length > 0 && jobField.input.files.length > 0;
-    generateButton.disabled = !ready;
+    const resumeReady = resumeField.input.files.length > 0;
+    const jobReady = jobField.input.files.length > 0
+      || String(jobUrlField.input.value || '').trim().length > 0;
+    generateButton.disabled = !(resumeReady && jobReady);
   }
 
   resumeField.input.addEventListener('change', updateGenerateState);
   jobField.input.addEventListener('change', updateGenerateState);
+  jobUrlField.input.addEventListener('input', updateGenerateState);
 
   generateButton.addEventListener('click', async () => {
     if (generateButton.disabled) return;
@@ -440,21 +721,27 @@ function buildSetupPanel(state, ui) {
       state.questions,
       state.questionStatuses,
       ui.questionPlaceholder,
-      ui.onQuestionStatusChange
+      ui.onQuestionStatusChange,
+      buildQuestionRenderOptions(ui, state)
     );
     renderTranscript(ui.transcriptList, state.transcript);
     renderScore(ui, null);
 
     try {
+      const jobUrl = String(jobUrlField.input.value || '').trim();
       const result = await createInterview({
         resumeFile: resumeField.input.files[0],
-        jobFile: jobField.input.files[0]
+        jobFile: jobField.input.files[0] || null,
+        jobUrl: jobUrl || null
       });
 
       state.interviewId = result.interview_id;
       state.questions = result.questions || [];
       state.questionStatuses = normalizeQuestionStatuses(state.questions, result.question_statuses);
       state.adapter = result.adapter || state.adapter;
+      state.focusAreas = result.focus_areas || [];
+      state.resumeExcerpt = result.resume_excerpt || '';
+      state.jobExcerpt = result.job_excerpt || '';
       state.sessionName = '';
       state.askedQuestionIndex = result.asked_question_index ?? null;
       state.sessionStarted = false;
@@ -463,11 +750,18 @@ function buildSetupPanel(state, ui) {
         state.questions,
         state.questionStatuses,
         ui.questionPlaceholder,
-        ui.onQuestionStatusChange
+        ui.onQuestionStatusChange,
+        buildQuestionRenderOptions(ui, state)
       );
       ui.resetSessionState?.();
       ui.startButton.disabled = false;
-      status.textContent = 'Questions ready. Start the session when ready.';
+      if (result.job_url_warning) {
+        status.className = 'ui-field__warning';
+        status.textContent = 'Questions ready. The job URL could not be reached, so we used the uploaded file.';
+      } else {
+        status.className = 'ui-field__help';
+        status.textContent = 'Questions ready. Start the session when ready.';
+      }
       ui.updateMeta?.();
       if (ui.sessionNameInput) {
         ui.sessionNameInput.value = '';
@@ -477,6 +771,8 @@ function buildSetupPanel(state, ui) {
       }
       ui.updateSessionToolsState?.();
       ui.refreshSessionList?.();
+      const defaultInsightIndex = state.questions.length > 0 ? 0 : null;
+      ui.updateQuestionInsights?.(defaultInsightIndex, { clear: true });
     } catch (error) {
       status.className = 'ui-field__error';
       status.textContent = error.message || 'Unable to generate questions.';
@@ -490,17 +786,19 @@ function buildSetupPanel(state, ui) {
   content.className = 'layout-stack';
   content.appendChild(resumeField.wrapper);
   content.appendChild(jobField.wrapper);
+  content.appendChild(jobUrlField.wrapper);
   content.appendChild(generateButton);
   content.appendChild(status);
 
   ui.resumeInput = resumeField.input;
   ui.jobInput = jobField.input;
+  ui.jobUrlInput = jobUrlField.input;
   ui.setupStatus = status;
   ui.generateButton = generateButton;
 
   return createPanel({
     title: 'Candidate Setup',
-    subtitle: 'Upload PDFs to personalize the interview.',
+    subtitle: 'Add resume + job details to personalize the interview.',
     content,
     attrs: { 'data-testid': 'setup-panel' }
   });
@@ -582,7 +880,7 @@ function buildControlsPanel(state, ui, config) {
   });
 
   const sessionToolsButton = createButton({
-    label: 'More',
+    label: 'Advanced Setup',
     variant: 'ghost',
     size: 'sm',
     attrs: {
@@ -768,6 +1066,9 @@ function buildControlsPanel(state, ui, config) {
     if (ui.turnActionsRow) {
       ui.turnActionsRow.hidden = !showRow;
     }
+    if (ui.turnHelp) {
+      ui.turnHelp.hidden = !showRow;
+    }
     if (!ui.submitTurnButton) {
       return;
     }
@@ -776,13 +1077,49 @@ function buildControlsPanel(state, ui, config) {
       if (ui.helpTurnButton) {
         ui.helpTurnButton.disabled = true;
       }
+      ui.submitTurnButton.classList.remove('ui-button--ready');
+      ui.helpTurnButton?.classList.remove('ui-button--ready');
       return;
     }
     const hasAnswer = String(state.captionDraftText || state.captionFinalText || '').trim().length > 0;
     const canInteract = state.turnAwaitingAnswer && !state.turnSpeaking;
-    ui.submitTurnButton.disabled = !(canInteract && hasAnswer);
+    const canSubmit = canInteract && hasAnswer;
+    const canHelp = canInteract && !state.turnHelpPending;
+
+    ui.submitTurnButton.disabled = !canSubmit;
+    ui.submitTurnButton.classList.toggle('ui-button--ready', canSubmit);
+    ui.submitTurnButton.title = canSubmit
+      ? 'Submit your answer and move on.'
+      : state.turnSpeaking
+        ? 'Wait for the coach to finish speaking.'
+        : state.turnAwaitingAnswer
+          ? 'Start answering to enable Submit.'
+          : 'Waiting for the next coach question.';
+
     if (ui.helpTurnButton) {
-      ui.helpTurnButton.disabled = !(canInteract && !state.turnHelpPending);
+      ui.helpTurnButton.disabled = !canHelp;
+      ui.helpTurnButton.classList.toggle('ui-button--ready', canHelp);
+      ui.helpTurnButton.title = canHelp
+        ? 'Get a resume-grounded hint for this question.'
+        : state.turnSpeaking
+          ? 'Wait for the coach to finish speaking.'
+          : state.turnAwaitingAnswer
+            ? 'Help is on the way.' 
+            : 'Help becomes available after the coach asks a question.';
+    }
+
+    if (ui.turnHelp) {
+      if (state.turnSpeaking) {
+        ui.turnHelp.textContent = 'Coach is speaking. Wait to request help or submit your answer.';
+      } else if (!state.turnAwaitingAnswer) {
+        ui.turnHelp.textContent = 'Waiting for the next coach question.';
+      } else if (!hasAnswer) {
+        ui.turnHelp.textContent = 'Start answering to enable Submit. Help is available as soon as the coach finishes speaking.';
+      } else if (state.turnHelpPending) {
+        ui.turnHelp.textContent = 'Fetching help...';
+      } else {
+        ui.turnHelp.textContent = 'Ready when you are. Request help or submit your answer.';
+      }
     }
   }
 
@@ -1912,6 +2249,11 @@ function buildControlsPanel(state, ui, config) {
   turnActionsRow.appendChild(helpTurnButton);
   turnActionsRow.appendChild(submitTurnButton);
 
+  const turnHelp = document.createElement('div');
+  turnHelp.className = 'ui-turn-help';
+  turnHelp.setAttribute('data-testid', 'turn-help');
+  turnHelp.textContent = 'Waiting for the coach.';
+
   const toolsRow = document.createElement('div');
   toolsRow.className = 'ui-controls__row ui-controls__row--tools';
   toolsRow.appendChild(sessionToolsButton);
@@ -1921,6 +2263,7 @@ function buildControlsPanel(state, ui, config) {
   content.appendChild(statusPill);
   content.appendChild(actionsRow);
   content.appendChild(turnActionsRow);
+  content.appendChild(turnHelp);
   content.appendChild(toolsRow);
 
   ui.statusPill = statusPill;
@@ -1931,6 +2274,7 @@ function buildControlsPanel(state, ui, config) {
   ui.helpTurnButton = helpTurnButton;
   ui.submitTurnButton = submitTurnButton;
   ui.turnActionsRow = turnActionsRow;
+  ui.turnHelp = turnHelp;
   ui.sessionToolsToggle = sessionToolsButton;
   ui.updateMeta = updateMeta;
   ui.applyModelOverrides = applyModelOverrides;
@@ -1941,7 +2285,7 @@ function buildControlsPanel(state, ui, config) {
 
   return createPanel({
     title: 'Session Controls',
-    subtitle: 'Voice-only mode',
+    subtitle: 'Turn-based coaching controls.',
     content,
     attrs: { 'data-testid': 'controls-panel' }
   });
@@ -1962,9 +2306,16 @@ function buildSessionToolsDrawer(state, ui, config) {
   const header = document.createElement('div');
   header.className = 'ui-drawer__header';
 
+  const heading = document.createElement('div');
+  heading.className = 'ui-drawer__heading';
+
   const title = document.createElement('h3');
   title.className = 'ui-drawer__title';
-  title.textContent = 'More';
+  title.textContent = 'Advanced Setup';
+
+  const subtitle = document.createElement('p');
+  subtitle.className = 'ui-drawer__subtitle';
+  subtitle.textContent = 'Go deeper: load a past session, add custom questions, and export study guides.';
 
   const closeButton = createButton({
     label: 'Close',
@@ -1976,7 +2327,9 @@ function buildSessionToolsDrawer(state, ui, config) {
     }
   });
 
-  header.appendChild(title);
+  heading.appendChild(title);
+  heading.appendChild(subtitle);
+  header.appendChild(heading);
   header.appendChild(closeButton);
 
   const sessionSection = document.createElement('section');
@@ -2200,10 +2553,102 @@ function buildQuestionsPanel(ui) {
 
   return createPanel({
     title: 'Interview Questions',
-    subtitle: 'Generated from the resume and role.',
+    subtitle: 'Generated from the resume and role. Hover to see insights.',
     content: list,
     attrs: { 'data-testid': 'questions-panel' }
   });
+}
+
+function buildQuestionInsightsPanel(ui) {
+  const container = document.createElement('div');
+  container.className = 'ui-insights';
+
+  const header = document.createElement('div');
+  header.className = 'ui-insights__header';
+
+  const question = document.createElement('div');
+  question.className = 'ui-insights__question';
+  question.setAttribute('data-testid', 'insights-question');
+  question.textContent = 'Hover a question to see insights.';
+
+  const pinBadge = document.createElement('span');
+  pinBadge.className = 'ui-insights__pin';
+  pinBadge.setAttribute('data-testid', 'insights-pin');
+  pinBadge.textContent = 'Pinned';
+  pinBadge.hidden = true;
+
+  header.appendChild(question);
+  header.appendChild(pinBadge);
+
+  const empty = document.createElement('div');
+  empty.className = 'ui-insights__empty';
+  empty.textContent = 'Hover a question to see why it is asked and which resume cues to use.';
+
+  const whyLabel = document.createElement('div');
+  whyLabel.className = 'ui-insights__label';
+  whyLabel.textContent = 'Why this is asked';
+
+  const whyText = document.createElement('p');
+  whyText.className = 'ui-insights__text';
+
+  const rubricLabel = document.createElement('div');
+  rubricLabel.className = 'ui-insights__label';
+  rubricLabel.textContent = 'Answer rubric';
+
+  const rubricList = document.createElement('ul');
+  rubricList.className = 'ui-insights__list';
+
+  const focusLabel = document.createElement('div');
+  focusLabel.className = 'ui-insights__label';
+  focusLabel.textContent = 'Focus areas';
+
+  const focusList = document.createElement('ul');
+  focusList.className = 'ui-insights__list';
+
+  const resumeLabel = document.createElement('div');
+  resumeLabel.className = 'ui-insights__label';
+  resumeLabel.textContent = 'Resume cues';
+
+  const resumeList = document.createElement('ul');
+  resumeList.className = 'ui-insights__list';
+
+  const jobLabel = document.createElement('div');
+  jobLabel.className = 'ui-insights__label';
+  jobLabel.textContent = 'Job cues';
+
+  const jobList = document.createElement('ul');
+  jobList.className = 'ui-insights__list';
+
+  container.appendChild(header);
+  container.appendChild(empty);
+  container.appendChild(whyLabel);
+  container.appendChild(whyText);
+  container.appendChild(rubricLabel);
+  container.appendChild(rubricList);
+  container.appendChild(focusLabel);
+  container.appendChild(focusList);
+  container.appendChild(resumeLabel);
+  container.appendChild(resumeList);
+  container.appendChild(jobLabel);
+  container.appendChild(jobList);
+
+  ui.insightsQuestion = question;
+  ui.insightsPin = pinBadge;
+  ui.insightsEmpty = empty;
+  ui.insightsWhy = whyText;
+  ui.insightsRubric = rubricList;
+  ui.insightsFocus = focusList;
+  ui.insightsResume = resumeList;
+  ui.insightsJob = jobList;
+
+  const panel = createPanel({
+    title: 'Question Insights',
+    subtitle: 'Hover a question or click Pin to keep details visible.',
+    content: container,
+    attrs: { 'data-testid': 'question-insights-panel' }
+  });
+  panel.classList.add('ui-panel--sticky');
+  return panel;
 }
 
 function buildTranscriptPanel(ui) {
@@ -2302,6 +2747,11 @@ export function buildVoiceLayout() {
     sessionId: null,
     questions: [],
     questionStatuses: [],
+    focusAreas: [],
+    resumeExcerpt: '',
+    jobExcerpt: '',
+    questionInsightsPinnedIndex: null,
+    questionInsightsActiveIndex: null,
     transcript: [],
     score: null,
     adapter: config.adapter,
@@ -2362,12 +2812,20 @@ export function buildVoiceLayout() {
   const ui = {};
   if (typeof window !== 'undefined' && window.__E2E__) {
     window.__e2eState = state;
+    window.__e2eUi = ui;
   }
 
   function syncQuestionStatuses(statuses) {
     state.questionStatuses = normalizeQuestionStatuses(state.questions, statuses);
     if (ui.questionList && ui.questionPlaceholder) {
-      renderQuestions(ui.questionList, state.questions, state.questionStatuses, ui.questionPlaceholder, onQuestionStatusChange);
+      renderQuestions(
+        ui.questionList,
+        state.questions,
+        state.questionStatuses,
+        ui.questionPlaceholder,
+        onQuestionStatusChange,
+        buildQuestionRenderOptions(ui, state)
+      );
     }
   }
 
@@ -2390,7 +2848,14 @@ export function buildVoiceLayout() {
     }
     const previous = state.questionStatuses[index];
     applyLocalQuestionStatus(index, status);
-    renderQuestions(ui.questionList, state.questions, state.questionStatuses, ui.questionPlaceholder, onQuestionStatusChange);
+    renderQuestions(
+      ui.questionList,
+      state.questions,
+      state.questionStatuses,
+      ui.questionPlaceholder,
+      onQuestionStatusChange,
+      buildQuestionRenderOptions(ui, state)
+    );
     try {
       const response = await updateQuestionStatus({
         interviewId: state.interviewId,
@@ -2406,7 +2871,14 @@ export function buildVoiceLayout() {
       if (previous) {
         applyLocalQuestionStatus(index, previous.status, previous.updated_at);
       }
-      renderQuestions(ui.questionList, state.questions, state.questionStatuses, ui.questionPlaceholder, onQuestionStatusChange);
+      renderQuestions(
+        ui.questionList,
+        state.questions,
+        state.questionStatuses,
+        ui.questionPlaceholder,
+        onQuestionStatusChange,
+        buildQuestionRenderOptions(ui, state)
+      );
     }
   }
 
@@ -2415,6 +2887,112 @@ export function buildVoiceLayout() {
   }
 
   ui.onQuestionStatusChange = onQuestionStatusChange;
+
+  function renderInsightList(list, items, emptyText) {
+    list.innerHTML = '';
+    const values = Array.isArray(items) ? items.filter(Boolean) : [];
+    if (values.length === 0) {
+      const li = document.createElement('li');
+      li.className = 'ui-insights__empty-item';
+      li.textContent = emptyText;
+      list.appendChild(li);
+      return;
+    }
+    values.forEach((item) => {
+      const li = document.createElement('li');
+      li.textContent = item;
+      list.appendChild(li);
+    });
+  }
+
+  function updateQuestionInsights(index, options = {}) {
+    if (!ui.insightsQuestion) {
+      return;
+    }
+    const { source = 'hover', clear = false } = options;
+    if (clear) {
+      state.questionInsightsPinnedIndex = null;
+    }
+    const maxIndex = state.questions.length - 1;
+    if (Number.isInteger(state.questionInsightsPinnedIndex)
+      && state.questionInsightsPinnedIndex > maxIndex) {
+      state.questionInsightsPinnedIndex = null;
+    }
+    const resolvedIndex = Number.isInteger(index) ? index : null;
+    if (source === 'pin') {
+      if (resolvedIndex === null) {
+        state.questionInsightsPinnedIndex = null;
+      } else if (state.questionInsightsPinnedIndex === resolvedIndex) {
+        state.questionInsightsPinnedIndex = null;
+      } else {
+        state.questionInsightsPinnedIndex = resolvedIndex;
+      }
+    }
+    const activeIndex = state.questionInsightsPinnedIndex ?? resolvedIndex;
+    state.questionInsightsActiveIndex = activeIndex;
+
+    if (ui.insightsPin) {
+      if (state.questionInsightsPinnedIndex === null) {
+        ui.insightsPin.hidden = true;
+      } else {
+        ui.insightsPin.hidden = false;
+        ui.insightsPin.textContent = `Pinned · Q${state.questionInsightsPinnedIndex + 1}`;
+      }
+    }
+
+    if (activeIndex === null || !state.questions[activeIndex]) {
+      ui.insightsQuestion.textContent = 'Hover a question to see insights.';
+      ui.insightsEmpty.hidden = false;
+      ui.insightsWhy.textContent = '';
+      renderInsightList(ui.insightsRubric, [], 'Rubric details appear after question selection.');
+      renderInsightList(ui.insightsFocus, [], 'Focus areas will appear after question generation.');
+      renderInsightList(ui.insightsResume, [], 'Resume cues will appear after question selection.');
+      renderInsightList(ui.insightsJob, [], 'Job cues will appear after question selection.');
+      return;
+    }
+
+    const questionText = state.questions[activeIndex];
+    const rubric = buildQuestionRubric(questionText);
+    ui.insightsQuestion.textContent = questionText;
+    ui.insightsEmpty.hidden = true;
+    ui.insightsWhy.textContent = rubric.why;
+
+    renderInsightList(ui.insightsRubric, rubric.rubric, 'No rubric details available.');
+    renderInsightList(ui.insightsFocus, state.focusAreas.slice(0, 4), 'No focus areas available yet.');
+    renderInsightList(
+      ui.insightsResume,
+      pickInsightLines(state.resumeExcerpt, questionText),
+      'No matching resume lines found yet.'
+    );
+    renderInsightList(
+      ui.insightsJob,
+      pickInsightLines(state.jobExcerpt, questionText),
+      state.jobExcerpt ? 'No matching job lines found yet.' : 'No job cues available yet.'
+    );
+
+    if (source === 'pin' && ui.questionList && ui.questionPlaceholder) {
+      renderQuestions(
+        ui.questionList,
+        state.questions,
+        state.questionStatuses,
+        ui.questionPlaceholder,
+        onQuestionStatusChange,
+        buildQuestionRenderOptions(ui, state)
+      );
+    }
+  }
+
+  function onQuestionHover(index) {
+    updateQuestionInsights(index, { source: 'hover' });
+  }
+
+  function onQuestionPin(index) {
+    updateQuestionInsights(index, { source: 'pin' });
+  }
+
+  ui.onQuestionHover = onQuestionHover;
+  ui.onQuestionPin = onQuestionPin;
+  ui.updateQuestionInsights = updateQuestionInsights;
 
   function isCoachRole(role) {
     const normalized = String(role || '').toLowerCase();
@@ -2450,7 +3028,11 @@ export function buildVoiceLayout() {
 
   const rightColumn = document.createElement('div');
   rightColumn.className = 'layout-stack';
-  rightColumn.appendChild(buildQuestionsPanel(ui));
+  const questionRow = document.createElement('div');
+  questionRow.className = 'layout-duo';
+  questionRow.appendChild(buildQuestionsPanel(ui));
+  questionRow.appendChild(buildQuestionInsightsPanel(ui));
+  rightColumn.appendChild(questionRow);
   rightColumn.appendChild(buildTranscriptPanel(ui));
   rightColumn.appendChild(buildScorePanel(ui));
 
@@ -2459,9 +3041,14 @@ export function buildVoiceLayout() {
   layout.appendChild(leftColumn);
   layout.appendChild(rightColumn);
 
+  const page = document.createElement('div');
+  page.className = 'layout-page';
+  page.appendChild(buildAppHeader());
+  page.appendChild(layout);
+
   const { drawer, backdrop } = buildSessionToolsDrawer(state, ui, config);
-  layout.appendChild(drawer);
-  layout.appendChild(backdrop);
+  page.appendChild(drawer);
+  page.appendChild(backdrop);
 
   function formatSessionTimestamp(value) {
     if (!value) return '';
@@ -2554,6 +3141,11 @@ export function buildVoiceLayout() {
       state.sessionActive = false;
       state.sessionId = null;
       state.liveMode = null;
+      state.focusAreas = [];
+      state.resumeExcerpt = '';
+      state.jobExcerpt = '';
+      state.questionInsightsPinnedIndex = null;
+      state.questionInsightsActiveIndex = null;
       clearGeminiReconnect(state);
 
       renderQuestions(
@@ -2561,10 +3153,13 @@ export function buildVoiceLayout() {
         state.questions,
         state.questionStatuses,
         ui.questionPlaceholder,
-        ui.onQuestionStatusChange
+        ui.onQuestionStatusChange,
+        buildQuestionRenderOptions(ui, state)
       );
       renderTranscript(ui.transcriptList, state.transcript);
       renderScore(ui, state.score);
+      const defaultInsightIndex = state.questions.length > 0 ? 0 : null;
+      ui.updateQuestionInsights?.(defaultInsightIndex, { clear: true });
 
       if (ui.sessionNameInput) {
         ui.sessionNameInput.value = state.sessionName;
@@ -2783,7 +3378,7 @@ export function buildVoiceLayout() {
   });
 
   updateSessionToolsState();
-  return layout;
+  return page;
 }
 
 export function mountVoiceApp(root) {

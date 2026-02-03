@@ -28,10 +28,15 @@ async function handleResponse(response) {
   throw new Error(detail || response.statusText);
 }
 
-export async function createInterview({ resumeFile, jobFile, roleTitle }) {
+export async function createInterview({ resumeFile, jobFile, jobUrl, roleTitle }) {
   const formData = new FormData();
   formData.append('resume', resumeFile);
-  formData.append('job_description', jobFile);
+  if (jobFile) {
+    formData.append('job_description', jobFile);
+  }
+  if (jobUrl) {
+    formData.append('job_description_url', jobUrl);
+  }
   if (roleTitle) {
     formData.append('role_title', roleTitle);
   }

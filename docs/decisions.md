@@ -523,3 +523,65 @@ Alternatives considered:
 Acceptance / test:
 - Submit is enabled as soon as the coach finishes speaking when a question is awaiting an answer and there is any transcript text.
 - Help responses include resume evidence snippets and fall back to “insufficient resume detail” messaging when evidence is missing.
+
+## D-20260202-1704
+Date: 2026-02-02 17:04
+Inputs: CR-20260202-1704
+PRD: Next / backlog
+
+Decision:
+Use the existing “PrepTalk” product name in the UI and AGENTS docs (treat “PreTalk” as a typo), add client-side question insights using resume/job excerpts returned at interview creation (no extra model calls), and allow a job description URL as an alternative to file upload via server-side fetch + HTML/PDF extraction.
+
+Rationale:
+Keeping the existing brand avoids inconsistent naming across repo/docs. Client-side insights meet the “client side view” requirement while leveraging already-extracted text. Allowing a URL option reduces friction while reusing the existing extraction pipeline on the server.
+
+Alternatives considered:
+- Rename the product to “PreTalk” across the repo (rejected: conflicts with existing “PrepTalk” naming already shipped).
+- Generate question insights via new model calls (rejected: not “client side view” and adds cost/latency).
+- Require users to paste job text instead of URL (rejected: less convenient).
+
+Acceptance / test:
+- UI displays “PrepTalk” and a short how-to; AGENTS.md includes the app name/purpose.
+- Question hover updates a persistent side panel with rubric/focus areas and resume pointers computed client-side.
+- Create interview accepts either job file or job URL and returns resume/job excerpts used by the UI.
+
+## D-20260202-1720
+Date: 2026-02-02 17:20
+Inputs: CR-20260202-1720
+PRD: Next / backlog
+
+Decision:
+Add a pin interaction so users can lock question insights in the side panel, expand the PrepTalk intro to include a short “how to use it” flow and turn-based button guidance, and prefer a reachable job URL over an uploaded job file (fall back to the file if the URL fetch fails).
+
+Rationale:
+Pinning keeps the insights panel useful while drafting responses. A fuller intro reduces confusion about setup and turn-based controls. Preferring the URL when it works aligns with the request while keeping document uploads as a reliable fallback.
+
+Alternatives considered:
+- Only update insights on hover with no pin (rejected: user asked for pin click).
+- Hide the job file field when a URL is provided (rejected: removes a useful fallback).
+- Error out when the URL fails even if a file exists (rejected: the request implies a fallback).
+
+Acceptance / test:
+- Question insights can be pinned and remain visible until cleared.
+- The intro includes what the app does and step-by-step usage plus turn-based button guidance.
+- When both URL and file are provided, the server uses the URL if reachable and otherwise processes the file.
+
+## D-20260202-1740
+Date: 2026-02-02 17:40
+Inputs: CR-20260202-1740
+PRD: Next / backlog
+
+Decision:
+Default the insights panel to the first generated question, surface a UI warning when a job URL fetch fails even if a file fallback succeeds, and update the PrepTalk intro copy with a positive, supportive tone that fills in missing “how to use it” guidance.
+
+Rationale:
+The user explicitly asked for first-question defaults and warnings on failed actions; adding a positive, supportive tone reduces confusion and aligns with the requested UX.
+
+Alternatives considered:
+- Leave insights empty until hover (rejected: user asked for first-question default).
+- Only warn on hard failures (rejected: request asked to warn on any failed action).
+
+Acceptance / test:
+- After question generation, the insights panel shows question 1 details by default.
+- When a job URL fetch fails but a file fallback succeeds, the setup panel shows a warning message.
+- The hero copy includes a friendly intro plus step-by-step usage guidance.
