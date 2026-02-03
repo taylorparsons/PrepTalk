@@ -3,11 +3,14 @@
 Spec: docs/specs/20260203-cta-clarity/spec.md
 
 ## NEXT
+- (none)
 
 ## IN PROGRESS
 - <at most one task>
 
 ## DONE
+- [2026-02-03 13:38] T-024: Hide questions/insights/transcript/controls during Stage 3 results view. (Implements: FR-018)
+- [2026-02-03 13:38] T-025: Update Playwright tests to assert Stage 3 panel hiding. (Implements: FR-018)
 - [2026-02-03 13:32] T-003: Implement Stage 2 CTA gating + help hint + rubric-based help surface. (Implements: FR-002, FR-004, FR-017)
 - [2026-02-03 13:22] T-022: Fix Candidate Setup collapse styling so the panel body and inputs are visually hidden. (Implements: FR-014, FR-015)
 - [2026-02-03 13:22] T-023: Extend Playwright tests to assert collapsed panel hides resume/job inputs. (Implements: FR-014, FR-015)

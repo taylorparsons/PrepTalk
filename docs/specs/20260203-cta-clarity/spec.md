@@ -37,6 +37,7 @@ Narrative:
 Acceptance scenarios:
 1. Given scoring is complete, When Stage 3 is shown, Then “Restart Interview” is the primary CTA and export actions are secondary. (Verifies: FR-003, FR-004)
 2. Given the score is ready, When Stage 3 is shown, Then the UI explicitly indicates that export options are available. (Verifies: FR-003)
+3. Given the session is stopped and scoring is pending or complete, When Stage 3 is shown, Then question, insights, transcript, and controls panels are hidden while the score panel remains visible. (Verifies: FR-018)
 
 ### US4: Stage-gated panel visibility (Priority: P1)
 Narrative:
@@ -68,6 +69,7 @@ Functional requirements:
 - FR-015: Candidate Setup collapses by default after a session starts and can be re-opened via the toggle. (Sources: CR-20260203-1138; D-20260203-1138)
 - FR-016: Panels remain hidden until they have content (questions, insights, transcript, score/report, session controls). (Sources: CR-20260203-1146; D-20260203-1138)
 - FR-017: Stage 2 shows a non-blocking help hint after brief inactivity and surfaces a compact rubric card when help is requested. (Sources: CR-20260203-1328; D-20260203-1328)
+- FR-018: Stage 3 hides question, insights, transcript, and controls panels once scoring starts, keeping results focused on score + exports. (Sources: CR-20260203-1335; D-20260203-1335)
 
 ## Edge cases
 - Missing inputs: “Start Interview” remains disabled and the reason is shown. (Verifies: FR-001, FR-004)

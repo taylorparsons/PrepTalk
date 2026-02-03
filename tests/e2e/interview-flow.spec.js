@@ -88,6 +88,10 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
 
   await page.getByTestId('stop-interview').click();
   await expect(scorePanel).toBeVisible();
+  await expect(controlsPanel).toBeHidden();
+  await expect(questionsPanel).toBeHidden();
+  await expect(insightsPanel).toBeHidden();
+  await expect(transcriptPanel).toBeHidden();
   await expect(page.getByTestId('score-value')).toHaveText('84');
   await expect(page.getByTestId('score-summary')).toContainText('Clear structure');
   await expect(page.getByTestId('restart-interview-main')).toBeEnabled();
