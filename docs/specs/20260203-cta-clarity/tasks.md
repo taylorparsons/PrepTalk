@@ -9,6 +9,7 @@ Spec: docs/specs/20260203-cta-clarity/spec.md
 - <at most one task>
 
 ## DONE
+- [2026-02-03 14:22] T-027: Run Playwright live E2E and record report output. (Implements: FR-013)
 - [2026-02-03 13:42] T-026: Attempt Playwright mock + live runs and record results. (Implements: FR-013)
 - [2026-02-03 13:38] T-024: Hide questions/insights/transcript/controls during Stage 3 results view. (Implements: FR-018)
 - [2026-02-03 13:38] T-025: Update Playwright tests to assert Stage 3 panel hiding. (Implements: FR-018)
