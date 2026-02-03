@@ -823,6 +823,27 @@ body {
   padding: 8px 10px;
 }
 
+.ui-turn-rubric {
+  font-size: 12px;
+  color: var(--ui-color-text);
+  background: #fffaf1;
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-color-border);
+  padding: 10px 12px;
+}
+
+.ui-turn-rubric__title {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.ui-turn-rubric__list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+}
+
 .ui-controls__row--tools {
   justify-content: flex-start;
 }
