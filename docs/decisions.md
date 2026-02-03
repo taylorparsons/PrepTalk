@@ -585,3 +585,24 @@ Acceptance / test:
 - After question generation, the insights panel shows question 1 details by default.
 - When a job URL fetch fails but a file fallback succeeds, the setup panel shows a warning message.
 - The hero copy includes a friendly intro plus step-by-step usage guidance.
+
+## D-20260202-1816
+Date: 2026-02-02 18:16
+Inputs: CR-20260202-1816
+PRD: Next / backlog
+
+Decision:
+Format focus areas into title + description blocks on the client, stack question controls vertically above the question text to reduce whitespace, make the Candidate Setup panel collapsible once an interview is created, and add a main-page restart button that mirrors the Advanced Setup restart behavior.
+
+Rationale:
+These choices preserve existing backend contracts while improving readability and scanability in the UI, and they expose frequent actions without forcing users into the drawer.
+
+Alternatives considered:
+- Change the backend focus area payload shape (rejected: higher risk for adapters and stored data).
+- Auto-collapse setup on session start (rejected: user asked for collapsible, not forced).
+
+Acceptance / test:
+- Focus areas render as formatted title + description blocks.
+- Question controls stack vertically above question text.
+- Candidate Setup can be collapsed after interview creation.
+- Main restart button appears and follows the same enable/disable rules as the drawer restart.

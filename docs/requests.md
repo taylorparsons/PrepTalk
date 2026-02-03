@@ -482,3 +482,25 @@ Notes:
 - Default the insights panel to the first question after generation.
 - Show a warning whenever a user action (like a job URL fetch) fails, even if a fallback succeeds.
 - Use a positive, supportive tone in the intro/how-to copy and fill in any missing guidance.
+
+## CR-20260202-1816
+Date: 2026-02-02 18:16
+Source: chat
+
+Request (verbatim):
+I have a few details to be updated in the UI 
+1. the question insights show json, this needs to be mapped to a formatted display 
+eg """ocus areas
+{'area': 'Technical Depth in Distributed Systems & AI', 'description': "Assess candidate's ability to discuss architectural trade-offs (CAP theorem, latency vs. accuracy) in data platforms and their specific knowledge of ML/LLM lifecycles beyond high-level buzzwords."}
+{'area': 'Cross-Functional Dependency Management', 'description': "Evaluate experience in navigating complex organizational structures to align stakeholders (Engineering, Product, Data Science) on critical path schedules, specifically in high-stakes environments like Nordstrom's peak events."}
+{'area': 'Operational Excellence & Quality Assurance', 'description': "Focus on the candidate's methodology for improving system reliability (SLO/SLA management, incident response) and their hands-on experience implementing testing cultures that reduce production failures."}
+{'area': 'Data Governance & Privacy', 'description': "Given Apple's focus on user privacy, scrutinize the candidate's experience with AI governance and data ingestion security to ensure they prioritize protection alongside innovation."}"""
+2. the interview questions have a lot of white space, stack the pin and status on top of each other or above the question so free up more white space
+3. once app is running the Candidate setup should collaspable
+4. the restart inteview that is in the advanced setting should be up on the main app as well. Perhaps but below the session controls and the advnaced setup button in the same container on the left menu
+
+Notes:
+- Format focus areas into a readable title + description layout instead of raw JSON strings.
+- Stack question controls vertically to reduce whitespace.
+- Make Candidate Setup collapsible once a session/interview exists.
+- Add a main restart button near Session Controls (keep Advanced Setup version).

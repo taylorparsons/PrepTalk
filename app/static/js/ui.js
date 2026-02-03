@@ -683,6 +683,14 @@ function buildSetupPanel(state, ui) {
   status.className = 'ui-field__help';
   status.textContent = 'Waiting for documents.';
 
+  const collapseButton = createButton({
+    label: 'Collapse setup',
+    variant: 'ghost',
+    size: 'sm',
+    disabled: true,
+    attrs: { 'data-testid': 'setup-collapse' }
+  });
+
   const generateButton = createButton({
     label: 'Generate Questions',
     variant: 'secondary',
@@ -796,12 +804,40 @@ function buildSetupPanel(state, ui) {
   ui.setupStatus = status;
   ui.generateButton = generateButton;
 
-  return createPanel({
+  const panel = createPanel({
     title: 'Candidate Setup',
     subtitle: 'Add resume + job details to personalize the interview.',
     content,
     attrs: { 'data-testid': 'setup-panel' }
   });
+
+  const header = panel.querySelector('.ui-panel__header');
+  if (header) {
+    header.classList.add('ui-panel__header--actions');
+    const actions = document.createElement('div');
+    actions.className = 'ui-panel__actions';
+    actions.appendChild(collapseButton);
+    header.appendChild(actions);
+  }
+
+  let setupCollapsed = false;
+  function setSetupCollapsed(value) {
+    setupCollapsed = value;
+    content.hidden = setupCollapsed;
+    panel.classList.toggle('ui-panel--collapsed', setupCollapsed);
+    updateButtonLabel(collapseButton, setupCollapsed ? 'Expand setup' : 'Collapse setup');
+  }
+
+  collapseButton.addEventListener('click', () => {
+    setSetupCollapsed(!setupCollapsed);
+  });
+
+  ui.setupCollapse = collapseButton;
+  ui.setupBody = content;
+  ui.setSetupCollapsed = setSetupCollapsed;
+  ui.setupPanel = panel;
+
+  return panel;
 }
 
 function buildControlsPanel(state, ui, config) {
@@ -889,6 +925,22 @@ function buildControlsPanel(state, ui, config) {
       'aria-expanded': 'false'
     }
   });
+
+  const restartMainLabel = document.createElement('div');
+  restartMainLabel.className = 'ui-field__label';
+  restartMainLabel.textContent = 'Restart interview';
+
+  const restartMainButton = createButton({
+    label: 'Restart',
+    variant: 'ghost',
+    size: 'sm',
+    disabled: true,
+    attrs: { 'data-testid': 'restart-interview-main' }
+  });
+
+  const restartMainHelp = document.createElement('p');
+  restartMainHelp.className = 'ui-field__help';
+  restartMainHelp.textContent = 'Enabled after a session starts.';
 
   function setMuteState(isMuted) {
     state.isMuted = isMuted;
@@ -2258,6 +2310,12 @@ function buildControlsPanel(state, ui, config) {
   toolsRow.className = 'ui-controls__row ui-controls__row--tools';
   toolsRow.appendChild(sessionToolsButton);
 
+  const restartRow = document.createElement('div');
+  restartRow.className = 'ui-controls__restart';
+  restartRow.appendChild(restartMainLabel);
+  restartRow.appendChild(restartMainButton);
+  restartRow.appendChild(restartMainHelp);
+
   const content = document.createElement('div');
   content.className = 'layout-stack';
   content.appendChild(statusPill);
@@ -2265,6 +2323,7 @@ function buildControlsPanel(state, ui, config) {
   content.appendChild(turnActionsRow);
   content.appendChild(turnHelp);
   content.appendChild(toolsRow);
+  content.appendChild(restartRow);
 
   ui.statusPill = statusPill;
   ui.startButton = startButton;
@@ -2276,6 +2335,8 @@ function buildControlsPanel(state, ui, config) {
   ui.turnActionsRow = turnActionsRow;
   ui.turnHelp = turnHelp;
   ui.sessionToolsToggle = sessionToolsButton;
+  ui.restartButtonMain = restartMainButton;
+  ui.restartMainHelp = restartMainHelp;
   ui.updateMeta = updateMeta;
   ui.applyModelOverrides = applyModelOverrides;
   ui.resetModelOverrides = resetModelOverrides;
@@ -2603,7 +2664,7 @@ function buildQuestionInsightsPanel(ui) {
   focusLabel.textContent = 'Focus areas';
 
   const focusList = document.createElement('ul');
-  focusList.className = 'ui-insights__list';
+  focusList.className = 'ui-insights__list ui-insights__list--focus';
 
   const resumeLabel = document.createElement('div');
   resumeLabel.className = 'ui-insights__label';
@@ -2905,6 +2966,72 @@ export function buildVoiceLayout() {
     });
   }
 
+  function parseFocusAreaEntry(entry) {
+    if (!entry) {
+      return null;
+    }
+    if (typeof entry === 'object') {
+      const title = entry.area || entry.title || entry.name;
+      const description = entry.description || entry.details || entry.summary || '';
+      if (!title && !description) {
+        return null;
+      }
+      return {
+        title: String(title || description || '').trim(),
+        description: String(description || '').trim()
+      };
+    }
+    if (typeof entry === 'string') {
+      const raw = entry.trim();
+      if (!raw) return null;
+      if (raw.startsWith('{') && raw.includes('area')) {
+        const areaMatch = raw.match(/['"]area['"]\s*:\s*(['"])(.*?)\1/);
+        const descMatch = raw.match(/['"]description['"]\s*:\s*(['"])([\s\S]*?)\1/);
+        const title = areaMatch?.[2]?.trim();
+        const description = descMatch?.[2]?.trim() || '';
+        if (title || description) {
+          return { title: title || raw, description };
+        }
+      }
+      return { title: raw, description: '' };
+    }
+    return null;
+  }
+
+  function normalizeFocusAreas(items) {
+    const values = Array.isArray(items) ? items : [];
+    return values
+      .map((entry) => parseFocusAreaEntry(entry))
+      .filter(Boolean);
+  }
+
+  function renderFocusAreas(list, areas, emptyText) {
+    list.innerHTML = '';
+    const values = normalizeFocusAreas(areas);
+    if (values.length === 0) {
+      const li = document.createElement('li');
+      li.className = 'ui-insights__empty-item';
+      li.textContent = emptyText;
+      list.appendChild(li);
+      return;
+    }
+    values.forEach((item) => {
+      const li = document.createElement('li');
+      li.className = 'ui-insights__focus-item';
+      const title = document.createElement('div');
+      title.className = 'ui-insights__focus-title';
+      title.textContent = item.title;
+      li.appendChild(title);
+      if (item.description) {
+        const description = document.createElement('div');
+        description.className = 'ui-insights__focus-description';
+        description.textContent = item.description;
+        li.appendChild(description);
+      }
+      list.appendChild(li);
+    });
+  }
+
   function updateQuestionInsights(index, options = {}) {
     if (!ui.insightsQuestion) {
       return;
@@ -2958,7 +3085,7 @@ export function buildVoiceLayout() {
     ui.insightsWhy.textContent = rubric.why;
 
     renderInsightList(ui.insightsRubric, rubric.rubric, 'No rubric details available.');
-    renderInsightList(ui.insightsFocus, state.focusAreas.slice(0, 4), 'No focus areas available yet.');
+    renderFocusAreas(ui.insightsFocus, state.focusAreas.slice(0, 4), 'No focus areas available yet.');
     renderInsightList(
       ui.insightsResume,
       pickInsightLines(state.resumeExcerpt, questionText),
@@ -3230,8 +3357,18 @@ export function buildVoiceLayout() {
     if (ui.restartButton) {
       ui.restartButton.disabled = !canRestart;
     }
+    if (ui.restartButtonMain) {
+      ui.restartButtonMain.disabled = !canRestart;
+    }
     if (ui.exportTranscript) {
       updateButtonLabel(ui.exportTranscript, exportFormat === 'txt' ? 'Export TXT' : 'Export PDF');
+    }
+    if (ui.setupCollapse) {
+      ui.setupCollapse.disabled = !hasInterview;
+      ui.setupCollapse.hidden = !hasInterview;
+      if (!hasInterview && ui.setSetupCollapsed) {
+        ui.setSetupCollapsed(false);
+      }
     }
 
     if (ui.exportHelp) {
@@ -3241,6 +3378,11 @@ export function buildVoiceLayout() {
     }
     if (ui.restartHelp) {
       ui.restartHelp.textContent = state.sessionActive
+        ? 'Stop the session to restart.'
+        : 'Enabled after a session starts.';
+    }
+    if (ui.restartMainHelp) {
+      ui.restartMainHelp.textContent = state.sessionActive
         ? 'Stop the session to restart.'
         : 'Enabled after a session starts.';
     }
@@ -3360,7 +3502,7 @@ export function buildVoiceLayout() {
     }
   });
 
-  ui.restartButton?.addEventListener('click', async () => {
+  async function handleRestart() {
     if (!state.interviewId) return;
     try {
       await restartInterview({ interviewId: state.interviewId });
@@ -3371,10 +3513,23 @@ export function buildVoiceLayout() {
       ui.stopButton.disabled = true;
       updateStatusPill(ui.statusPill, { label: 'Idle', tone: 'neutral' });
     } catch (error) {
-      ui.restartHelp.textContent = error.message || 'Unable to restart session.';
+      const message = error.message || 'Unable to restart session.';
+      if (ui.restartHelp) {
+        ui.restartHelp.textContent = message;
+      }
+      if (ui.restartMainHelp) {
+        ui.restartMainHelp.textContent = message;
+      }
     } finally {
       updateSessionToolsState();
     }
+  }
+
+  ui.restartButton?.addEventListener('click', () => {
+    void handleRestart();
+  });
+  ui.restartButtonMain?.addEventListener('click', () => {
+    void handleRestart();
   });
 
   updateSessionToolsState();

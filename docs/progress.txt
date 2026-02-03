@@ -938,3 +938,33 @@ NOTES
 - Commands run: `./.venv/bin/python -m pytest tests/test_api_interviews.py -q` -> 13 passed; `./run.sh test` -> 56 passed (warned about --localstorage-file path).
 - Decisions: Default insights to question 1, surface job URL failure warnings, and update intro copy with a positive tone.
 - Risks / open questions: None.
+
+---
+
+Session: 2026-02-02 18:21
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, frontend-component-system
+Feature: 20260202-ui-guidance
+Input: CR-20260202-1816
+Decisions: D-20260202-1816
+Spec: docs/specs/20260202-ui-guidance/spec.md
+Tasks: docs/specs/20260202-ui-guidance/tasks.md
+Goal: Format focus areas, compact question layout, add collapsible setup, and expose restart in main controls.
+
+DONE
+- [2026-02-02 18:21] T-006: Format focus areas in the insights panel as title + description. (Skills: ralph, frontend-component-system)
+- [2026-02-02 18:21] T-007: Reduce question list whitespace by stacking pin + status controls vertically. (Skills: ralph, frontend-component-system)
+- [2026-02-02 18:21] T-008: Add collapsible Candidate Setup once an interview exists. (Skills: ralph, frontend-component-system)
+- [2026-02-02 18:21] T-009: Add main Restart button under Session Controls and mirror drawer rules. (Skills: ralph, frontend-component-system)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `./run.sh test` -> 57 passed (warned about --localstorage-file path).
+- Decisions: Format focus areas on the client, stack question controls vertically, enable setup collapse once interview exists, and mirror restart in main controls.
+- Risks / open questions: None.
