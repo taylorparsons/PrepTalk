@@ -1,0 +1,59 @@
+flowchart TB
+    subgraph HEADER[Session Complete]
+        LOGO[PrepTalk]
+    end
+
+    subgraph CELEBRATE[Celebration]
+        TROPHY[You did it!]
+        SUB[Here is how you have grown today]
+    end
+
+    subgraph STATS[Session Stats]
+        direction LR
+        S1[5 Questions<br/>Practiced]
+        S2[18 Minutes<br/>Practice Time]
+        S3[3 Stories<br/>Ready to Tell]
+    end
+
+    subgraph WINS[Key Wins This Session]
+        W1[You connected your Kubernetes<br/>migration to measurable results]
+        W2[Your STAR structure improved<br/>with each answer]
+        W3[You showed great self-awareness<br/>discussing challenges]
+    end
+
+    subgraph GROWTH[Areas of Strength]
+        direction LR
+        G1[Quantifying<br/>impact]
+        G2[Clear<br/>storytelling]
+        G3[Leadership<br/>examples]
+    end
+
+    subgraph NEXTUP[What is Next]
+        direction LR
+        EXPORT[Export Study Guide]
+        PRACTICE[Practice More]
+    end
+
+    subgraph FOOTER[Encouragement]
+        ENCOURAGE[You are more prepared than you think<br/>Trust your experience]
+    end
+
+    HEADER ~~~ CELEBRATE
+    CELEBRATE ~~~ STATS
+    STATS ~~~ WINS
+    WINS ~~~ GROWTH
+    GROWTH ~~~ NEXTUP
+    NEXTUP ~~~ FOOTER
+
+    style TROPHY fill:#9A2A2A,color:#fff
+    style S1 fill:#F5E5E4,color:#3D1111
+    style S2 fill:#F5E5E4,color:#3D1111
+    style S3 fill:#F5E5E4,color:#3D1111
+    style W1 fill:#fff,stroke:#9A2A2A
+    style W2 fill:#fff,stroke:#9A2A2A
+    style W3 fill:#fff,stroke:#9A2A2A
+    style G1 fill:#F5E5E4,color:#3D1111
+    style G2 fill:#F5E5E4,color:#3D1111
+    style G3 fill:#F5E5E4,color:#3D1111
+    style EXPORT fill:#9A2A2A,color:#fff
+    style ENCOURAGE fill:#F5E5E4,color:#3D1111

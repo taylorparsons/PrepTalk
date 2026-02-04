@@ -1,0 +1,24 @@
+flowchart TB
+    subgraph CURRENT["CURRENT: Test First → Freeze → Maybe Help"]
+        direction LR
+        C1["Question"] --> C2["Freeze"]
+        C2 --> C3["Panic"]
+        C3 --> C4["Maybe Help"]
+        C4 --> C5["Recover"]
+    end
+
+    subgraph PROPOSED["PROPOSED: Teach First → Confidence → Mastery"]
+        direction LR
+        P1["Example"] --> P2["Understand"]
+        P2 --> P3["Practice"]
+        P3 --> P4["Master"]
+    end
+
+    CURRENT ~~~ PROPOSED
+
+    style C2 fill:#c2453b,color:#fff
+    style C3 fill:#c2453b,color:#fff
+    style P1 fill:#1f6f5f,color:#fff
+    style P2 fill:#1f6f5f,color:#fff
+    style P3 fill:#1f6f5f,color:#fff
+    style P4 fill:#1f6f5f,color:#fff

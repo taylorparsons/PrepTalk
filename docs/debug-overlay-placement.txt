@@ -1,0 +1,219 @@
+PrepTalk Debug Overlay - Screen Layout
+==========================================
+
+PRACTICE SCREEN WITH DEBUG ENABLED (?debug=1)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌────────────────────────────────────────────────────────────────────────┐
+│  PrepTalk                                    Home  Progress  My Stories │  HEADER
+└────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────┬──────────────────────────────────┐
+│                                     │                                  │
+│  MAIN CONTENT                       │  SIDEBAR                         │
+│                                     │                                  │
+│  ┌─────────────────────────────┐   │  ┌────────────────────────────┐ │
+│  │ Progress: ▓▓▓░░░░░░░░       │   │  │ 🔍 AUDIO TELEMETRY        │ │ ← DEBUG CARD
+│  └─────────────────────────────┘   │  │                            │ │   (DARK THEME)
+│                                     │  │ MEDIUM              ●      │ │
+│  Question 1 of 3 • Leadership       │  │ ▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░  │ │
+│                                     │  │                            │ │
+│  ┌─────────────────────────────┐   │  │ Sample Rate     24 kHz     │ │
+│  │ "Tell me about a time you   │   │  │ Frame Size      40 ms      │ │
+│  │  led a team through a       │   │  │ Network         4g         │ │
+│  │  challenging project..."    │   │  │ Latency         85 ms      │ │
+│  └─────────────────────────────┘   │  │ Bandwidth       8.2 Mbps   │ │
+│                                     │  └────────────────────────────┘ │
+│  ┌─────────────────────────────┐   │                                  │
+│  │  🎙️  Recording...           │   │  Quick Reference                 │
+│  │     Speak naturally         │   │  ┌────────────────────────────┐ │
+│  └─────────────────────────────┘   │  │ Your resume cue:           │ │
+│                                     │  │ "Led cross-functional...   │ │
+│  ┌─────────────────────────────┐   │  └────────────────────────────┘ │
+│  │ LIVE TRANSCRIPT             │   │                                  │
+│  │                             │   │  ┌────────────────────────────┐ │
+│  │ "In my previous role, I led │   │  │ Remember:                  │ │
+│  │  a team of..."              │   │  │ • Start with context       │ │
+│  └─────────────────────────────┘   │  │ • Focus on YOUR actions    │ │
+│                                     │  └────────────────────────────┘ │
+│  [← Need help]    [Done →]          │                                  │
+│                                     │  ⏱️ 1:24                         │
+│                                     │  Target: 2-3 min                 │
+│                                     │                                  │
+└─────────────────────────────────────┴──────────────────────────────────┘
+
+
+TOAST NOTIFICATION (appears when quality changes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                                                    ┌─────────────────────┐
+                                                    │ ⬇️  Audio Quality    │
+                                                    │    Adjusted         │
+                                                    │    Switched to LOW  │
+                                                    │    quality for      │
+                                                    │    stability        │
+                                                    └─────────────────────┘
+                                                    (Auto-dismiss: 4 sec)
+
+
+WITHOUT DEBUG MODE (default: ?debug=1 NOT present)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌────────────────────────────────────────────────────────────────────────┐
+│  PrepTalk                                    Home  Progress  My Stories │
+└────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────┬──────────────────────────────────┐
+│                                     │                                  │
+│  MAIN CONTENT                       │  SIDEBAR                         │
+│                                     │                                  │
+│  [Same content as above]            │  Quick Reference                 │
+│                                     │  ┌────────────────────────────┐ │
+│                                     │  │ Your resume cue:           │ │
+│                                     │  │ "Led cross-functional...   │ │
+│                                     │  └────────────────────────────┘ │
+│                                     │                                  │
+│                                     │  ┌────────────────────────────┐ │
+│                                     │  │ Remember:                  │ │
+│                                     │  │ • Start with context       │ │
+│                                     │  └────────────────────────────┘ │
+│                                     │                                  │
+│                                     │  [NO DEBUG CARD]                 │
+│                                     │                                  │
+│                                     │  ⏱️ 1:24                         │
+│                                     │  Target: 2-3 min                 │
+│                                     │                                  │
+└─────────────────────────────────────┴──────────────────────────────────┘
+
+
+QUALITY INDICATOR STATES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+HIGH QUALITY (Green)
+┌────────────────────────────┐
+│ HIGH                ●      │  ← Pulsing green dot
+│ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  │  ← 100% green bar
+│                            │
+│ Sample Rate     48 kHz     │
+│ Frame Size      20 ms      │
+│ Network         4g         │
+│ Latency         45 ms      │
+│ Bandwidth       12.5 Mbps  │
+└────────────────────────────┘
+
+MEDIUM QUALITY (Yellow)
+┌────────────────────────────┐
+│ MEDIUM              ●      │  ← Pulsing yellow dot
+│ ▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░  │  ← 60% yellow bar
+│                            │
+│ Sample Rate     24 kHz     │
+│ Frame Size      40 ms      │
+│ Network         4g         │
+│ Latency         85 ms      │
+│ Bandwidth       8.2 Mbps   │
+└────────────────────────────┘
+
+LOW QUALITY (Red)
+┌────────────────────────────┐
+│ LOW                 ●      │  ← Pulsing red dot
+│ ▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░  │  ← 30% red bar
+│                            │
+│ Sample Rate     16 kHz     │
+│ Frame Size      60 ms      │
+│ Network         3g         │
+│ Latency         250 ms     │
+│ Bandwidth       1.2 Mbps   │
+└────────────────────────────┘
+
+
+RESPONSIVE BEHAVIOR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DESKTOP (1200px+)          TABLET (768-1199px)       MOBILE (<768px)
+Sidebar: 320px wide        Sidebar: 280px wide       Sidebar: 100% width
+Toast: 320px wide          Toast: 280px wide         Toast: 90vw wide
+Side-by-side layout        Side-by-side layout       Stacked layout
+
+
+ANIMATION SEQUENCE (Quality Downgrade Example)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Network degrades (detected by preflight-audio.js)
+   ↓
+
+2. Quality indicator changes:
+   - Text: "MEDIUM" → "LOW" (instant)
+   - Dot: Yellow → Red (instant)
+   - Bar: 60% → 30% (500ms smooth transition)
+   ↓
+
+3. Stats update:
+   - Sample Rate: 24 kHz → 16 kHz
+   - Frame Size: 40 ms → 60 ms
+   - Network: 4g → 3g
+   - Latency: 85 ms → 250 ms
+   - Bandwidth: 8.2 Mbps → 1.2 Mbps
+   ↓
+
+4. Toast appears:
+   - Fade in from bottom (300ms)
+   - Yellow border (warning)
+   - ⬇️ icon + message
+   ↓
+
+5. Toast auto-dismisses:
+   - Wait 4 seconds
+   - Fade out (300ms)
+
+
+KEY VISUAL DISTINCTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Debug Card vs Production UI:
+
+┌──────────────────────┬──────────────────────┐
+│ PRODUCTION UI        │ DEBUG UI             │
+├──────────────────────┼──────────────────────┤
+│ Light (#FAFAFA)      │ Dark (#2A2A2E)       │
+│ Inter font           │ IBM Plex Mono        │
+│ Brand green accent   │ Signal colors (R/Y/G)│
+│ Soft borders         │ Strong borders       │
+│ User-focused         │ Technical-focused    │
+└──────────────────────┴──────────────────────┘
+
+This makes it IMMEDIATELY obvious which elements are debug vs production.
+
+
+FILE LOCATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+HTML:  /app/templates/prototype-c.html (lines 377-412)
+CSS:   /app/static/css/prototype-c-components.css (lines 505-682)
+JS:    /app/static/js/preflight-audio.js (showDebugOverlay, etc.)
+Docs:  /docs/debug-overlay-*.md (5 files + 1 demo.html)
+
+
+ENABLE/DISABLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ENABLED:   http://localhost:5000/prototype-c?debug=1
+DISABLED:  http://localhost:5000/prototype-c
+
+Toggle is instant - just add or remove URL parameter.
+No code changes required to switch between modes.
+
+
+DEMO CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ Open PrepTalk with ?debug=1
+□ Navigate to practice screen
+□ Point out dark telemetry card in sidebar
+□ Explain current quality (color, stats)
+□ Open Chrome DevTools
+□ Network tab → Throttling → "Slow 3G"
+□ Reload page
+□ Watch quality drop to LOW
+□ Toast notification appears
+□ Stats update with new values
+□ Explain how this maintains stability

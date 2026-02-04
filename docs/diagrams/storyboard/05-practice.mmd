@@ -1,0 +1,55 @@
+flowchart TB
+    subgraph HEADER[Question 1 of 5 - Recording]
+        direction LR
+        EXIT[Exit]
+        STATUS[Recording]
+    end
+
+    subgraph MAIN[Practice Area]
+        direction LR
+
+        subgraph LEFT[ANSWER PANEL]
+            direction TB
+            QUESTION[Tell me about a time<br/>you led a technical project]
+
+            subgraph VOICE[Voice Input]
+                MIC[Microphone]
+                WAVE[Listening...]
+            end
+
+            TRANSCRIPT[Your answer appears here<br/>as you speak...]
+
+            subgraph CONTROLS[Controls]
+                direction LR
+                HINT[Need Hint]
+                SUBMIT[Submit]
+            end
+        end
+
+        subgraph RIGHT[RESUME CUES]
+            direction TB
+            RTITLE[Your Relevant Experience]
+            C1[Led 50+ microservice migrations]
+            C2[Reduced deployment time by 60%]
+            C3[Managed team of 8 engineers]
+            C4[Implemented CI/CD pipeline]
+            HELP[Use these facts in your answer]
+        end
+    end
+
+    subgraph ENCOURAGE[Encouragement]
+        MSG[You have got this - Take your time]
+    end
+
+    HEADER ~~~ MAIN
+    MAIN ~~~ ENCOURAGE
+
+    style STATUS fill:#9A2A2A,color:#fff
+    style MIC fill:#9A2A2A,color:#fff
+    style SUBMIT fill:#9A2A2A,color:#fff
+    style RIGHT fill:#F5E5E4,color:#3D1111
+    style C1 fill:#fff,color:#3D1111
+    style C2 fill:#fff,color:#3D1111
+    style C3 fill:#fff,color:#3D1111
+    style C4 fill:#fff,color:#3D1111
+    style MSG fill:#F5E5E4,color:#3D1111

@@ -1,0 +1,75 @@
+flowchart LR
+    subgraph Client["Browser Client"]
+        direction TB
+        UI[ui.js<br/>State Manager]
+        Voice[voice.js<br/>Mic Capture]
+        Audio[Audio Playback<br/>Web Audio API]
+        Speech[Speech Recognition<br/>Web Speech API]
+        API[api/client.js<br/>HTTP Client]
+        WS[transport.js<br/>WebSocket]
+    end
+
+    subgraph Server["FastAPI Backend"]
+        direction TB
+        REST[api.py<br/>REST Routes]
+        WSHandler[ws.py<br/>WebSocket Handler]
+        IntSvc[interview_service.py<br/>Core Logic]
+        Store[store.py<br/>Session Store]
+    end
+
+    subgraph AI["Gemini Services"]
+        direction TB
+        GenText[gemini_text.py<br/>Questions + Scoring]
+        GenTTS[gemini_tts.py<br/>Text-to-Speech]
+        GenLive[gemini_live.py<br/>Live Streaming]
+    end
+
+    subgraph External["External APIs"]
+        GeminiAPI[Gemini API]
+    end
+
+    subgraph Storage["Persistence"]
+        JSON[(session_store/<br/>JSON Files)]
+        Logs[(logs/<br/>app.log)]
+    end
+
+    %% Client internal flows
+    Voice -->|PCM-16 frames| UI
+    Speech -->|transcript| UI
+    UI -->|play audio| Audio
+    UI -->|HTTP requests| API
+    UI -->|audio stream| WS
+
+    %% Client to Server
+    API -->|POST /api/*| REST
+    WS -->|binary audio| WSHandler
+
+    %% Server internal
+    REST --> IntSvc
+    WSHandler --> IntSvc
+    IntSvc --> Store
+    REST --> Logs
+    WSHandler --> Logs
+
+    %% Server to AI
+    IntSvc --> GenText
+    IntSvc --> GenTTS
+    WSHandler --> GenLive
+    GenText --> GeminiAPI
+    GenTTS --> GeminiAPI
+    GenLive --> GeminiAPI
+
+    %% Storage
+    Store --> JSON
+
+    %% Response flows
+    GeminiAPI -.->|questions, feedback| GenText
+    GeminiAPI -.->|audio bytes| GenTTS
+    GeminiAPI -.->|stream| GenLive
+    GenText -.-> REST
+    GenTTS -.-> REST
+    GenLive -.-> WSHandler
+    REST -.->|JSON response| API
+    WSHandler -.->|audio + transcript| WS
+    API -.-> UI
+    WS -.-> UI
