@@ -1,0 +1,510 @@
+.progress-fill--67 { width: 67%; }
+.progress-fill--100 { width: 100%; }
+
+/* ========================================
+   STORY SHELF
+   ======================================== */
+
+.stories-header {
+  margin-bottom: var(--space-xl);
+}
+
+.stories-shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.stories-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: var(--space-2xl) var(--space-lg);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--color-border);
+}
+
+.stories-empty h3 {
+  margin-top: var(--space-md);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.stories-empty p {
+  color: var(--color-muted);
+  margin-top: var(--space-xs);
+}
+
+.logo-pulse--medium {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto;
+}
+
+/* Story Card */
+.story-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.story-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-color: var(--brand-primary);
+}
+
+.story-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.story-card-icon {
+  font-size: 24px;
+}
+
+.story-card-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.story-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--space-md);
+}
+
+.story-tag {
+  padding: 2px 10px;
+  background: var(--brand-primary-light);
+  border-radius: 100px;
+  font-size: 11px;
+  color: var(--brand-primary);
+  font-weight: 500;
+}
+
+.story-card-readiness {
+  margin-top: var(--space-sm);
+}
+
+.readiness-bar {
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.readiness-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #9A7A4A, #4A7A9A, #2D8A5A);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.readiness-label {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--color-muted);
+  text-align: right;
+}
+
+/* Story card status indicators */
+.story-card[data-status="ready"] {
+  border-left: 3px solid #2D8A5A;
+}
+
+.story-card[data-status="practicing"] {
+  border-left: 3px solid #4A7A9A;
+}
+
+.story-card[data-status="new"] {
+  border-left: 3px solid #9A7A4A;
+}
+
+/* Story card meta row (practices, action hint) */
+.story-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border);
+}
+
+.story-card-practices {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.story-card-action {
+  font-size: 12px;
+  color: var(--brand-primary);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.story-card:hover .story-card-action {
+  opacity: 1;
+}
+
+/* ==========================================
+   Story Suggestions (Upstream Integration)
+   Shows relevant stories during practice
+   ========================================== */
+
+.story-suggestions {
+  background: linear-gradient(135deg, rgba(45, 138, 90, 0.08) 0%, rgba(74, 122, 154, 0.08) 100%);
+  border: 1px solid rgba(45, 138, 90, 0.2);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.story-suggestions-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.story-suggestions-icon {
+  font-size: 16px;
+}
+
+.story-suggestions-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.story-suggestions-intro {
+  font-size: 14px;
+  color: var(--color-muted);
+  margin-bottom: var(--space-sm);
+}
+
+.story-suggestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+}
+
+.story-suggestion-item {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.story-suggestion-item:hover {
+  border-color: var(--brand-primary);
+}
+
+.story-suggestion-item.selected {
+  border-color: var(--brand-primary);
+  background: rgba(45, 138, 90, 0.05);
+  box-shadow: 0 0 0 2px rgba(45, 138, 90, 0.1);
+}
+
+.suggestion-name {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.suggestion-meta {
+  display: flex;
+  gap: var(--space-sm);
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.suggestion-status {
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.suggestion-status--ready {
+  background: rgba(45, 138, 90, 0.15);
+  color: #2D8A5A;
+}
+
+.suggestion-status--practicing {
+  background: rgba(74, 122, 154, 0.15);
+  color: #4A7A9A;
+}
+
+.suggestion-status--new {
+  background: rgba(154, 122, 74, 0.15);
+  color: #9A7A4A;
+}
+
+.story-suggestions-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.btn-ghost {
+  background: transparent;
+  border: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 13px;
+  transition: color 0.15s ease;
+}
+
+.btn-ghost:hover {
+  color: var(--color-ink);
+}
+
+/* Dark mode support for story suggestions */
+@media (prefers-color-scheme: dark) {
+  .story-suggestions {
+    background: linear-gradient(135deg, rgba(45, 138, 90, 0.12) 0%, rgba(74, 122, 154, 0.12) 100%);
+    border-color: rgba(45, 138, 90, 0.3);
+  }
+
+  .story-suggestion-item {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+  }
+
+  .story-suggestion-item.selected {
+    background: rgba(45, 138, 90, 0.15);
+  }
+}
+
+/* Story capture card */
+.story-capture-card {
+  position: fixed;
+  bottom: var(--space-lg);
+  right: var(--space-lg);
+  width: 320px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  border: 1px solid var(--color-border);
+  z-index: 100;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.story-capture-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.story-capture-icon {
+  font-size: 20px;
+}
+
+.story-capture-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--brand-primary);
+}
+
+.story-capture-name {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
+}
+
+.story-capture-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: var(--space-sm);
+}
+
+.story-capture-insight {
+  font-size: 13px;
+  color: var(--color-muted);
+  margin-bottom: var(--space-md);
+  line-height: 1.5;
+}
+
+/* Stories stats */
+.stories-stats {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-xl);
+  padding: var(--space-lg);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-item .stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--brand-primary);
+}
+
+.stat-item .stat-label {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+/* Filler trend card */
+.filler-trend-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.filler-trend-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: var(--space-md);
+}
+
+.filler-trend-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 40px;
+  margin-bottom: var(--space-sm);
+}
+
+.filler-bar {
+  flex: 1;
+  background: var(--brand-primary);
+  border-radius: 2px;
+  opacity: 0.6;
+  transition: height 0.3s ease;
+}
+
+.filler-bar:last-child {
+  opacity: 1;
+}
+
+.filler-trend-insight {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+/* Stories actions */
+.stories-actions {
+  text-align: center;
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+.stories-actions .btn svg {
+  margin-right: var(--space-xs);
+}
+
+/* Dark mode adjustments for stories */
+@media (prefers-color-scheme: dark) {
+  .stories-empty {
+    background: var(--color-surface-dark, #1A1A1A);
+    border-color: var(--color-border-dark, #333);
+  }
+
+  .story-card {
+    background: var(--color-surface-dark, #1A1A1A);
+    border-color: var(--color-border-dark, #333);
+  }
+
+  .story-capture-card {
+    background: var(--color-surface-dark, #1A1A1A);
+    border-color: var(--color-border-dark, #333);
+  }
+
+  .stories-stats,
+  .filler-trend-card {
+    background: var(--color-surface-dark, #1A1A1A);
+  }
+}
+
+/* ==========================================
+   Story Practice Modal
+   Full-screen modal for rescoring stories
+   ========================================== */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: var(--color-background);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  max-width: 520px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+  animation: modalSlideUp 0.3s ease;
+}
+
+.modal-content--large {
+  max-width: 600px;
+}
+
+@keyframes modalSlideUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-close {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: var(--color-muted);
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+}

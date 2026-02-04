@@ -1,0 +1,69 @@
+{
+  "pdf": {
+    "filename_pattern": "PrepTalk_Report_{date}.pdf",
+    "colors": {
+      "primary_rgb": [45, 90, 71],
+      "secondary_rgb": [74, 106, 138],
+      "dark_rgb": [30, 30, 30],
+      "gray_rgb": [120, 120, 120],
+      "light_rgb": [248, 248, 246],
+      "white_rgb": [255, 255, 255],
+      "border_rgb": [220, 220, 220]
+    },
+    "layout": {
+      "margin": 20,
+      "line_height": 5,
+      "section_gap": 12,
+      "item_gap": 5
+    },
+    "header": {
+      "title": "PrepTalk",
+      "tagline": "Interview Practice Report",
+      "logo_size": 8
+    },
+    "footer": {
+      "tagline": "You already have the stories. Now go tell them. — Prep",
+      "show_page_numbers": true
+    },
+    "sections": [
+      {
+        "title": "Continue",
+        "subtitle": "These are working beautifully. Keep doing exactly this.",
+        "color_key": "secondary_rgb",
+        "items": [
+          "Your stories flow naturally and are easy to follow. Interviewers can track your thinking without getting lost.",
+          "Using specific numbers like \"23% improvement\" sticks in memory far longer than saying \"significant impact.\"",
+          "Your pace is steady and grounded. That calm energy builds trust and makes you sound confident."
+        ]
+      },
+      {
+        "title": "Lean Into",
+        "subtitle": "You're already doing this well. A bit more would make it shine.",
+        "color_key": "primary_rgb",
+        "items": [
+          "The payment integration story is your strongest. Use it for leadership, technical, and collaboration questions.",
+          "Naming specific tools like Kubernetes and Terraform sounds more credible than \"various technologies.\"",
+          "Quantified outcomes are what interviewers remember when comparing candidates at the end of the day."
+        ]
+      },
+      {
+        "title": "Add",
+        "subtitle": "New elements that could elevate your answers.",
+        "color_key": "secondary_rgb",
+        "items": [
+          "A \"lesson learned\" ending shows self-awareness and growth mindset. Interviewers love candidates who reflect.",
+          "Mentioning what you'd do differently demonstrates maturity and continuous improvement. It's disarming and authentic.",
+          "Connecting your past to this role shows you've done your homework and can see yourself in their future."
+        ]
+      },
+      {
+        "title": "Refine",
+        "subtitle": "Small adjustments that could tighten your stories.",
+        "color_key": "primary_rgb",
+        "items": [
+          "Your action moments are the most compelling part. Getting there faster gives you more time for the good stuff."
+        ]
+      }
+    ]
+  }
+}
