@@ -1,0 +1,59 @@
+sequenceDiagram
+    autonumber
+    participant U as Candidate
+    participant UI as PrepTalk App
+    participant Server as PrepTalk Server
+    participant AI as Gemini AI
+
+    Note over U,AI: THE HELP ACTION: Teaching users to find their narrative
+
+    rect rgb(240, 248, 255)
+        Note over U: Step 1: Candidate Gets Stuck
+        U->>U: Hears interview question<br/>but doesn't know what to say
+    end
+
+    rect rgb(255, 250, 240)
+        Note over U,UI: Step 2: Request Help
+        U->>UI: Clicks "Request Help" button<br/>or says "help me"
+        UI->>UI: Shows "Helping..." status
+    end
+
+    rect rgb(240, 255, 240)
+        Note over UI,Server: Step 3: Gather Context
+        UI->>Server: Send the question + any<br/>partial answer the candidate started
+        Server->>Server: Retrieve candidate's resume<br/>and job description from session
+    end
+
+    rect rgb(255, 240, 245)
+        Note over Server,AI: Step 4: Generate Grounded Example
+        Server->>AI: "Help this candidate answer<br/>using ONLY facts from their resume"
+        Note over AI: RULE: Never make anything up!<br/>Only use exact phrases from resume
+        AI->>AI: Find relevant experience<br/>in resume that matches question
+        AI-->>Server: Return example answer with<br/>verbatim resume evidence
+    end
+
+    rect rgb(240, 248, 255)
+        Note over Server: Step 5: Validate Truthfulness
+        Server->>Server: Verify every fact in the<br/>example exists in the resume
+        Note over Server: If resume lacks relevant<br/>experience, say so honestly
+    end
+
+    rect rgb(255, 250, 240)
+        Note over Server,AI: Step 6: Convert to Speech (Optional)
+        Server->>AI: Convert help text to audio
+        AI-->>Server: Return spoken version
+    end
+
+    rect rgb(240, 255, 240)
+        Note over UI,U: Step 7: Deliver Help to Candidate
+        Server-->>UI: Send help text + audio
+        UI->>U: Play example answer aloud<br/>AND show text on screen
+    end
+
+    rect rgb(255, 245, 238)
+        Note over U: Step 8: Candidate Learns
+        U->>U: Hears example based on<br/>THEIR OWN experience
+        U->>U: Now knows what narrative<br/>to build their answer from
+    end
+
+    Note over U,AI: OUTCOME: Candidate has a starting point<br/>grounded in their real experience

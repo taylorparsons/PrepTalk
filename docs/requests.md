@@ -488,8 +488,8 @@ Date: 2026-02-02 18:16
 Source: chat
 
 Request (verbatim):
-I have a few details to be updated in the UI 
-1. the question insights show json, this needs to be mapped to a formatted display 
+I have a few details to be updated in the UI
+1. the question insights show json, this needs to be mapped to a formatted display
 eg """ocus areas
 {'area': 'Technical Depth in Distributed Systems & AI', 'description': "Assess candidate's ability to discuss architectural trade-offs (CAP theorem, latency vs. accuracy) in data platforms and their specific knowledge of ML/LLM lifecycles beyond high-level buzzwords."}
 {'area': 'Cross-Functional Dependency Management', 'description': "Evaluate experience in navigating complex organizational structures to align stakeholders (Engineering, Product, Data Science) on critical path schedules, specifically in high-stakes environments like Nordstrom's peak events."}
@@ -504,3 +504,21 @@ Notes:
 - Stack question controls vertically to reduce whitespace.
 - Make Candidate Setup collapsible once a session/interview exists.
 - Add a main restart button near Session Controls (keep Advanced Setup version).
+
+## CR-20260203-2100
+Date: 2026-02-03 21:00
+Source: chat
+
+Request (verbatim):
+Transform PrepTalk from interview simulator to confidence builder using the teach-first coaching model. Show users resume-grounded examples BEFORE asking questions, preventing the freeze that occurs when users don't know which story to tell.
+
+Option A (Learning Mode) approved: Show resume-grounded examples BEFORE presenting each question, enabling users to know which story to tell before being asked.
+
+Notes:
+- Target users freeze because they don't know which story to tell (ACCESS gap, not knowledge gap).
+- Learning Card component shows resume fact + example answer + "why this works" before each question.
+- "Show Example First" toggle defaults ON for new users.
+- Split panel displays resume cues during answer phase.
+- Messaging across all 5 journey phases reflects teach-first positioning.
+- Garnet color palette to replace current design tokens.
+- Accessibility fixes: focus-visible, aria-live, skip-link, reduced-motion support.

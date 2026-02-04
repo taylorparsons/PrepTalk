@@ -448,16 +448,25 @@
   padding: var(--space-lg);
   margin: 0 auto var(--space-lg);
   position: relative;
-  width: 160px;
-  height: 160px;
+  width: 100%;
+  max-width: 200px;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 .progress-rings svg {
   transform: rotate(-90deg);
   width: 100%;
   height: 100%;
+  max-width: 160px;
+  max-height: 160px;
   transition: transform 300ms ease;
+  flex-shrink: 0;
 }
 
 .progress-rings:hover svg {

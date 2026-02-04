@@ -1,0 +1,46 @@
+flowchart TB
+    subgraph HEADER[Question 1 of 5]
+        direction LR
+        EXIT[Exit]
+        TIMER[3:24]
+    end
+
+    subgraph COACH[Coach Says]
+        AVATAR[Coach]
+        MSG[Before you answer let me show<br/>you a great example from<br/>YOUR experience]
+    end
+
+    subgraph LEARNING[Learning Card]
+        subgraph RESUME[FROM YOUR RESUME]
+            FACT[Led migration of 50+ microservices<br/>to Kubernetes reducing deployment<br/>time by 60%]
+        end
+
+        subgraph EXAMPLE[EXAMPLE ANSWER]
+            EX[In my role at Company I led a<br/>migration project involving 50+<br/>microservices The challenge was<br/>My approach was The result was<br/>a 60% reduction in deployment time]
+        end
+
+        subgraph WHY[WHY THIS WORKS]
+            TIPS[Specific numbers - Clear structure<br/>Shows leadership - Quantifiable impact]
+        end
+    end
+
+    subgraph PREVIEW[Coming Up]
+        Q[THE QUESTION<br/>Tell me about a time you<br/>led a technical project]
+    end
+
+    subgraph FOOTER[Actions]
+        direction LR
+        MORE[Show Another Example]
+        READY[I am Ready to Practice]
+    end
+
+    HEADER ~~~ COACH
+    COACH ~~~ LEARNING
+    LEARNING ~~~ PREVIEW
+    PREVIEW ~~~ FOOTER
+
+    style AVATAR fill:#9A2A2A,color:#fff
+    style RESUME fill:#F5E5E4,color:#3D1111
+    style WHY fill:#F5E5E4,color:#3D1111
+    style Q fill:#3D1111,color:#fff
+    style READY fill:#9A2A2A,color:#fff

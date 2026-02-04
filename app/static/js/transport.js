@@ -1,3 +1,24 @@
+// Adaptive config from preflight-audio.js
+const getAdaptiveConfig = () => {
+  const config = window.PREPTALK_AUDIO_CONFIG || {
+    sampleRate: 24000,
+    frameSize: 60,
+    bufferSize: 2048,
+    profile: 'fallback'
+  };
+
+  // Log when adaptive config is applied (only once per transport instance)
+  if (window.PREPTALK_AUDIO_CONFIG && !window._PREPTALK_TRANSPORT_CONFIG_LOGGED) {
+    console.log('🎙️ Using adaptive config for transport:', config.profile, {
+      frameSize: `${config.frameSize}ms`,
+      sampleRate: `${config.sampleRate / 1000}kHz`
+    });
+    window._PREPTALK_TRANSPORT_CONFIG_LOGGED = true;
+  }
+
+  return config;
+};
+
 export class LiveTransport {
   constructor({
     url,
@@ -29,6 +50,11 @@ export class LiveTransport {
     this.reconnectTimer = null;
     this.heartbeatIntervalMs = heartbeatIntervalMs;
     this.heartbeatTimer = null;
+
+    // Apply adaptive config for packet sizing
+    const adaptiveConfig = getAdaptiveConfig();
+    this.frameSize = adaptiveConfig.frameSize;
+    this.sampleRate = adaptiveConfig.sampleRate;
   }
 
   static defaultUrl() {

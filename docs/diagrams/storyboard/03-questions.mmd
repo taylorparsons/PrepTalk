@@ -1,0 +1,52 @@
+flowchart TB
+    subgraph HEADER[Step 2 of 3 - Preview]
+        direction LR
+        BACK[Back]
+        TITLE[PrepTalk]
+    end
+
+    subgraph PROGRESS[Progress]
+        direction LR
+        S1[1 Upload]
+        S2[2 Preview]
+        S3[3 Practice]
+    end
+
+    subgraph COACH[Coach]
+        AVATAR[Coach Avatar]
+        MSG[Here is what we will practice together<br/><br/>I identified 5 questions based on the role<br/>For each one I will show an example first<br/>then you will practice]
+    end
+
+    subgraph QUESTIONS[Practice Questions]
+        Q1[1 Tell me about a time you<br/>led a technical project]
+        Q2[2 Describe a challenge you<br/>overcame at work]
+        Q3[3 Why are you interested<br/>in this role]
+        Q4[4 Walk me through a<br/>difficult decision]
+        Q5[5 What is your greatest<br/>professional achievement]
+    end
+
+    subgraph MODE[Learning Mode]
+        TOGGLE[Show examples before questions ON]
+        HINT[Recommended for first practice]
+    end
+
+    subgraph FOOTER[Actions]
+        START[Start Practice Session]
+    end
+
+    HEADER ~~~ PROGRESS
+    PROGRESS ~~~ COACH
+    COACH ~~~ QUESTIONS
+    QUESTIONS ~~~ MODE
+    MODE ~~~ FOOTER
+
+    style S2 fill:#9A2A2A,color:#fff
+    style AVATAR fill:#9A2A2A,color:#fff
+    style TOGGLE fill:#9A2A2A,color:#fff
+    style START fill:#9A2A2A,color:#fff
+    style Q1 fill:#F5E5E4,color:#3D1111
+    style Q2 fill:#F5E5E4,color:#3D1111
+    style Q3 fill:#F5E5E4,color:#3D1111
+    style Q4 fill:#F5E5E4,color:#3D1111
+    style Q5 fill:#F5E5E4,color:#3D1111
+    style HINT fill:#F5E5E4,color:#3D1111

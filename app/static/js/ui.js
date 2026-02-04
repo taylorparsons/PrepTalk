@@ -1,5 +1,7 @@
 import {
   createButton,
+  createLearningCard,
+  generateLearningContent,
   createPanel,
   createStatusPill,
   createTranscriptRow
@@ -28,6 +30,17 @@ import { createActivityDetector } from './audio-activity.js';
 import { createAudioFrameBuffer, createAudioFrameFlusher } from './audio-buffer.js';
 import { createAudioPlayback, decodePcm16Base64, startMicrophoneCapture } from './voice.js';
 import { renderMarkdownInto } from './markdown.js';
+
+// Adaptive config from preflight-audio.js
+const getAdaptiveConfig = () => {
+  const config = window.PREPTALK_AUDIO_CONFIG || {
+    sampleRate: 24000,
+    frameSize: 60,
+    bufferSize: 2048,
+    profile: 'fallback'
+  };
+  return config;
+};
 
 const STATUS_TONES = ['neutral', 'success', 'warning', 'danger', 'info'];
 const GEMINI_RECONNECT_MAX_ATTEMPTS = 3;
@@ -410,7 +423,7 @@ function buildAppHeader() {
 
   const eyebrow = document.createElement('div');
   eyebrow.className = 'ui-hero__eyebrow';
-  eyebrow.textContent = 'PrepTalk • Contextual Interview Coach';
+  eyebrow.textContent = 'PrepTalk • Your Interview Practice Coach';
 
   const title = document.createElement('h1');
   title.className = 'ui-hero__title';
@@ -418,7 +431,7 @@ function buildAppHeader() {
 
   const subtitle = document.createElement('p');
   subtitle.className = 'ui-hero__subtitle';
-  subtitle.textContent = 'PrepTalk helps you practice with contextual interview questions built from your resume and job description, then coaches you through a focused, turn-based session.';
+  subtitle.textContent = 'Build confidence with personalized practice topics drawn from your experience. Your coach will guide you through each answer, one step at a time.';
 
   const steps = document.createElement('ol');
   steps.className = 'ui-hero__steps';
@@ -434,7 +447,7 @@ function buildAppHeader() {
 
   const note = document.createElement('div');
   note.className = 'ui-hero__note';
-  note.textContent = 'PrepTalk is turn-based (not live). Help/Submit become active once the coach finishes speaking.';
+  note.textContent = 'Practice is turn-based. Help and Submit become active after the coach finishes speaking.';
 
   const callout = document.createElement('div');
   callout.className = 'ui-hero__callout';
@@ -618,7 +631,7 @@ export function renderTranscript(list, entries) {
 function renderScore(ui, score) {
   if (!score) {
     ui.scoreValue.textContent = '--';
-    ui.scoreSummary.textContent = 'Complete a session to view scoring insights.';
+    ui.scoreSummary.textContent = 'Complete a practice session to see your coaching feedback.';
     ui.scoreStrengths.innerHTML = '';
     ui.scoreImprovements.innerHTML = '';
     return;
@@ -692,7 +705,7 @@ function buildSetupPanel(state, ui) {
   });
 
   const generateButton = createButton({
-    label: 'Generate Questions',
+    label: 'Prepare Practice',
     variant: 'secondary',
     size: 'md',
     disabled: true,
@@ -714,9 +727,9 @@ function buildSetupPanel(state, ui) {
     if (generateButton.disabled) return;
 
     status.className = 'ui-field__help';
-    status.textContent = 'Analyzing documents and generating questions...';
+    status.textContent = 'Analyzing your background and preparing practice topics...';
     generateButton.disabled = true;
-    updateButtonLabel(generateButton, 'Generating...');
+    updateButtonLabel(generateButton, 'Preparing...');
     state.interviewId = null;
     state.questions = [];
     state.questionStatuses = [];
@@ -768,7 +781,7 @@ function buildSetupPanel(state, ui) {
         status.textContent = 'Questions ready. The job URL could not be reached, so we used the uploaded file.';
       } else {
         status.className = 'ui-field__help';
-        status.textContent = 'Questions ready. Start the session when ready.';
+        status.textContent = 'Practice topics ready. Begin when you feel comfortable.';
       }
       ui.updateMeta?.();
       if (ui.sessionNameInput) {
@@ -783,9 +796,9 @@ function buildSetupPanel(state, ui) {
       ui.updateQuestionInsights?.(defaultInsightIndex, { clear: true });
     } catch (error) {
       status.className = 'ui-field__error';
-      status.textContent = error.message || 'Unable to generate questions.';
+      status.textContent = error.message || 'Unable to prepare practice topics. Please try again.';
     } finally {
-      updateButtonLabel(generateButton, 'Generate Questions');
+      updateButtonLabel(generateButton, 'Prepare Practice');
       updateGenerateState();
     }
   });
@@ -806,7 +819,7 @@ function buildSetupPanel(state, ui) {
 
   const panel = createPanel({
     title: 'Candidate Setup',
-    subtitle: 'Add resume + job details to personalize the interview.',
+    subtitle: 'Share your background to personalize the practice session.',
     content,
     attrs: { 'data-testid': 'setup-panel' }
   });
@@ -845,10 +858,10 @@ function buildControlsPanel(state, ui, config) {
   const statusPill = createStatusPill({
     label: 'Idle',
     tone: 'neutral',
-    attrs: { 'data-testid': 'session-status' }
+    attrs: { 'data-testid': 'session-status', 'aria-live': 'polite', 'role': 'status' }
   });
   const startButton = createButton({
-    label: 'Start Interview',
+    label: 'Begin Practice',
     variant: 'primary',
     size: 'lg',
     disabled: true,
@@ -926,9 +939,28 @@ function buildControlsPanel(state, ui, config) {
     }
   });
 
+  // Learning Mode toggle (teach-first coaching)
+  const learningModeToggle = createButton({
+    label: state.showExampleFirst ? 'Learning Mode: ON' : 'Learning Mode: OFF',
+    variant: state.showExampleFirst ? 'primary' : 'ghost',
+    size: 'sm',
+    attrs: {
+      'data-testid': 'learning-mode-toggle',
+      'aria-pressed': String(state.showExampleFirst),
+      'title': 'When ON, shows a resume-grounded example before each question'
+    },
+    onClick: () => {
+      setLearningModePreference(!state.showExampleFirst);
+      learningModeToggle.className = state.showExampleFirst
+        ? 'ui-button ui-button--primary ui-button--sm'
+        : 'ui-button ui-button--ghost ui-button--sm';
+    }
+  });
+  ui.learningModeToggle = learningModeToggle;
+
   const restartMainLabel = document.createElement('div');
   restartMainLabel.className = 'ui-field__label';
-  restartMainLabel.textContent = 'Restart interview';
+  restartMainLabel.textContent = 'Restart Practice';
 
   const restartMainButton = createButton({
     label: 'Restart',
@@ -1612,7 +1644,8 @@ function buildControlsPanel(state, ui, config) {
     if (typeof window !== 'undefined' && window.__E2E__) {
       window.__e2eAudioChunks = (window.__e2eAudioChunks || 0) + 1;
     }
-    const sampleRate = payload?.sample_rate || 24000;
+    const adaptiveConfig = getAdaptiveConfig();
+    const sampleRate = payload?.sample_rate || adaptiveConfig.sampleRate;
     if (!state.audioPlayback || state.audioPlaybackSampleRate !== sampleRate) {
       state.audioPlayback?.stop();
       state.audioPlayback = createAudioPlayback({ sampleRate });
@@ -1622,7 +1655,9 @@ function buildControlsPanel(state, ui, config) {
     state.audioPlayback.play(pcm16);
   }
 
-  function ensureE2eCandidatePlayback(sampleRate = 24000) {
+  function ensureE2eCandidatePlayback(sampleRate) {
+    const adaptiveConfig = getAdaptiveConfig();
+    sampleRate = sampleRate || adaptiveConfig.sampleRate;
     if (!state.e2eCandidatePlayback || state.e2eCandidatePlaybackSampleRate !== sampleRate) {
       state.e2eCandidatePlayback?.stop();
       state.e2eCandidatePlayback = createAudioPlayback({ sampleRate });
@@ -2099,7 +2134,7 @@ function buildControlsPanel(state, ui, config) {
           }
           state.transport?.sendAudio(payload);
           if (state.e2eCandidatePlaybackEnabled) {
-            ensureE2eCandidatePlayback(24000).play(payload);
+            ensureE2eCandidatePlayback().play(payload);
           }
         };
         window.__e2eSendActivity = (activityState) => state.transport?.send({
@@ -2123,8 +2158,9 @@ function buildControlsPanel(state, ui, config) {
         silenceThreshold: AUDIO_ACTIVITY_THRESHOLD,
         silenceWindowMs: AUDIO_ACTIVITY_SILENCE_MS
       });
+      const adaptiveConfig = getAdaptiveConfig();
       state.audioCapture = await startMicrophoneCapture({
-        targetSampleRate: 24000,
+        targetSampleRate: adaptiveConfig.sampleRate,
         onAudioFrame: (frame) => {
           if (state.isMuted) return;
           const activity = state.activityDetector?.update(frame);
@@ -2192,8 +2228,9 @@ function buildControlsPanel(state, ui, config) {
     try {
       await ensureTransport();
       if (!state.audioPlayback) {
-        state.audioPlayback = createAudioPlayback({ sampleRate: 24000 });
-        state.audioPlaybackSampleRate = 24000;
+        const adaptiveConfig = getAdaptiveConfig();
+        state.audioPlayback = createAudioPlayback({ sampleRate: adaptiveConfig.sampleRate });
+        state.audioPlaybackSampleRate = adaptiveConfig.sampleRate;
       }
       await state.audioPlayback.resume();
       state.transport.start(state.interviewId, state.userId, { resume: false, liveModel: state.liveModel });
@@ -2237,10 +2274,10 @@ function buildControlsPanel(state, ui, config) {
     state.turnRequestActive = false;
     state.turnSpeaking = false;
     stopButton.disabled = true;
-    updateStatusPill(statusPill, { label: 'Scoring', tone: 'info' });
+    updateStatusPill(statusPill, { label: 'Preparing feedback', tone: 'info' });
     renderScore(ui, {
       overall_score: '--',
-      summary: 'Scoring… This can take ~20 seconds.',
+      summary: 'Preparing your coaching feedback… This takes about 20 seconds.',
       strengths: [],
       improvements: []
     });
@@ -2277,9 +2314,9 @@ function buildControlsPanel(state, ui, config) {
       ui.scorePanel?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
       ui.scorePanel?.focus?.({ preventScroll: true });
     } catch (error) {
-      updateStatusPill(statusPill, { label: 'Score Error', tone: 'danger' });
+      updateStatusPill(statusPill, { label: 'Feedback unavailable', tone: 'danger' });
       ui.scoreValue.textContent = '--';
-      ui.scoreSummary.textContent = error?.message || 'Scoring failed.';
+      ui.scoreSummary.textContent = error?.message || 'Unable to prepare feedback. Your practice session was still valuable.';
     } finally {
       startButton.disabled = !state.interviewId;
       setMuteState(false);
@@ -2304,10 +2341,13 @@ function buildControlsPanel(state, ui, config) {
   const turnHelp = document.createElement('div');
   turnHelp.className = 'ui-turn-help';
   turnHelp.setAttribute('data-testid', 'turn-help');
+  turnHelp.setAttribute('aria-live', 'polite');
+  turnHelp.setAttribute('role', 'status');
   turnHelp.textContent = 'Waiting for the coach.';
 
   const toolsRow = document.createElement('div');
   toolsRow.className = 'ui-controls__row ui-controls__row--tools';
+  toolsRow.appendChild(learningModeToggle);
   toolsRow.appendChild(sessionToolsButton);
 
   const restartRow = document.createElement('div');
@@ -2399,9 +2439,11 @@ function buildSessionToolsDrawer(state, ui, config) {
   const sessionLabel = document.createElement('label');
   sessionLabel.className = 'ui-field__label';
   sessionLabel.textContent = 'Load session';
+  sessionLabel.setAttribute('for', 'session-select');
 
   const sessionSelect = document.createElement('select');
   sessionSelect.className = 'ui-field__input';
+  sessionSelect.id = 'session-select';
   sessionSelect.setAttribute('data-testid', 'session-select');
 
   const sessionLoad = createButton({
@@ -2427,10 +2469,12 @@ function buildSessionToolsDrawer(state, ui, config) {
   const nameLabel = document.createElement('label');
   nameLabel.className = 'ui-field__label';
   nameLabel.textContent = 'Session name';
+  nameLabel.setAttribute('for', 'session-name-input');
 
   const nameInput = document.createElement('input');
   nameInput.className = 'ui-field__input';
   nameInput.type = 'text';
+  nameInput.id = 'session-name-input';
   nameInput.placeholder = 'e.g. PM system design';
   nameInput.setAttribute('data-testid', 'session-name-input');
 
@@ -2457,9 +2501,11 @@ function buildSessionToolsDrawer(state, ui, config) {
   const exportLabel = document.createElement('label');
   exportLabel.className = 'ui-field__label';
   exportLabel.textContent = 'Export transcript';
+  exportLabel.setAttribute('for', 'export-format');
 
   const exportFormat = document.createElement('select');
   exportFormat.className = 'ui-field__input';
+  exportFormat.id = 'export-format';
   exportFormat.setAttribute('data-testid', 'export-format');
 
   [
@@ -2500,19 +2546,23 @@ function buildSessionToolsDrawer(state, ui, config) {
   const questionLabel = document.createElement('label');
   questionLabel.className = 'ui-field__label';
   questionLabel.textContent = 'Add known question';
+  questionLabel.setAttribute('for', 'custom-question-input');
 
   const questionInput = document.createElement('textarea');
   questionInput.className = 'ui-field__input ui-field__input--textarea';
+  questionInput.id = 'custom-question-input';
   questionInput.placeholder = 'Paste the question the interviewer will ask.';
   questionInput.setAttribute('data-testid', 'custom-question-input');
 
   const positionLabel = document.createElement('label');
   positionLabel.className = 'ui-field__label';
   positionLabel.textContent = 'Insert position';
+  positionLabel.setAttribute('for', 'custom-question-position');
 
   const positionInput = document.createElement('input');
   positionInput.className = 'ui-field__input ui-field__input--number';
   positionInput.type = 'number';
+  positionInput.id = 'custom-question-position';
   positionInput.min = '1';
   positionInput.value = '1';
   positionInput.setAttribute('data-testid', 'custom-question-position');
@@ -2555,7 +2605,7 @@ function buildSessionToolsDrawer(state, ui, config) {
 
   const restartLabel = document.createElement('label');
   restartLabel.className = 'ui-field__label';
-  restartLabel.textContent = 'Restart interview';
+  restartLabel.textContent = 'Restart Practice';
 
   const restartButton = createButton({
     label: 'Restart',
@@ -2606,15 +2656,15 @@ function buildQuestionsPanel(ui) {
   list.className = 'ui-list';
   list.setAttribute('data-testid', 'question-list');
 
-  const placeholder = createListPlaceholder('Questions will appear after setup.');
+  const placeholder = createListPlaceholder('Practice topics will appear after sharing your background.');
   list.appendChild(placeholder);
 
   ui.questionList = list;
   ui.questionPlaceholder = placeholder;
 
   return createPanel({
-    title: 'Interview Questions',
-    subtitle: 'Generated from the resume and role. Hover to see insights.',
+    title: 'Practice Topics',
+    subtitle: 'Personalized from your background. Hover for coaching tips.',
     content: list,
     attrs: { 'data-testid': 'questions-panel' }
   });
@@ -2630,7 +2680,7 @@ function buildQuestionInsightsPanel(ui) {
   const question = document.createElement('div');
   question.className = 'ui-insights__question';
   question.setAttribute('data-testid', 'insights-question');
-  question.textContent = 'Hover a question to see insights.';
+  question.textContent = 'Hover a topic to see coaching tips.';
 
   const pinBadge = document.createElement('span');
   pinBadge.className = 'ui-insights__pin';
@@ -2643,7 +2693,7 @@ function buildQuestionInsightsPanel(ui) {
 
   const empty = document.createElement('div');
   empty.className = 'ui-insights__empty';
-  empty.textContent = 'Hover a question to see why it is asked and which resume cues to use.';
+  empty.textContent = 'Hover a topic to see coaching tips and which experiences to draw from.';
 
   const whyLabel = document.createElement('div');
   whyLabel.className = 'ui-insights__label';
@@ -2791,8 +2841,8 @@ function buildScorePanel(ui) {
   renderScore(ui, null);
 
   const panel = createPanel({
-    title: 'Score Summary',
-    subtitle: 'Full transcript and coaching highlights.',
+    title: 'Session Insights',
+    subtitle: 'Your coaching feedback and practice highlights.',
     content: container,
     attrs: { 'data-testid': 'score-panel' }
   });
@@ -2867,8 +2917,31 @@ export function buildVoiceLayout() {
     liveCoachPendingText: '',
     liveCoachSpeakTimer: null,
     lastSpokenCoachText: '',
-    lastCoachQuestion: ''
+    lastCoachQuestion: '',
+    // Learning Mode state (teach-first coaching)
+    showExampleFirst: getLearningModePreference(),
+    learningModeActive: false,
+    currentLearningCard: null
   };
+
+  // Learning Mode preference persistence
+  function getLearningModePreference() {
+    if (typeof localStorage === 'undefined') return true;
+    const stored = localStorage.getItem('preptalk_show_example_first');
+    if (stored === null) return true; // Default ON for new users
+    return stored === 'true';
+  }
+
+  function setLearningModePreference(value) {
+    state.showExampleFirst = value;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('preptalk_show_example_first', String(value));
+    }
+    if (ui.learningModeToggle) {
+      ui.learningModeToggle.setAttribute('aria-pressed', String(value));
+      updateButtonLabel(ui.learningModeToggle, value ? 'Learning Mode: ON' : 'Learning Mode: OFF');
+    }
+  }
 
   const ui = {};
   if (typeof window !== 'undefined' && window.__E2E__) {
@@ -3298,7 +3371,7 @@ export function buildVoiceLayout() {
       }
       if (ui.setupStatus) {
         ui.setupStatus.className = 'ui-field__help';
-        ui.setupStatus.textContent = 'Session loaded. Start the session when ready.';
+        ui.setupStatus.textContent = 'Session loaded. Begin when you feel ready.';
       }
       ui.sessionHelp.textContent = 'Session loaded.';
       ui.startButton.disabled = !state.interviewId;

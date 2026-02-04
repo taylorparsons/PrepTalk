@@ -1,16 +1,22 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="nordic">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PrepTalk Interview Coach</title>
+    <title>PrepTalk Practice Coach</title>
+    <link rel="stylesheet" href="/static/css/dist.css" />
     <link rel="stylesheet" href="/static/css/components.css" />
   </head>
   <body>
-    <div id="app" class="app-shell"></div>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div id="app" class="app-shell" role="application" aria-label="PrepTalk Practice Coach">
+      <main id="main-content" tabindex="-1"></main>
+    </div>
     <script>
       window.__APP_CONFIG__ = {{ app_config | safe }};
     </script>
+    <!-- Adaptive Audio Scout - runs BEFORE main app to set window.PREPTALK_AUDIO_CONFIG -->
+    <script src="/static/js/preflight-audio.js"></script>
     <script type="module" src="/static/js/app.js"></script>
   </body>
 </html>

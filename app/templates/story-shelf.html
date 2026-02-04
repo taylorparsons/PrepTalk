@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PrepTalk - Story Shelf</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/story-shelf.css" />
+</head>
+<body>
+  <div class="app" id="app">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-brand">
+        <div class="logo-pulse" aria-hidden="true"></div>
+        <span class="logo-text">PrepTalk</span>
+      </div>
+      <nav class="header-nav" aria-label="Main navigation">
+        <button class="nav-btn" data-screen="welcome" aria-label="Home">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+        </button>
+        <button class="nav-btn" data-screen="shelf" aria-label="Your Stories">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <span class="nav-badge" id="story-count" hidden>0</span>
+        </button>
+        <button class="nav-btn" data-screen="progress" aria-label="Your Progress">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="20" x2="12" y2="10"></line>
+            <line x1="18" y1="20" x2="18" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="16"></line>
+          </svg>
+        </button>
+      </nav>
+    </header>
+
+    <!-- Screen: Welcome -->
+    <main class="screen active" id="screen-welcome">
+      <div class="screen-content screen-content--centered">
+        <div class="logo-pulse logo-pulse--large" aria-hidden="true"></div>
+
+        <h1 class="title-hero">Build Your Story Shelf</h1>
+        <p class="subtitle-large">
+          Practice answering interview questions. I'll extract your stories and help you see which ones are interview-ready.
+        </p>
+
+        <div class="value-props">
+          <div class="value-prop">
+            <span class="value-icon">📖</span>
+            <span>Your stories, organized</span>
+          </div>
+          <div class="value-prop">
+            <span class="value-icon">🎯</span>
+            <span>Know which story fits which question</span>
+          </div>
+          <div class="value-prop">
+            <span class="value-icon">📈</span>
+            <span>Track your progress over time</span>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-lg" id="btn-start">
+          Let's build your shelf
+        </button>
+
+        <p class="footnote">About 5 minutes per story. Your data stays on your device.</p>
+      </div>
+    </main>
+
+    <!-- Screen: Setup (Optional) -->
+    <main class="screen" id="screen-setup">
+      <div class="screen-content">
+        <h2 class="title-section">Quick Setup</h2>
+        <p class="subtitle">Optional: Add context so I can give better suggestions.</p>
+
+        <div class="setup-cards">
+          <div class="setup-card" id="card-resume">
+            <div class="setup-card-icon">📄</div>
+            <div class="setup-card-content">
+              <h3>Your Resume</h3>
+              <p>Helps me understand your experience</p>
+            </div>
+            <input type="file" id="input-resume" accept=".pdf,.doc,.docx,.txt" hidden />
+            <button class="btn btn-outline btn-sm" id="btn-upload-resume">Upload</button>
+          </div>
+
+          <div class="setup-card" id="card-job">
+            <div class="setup-card-icon">💼</div>
+            <div class="setup-card-content">
+              <h3>Job Description</h3>
+              <p>Helps me suggest relevant stories</p>
+            </div>
+            <input type="file" id="input-job" accept=".pdf,.doc,.docx,.txt" hidden />
+            <button class="btn btn-outline btn-sm" id="btn-upload-job">Upload</button>
+          </div>
+        </div>
+
+        <div class="setup-actions">
+          <button class="btn btn-primary" id="btn-continue-setup">Continue</button>
+          <button class="btn btn-ghost" id="btn-skip-setup">Skip for now</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Screen: Question Selection -->
+    <main class="screen" id="screen-question">
+      <div class="screen-content">
+        <h2 class="title-section">Pick a question to practice</h2>
+        <p class="subtitle">Or I'll suggest one based on your shelf gaps.</p>
+
+        <div class="question-list" id="question-list">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="custom-question">
+          <label for="input-custom-question">Or type your own:</label>
+          <textarea id="input-custom-question" placeholder="Tell me about a time when..."></textarea>
+          <button class="btn btn-outline" id="btn-use-custom">Use this question</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Screen: Practice (The Main Event) -->
+    <main class="screen" id="screen-practice">
+      <div class="screen-content screen-content--practice">
+
+        <!-- Question Display -->
+        <div class="question-display">
+          <span class="question-label">Question</span>
+          <h2 class="question-text" id="current-question">Tell me about a time you led a team through a difficult situation.</h2>
+        </div>
+
+        <!-- Live Timeline -->
+        <div class="timeline-container">
+          <div class="timeline" id="timeline">
+            <div class="timeline-track"></div>
+            <div class="timeline-progress" id="timeline-progress"></div>
+            <!-- Key moments added dynamically -->
+          </div>
+          <div class="timeline-labels">
+            <span>0:00</span>
+            <span id="timeline-current">0:00</span>
+          </div>
+        </div>
+
+        <!-- Recording Controls -->
+        <div class="recording-area">
+          <div class="recording-visualizer" id="visualizer">
+            <div class="visualizer-bar"></div>
+            <div class="visualizer-bar"></div>
+            <div class="visualizer-bar"></div>
+            <div class="visualizer-bar"></div>
+            <div class="visualizer-bar"></div>
+          </div>
+
+          <div class="recording-status" id="recording-status">
+            <span class="status-dot"></span>
+            <span class="status-text">Ready to record</span>
+          </div>
+
+          <div class="recording-controls">
+            <button class="btn-record" id="btn-record" aria-label="Start recording">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="12" r="10"></circle>
+              </svg>
+            </button>
+            <button class="btn-stop" id="btn-stop" hidden aria-label="Stop recording">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Transcript -->
+        <div class="transcript-area">
+          <div class="transcript-header">
+            <span>What I'm hearing...</span>
+            <span class="transcript-hint">Key moments will highlight</span>
+          </div>
+          <div class="transcript-content" id="transcript">
+            <p class="transcript-placeholder">Start speaking and your words will appear here...</p>
+          </div>
+        </div>
+
+        <!-- Filler Word Cloud (Subtle, Right Side) -->
+        <aside class="filler-cloud" id="filler-cloud">
+          <div class="filler-cloud-header">Filler words</div>
+          <div class="filler-cloud-words" id="filler-words">
+            <!-- Populated dynamically -->
+          </div>
+        </aside>
+
+      </div>
+    </main>
+
+    <!-- Screen: Story Captured -->
+    <main class="screen" id="screen-captured">
+      <div class="screen-content screen-content--centered">
+
+        <div class="captured-animation" id="captured-animation">
+          <div class="captured-sparkle"></div>
+          <div class="captured-sparkle"></div>
+          <div class="captured-sparkle"></div>
+        </div>
+
+        <h2 class="title-section">Story Captured</h2>
+
+        <div class="story-card story-card--featured" id="captured-card">
+          <div class="story-card-header">
+            <span class="story-card-icon">📗</span>
+            <h3 class="story-card-name" id="captured-name">Loading...</h3>
+          </div>
+          <div class="story-card-tags" id="captured-tags">
+            <!-- Tags added dynamically -->
+          </div>
+          <div class="story-card-moments" id="captured-moments">
+            <!-- Key moments added dynamically -->
+          </div>
+          <div class="story-card-readiness">
+            <div class="readiness-bar">
+              <div class="readiness-fill" id="captured-readiness" style="width: 0%"></div>
+            </div>
+            <span class="readiness-label" id="captured-readiness-label">Analyzing...</span>
+          </div>
+        </div>
+
+        <div class="prep-insight" id="prep-insight">
+          <div class="prep-avatar">
+            <div class="logo-pulse logo-pulse--small"></div>
+          </div>
+          <div class="prep-message">
+            <strong>Prep says:</strong>
+            <p id="prep-insight-text">Analyzing your story...</p>
+          </div>
+        </div>
+
+        <div class="captured-actions">
+          <button class="btn btn-primary" id="btn-practice-again">Practice this story again</button>
+          <button class="btn btn-outline" id="btn-new-question">Try a different question</button>
+          <button class="btn btn-ghost" id="btn-view-shelf">View your shelf</button>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Screen: Story Shelf -->
+    <main class="screen" id="screen-shelf">
+      <div class="screen-content">
+
+        <div class="shelf-header">
+          <h2 class="title-section">Your Story Shelf</h2>
+          <p class="subtitle" id="shelf-summary">You have 0 stories</p>
+        </div>
+
+        <div class="shelf-filters">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="ready">Interview-Ready</button>
+          <button class="filter-btn" data-filter="practicing">Practicing</button>
+          <button class="filter-btn" data-filter="new">Needs Work</button>
+        </div>
+
+        <div class="shelf-grid" id="shelf-grid">
+          <!-- Story cards populated by JS -->
+          <div class="shelf-empty" id="shelf-empty">
+            <p>No stories yet. Let's capture your first one!</p>
+            <button class="btn btn-primary" id="btn-first-story">Practice a question</button>
+          </div>
+        </div>
+
+        <div class="shelf-actions">
+          <button class="btn btn-outline" id="btn-export-shelf">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export your stories
+          </button>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Screen: Progress -->
+    <main class="screen" id="screen-progress">
+      <div class="screen-content">
+
+        <div class="progress-header">
+          <h2 class="title-section">Your Journey</h2>
+          <p class="subtitle" id="journey-summary">Keep building your confidence</p>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <span class="stat-value" id="stat-stories">0</span>
+            <span class="stat-label">Stories</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="stat-sessions">0</span>
+            <span class="stat-label">Sessions</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="stat-minutes">0</span>
+            <span class="stat-label">Minutes</span>
+          </div>
+        </div>
+
+        <!-- Strengths & Gaps -->
+        <div class="progress-section">
+          <h3 class="progress-section-title">Getting Stronger</h3>
+          <div class="progress-list" id="strengths-list">
+            <p class="progress-empty">Practice more to see patterns</p>
+          </div>
+        </div>
+
+        <div class="progress-section">
+          <h3 class="progress-section-title">Needs Reps</h3>
+          <div class="progress-list" id="gaps-list">
+            <p class="progress-empty">No gaps identified yet</p>
+          </div>
+        </div>
+
+        <!-- Milestones (Scooby Snacks) -->
+        <div class="progress-section">
+          <h3 class="progress-section-title">Milestones</h3>
+          <div class="milestones-list" id="milestones-list">
+            <p class="progress-empty">Your achievements will appear here</p>
+          </div>
+        </div>
+
+        <!-- Filler Word Trend -->
+        <div class="progress-section">
+          <h3 class="progress-section-title">Filler Word Trend</h3>
+          <div class="filler-chart" id="filler-chart">
+            <p class="progress-empty">Practice more to see your trend</p>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="/static/js/story-shelf.js"></script>
+</body>
+</html>
