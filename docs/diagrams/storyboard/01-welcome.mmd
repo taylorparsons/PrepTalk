@@ -1,0 +1,39 @@
+flowchart TB
+    subgraph HEADER[Header]
+        direction LR
+        LOGO[PrepTalk]
+        NAV[About - How It Works]
+    end
+
+    subgraph HERO[Hero Section]
+        direction TB
+        BADGE[YOUR INTERVIEW COACH]
+        HEADLINE[Prepare with confidence<br/>not pressure]
+        SUBHEAD[I will help you discover the best stories<br/>from YOUR experience to tell in interviews]
+
+        subgraph PROMISE[What We Will Do Together]
+            direction LR
+            P1[Learn from<br/>examples]
+            P2[Practice with<br/>your stories]
+            P3[Build lasting<br/>confidence]
+        end
+
+        CTA[Lets prepare together]
+        REASSURE[No grades. No judgment. Just growth.]
+    end
+
+    subgraph SOCIAL[Social Proof]
+        direction LR
+        QUOTE[I finally understood what<br/>interviewers are looking for]
+        STAT[87% felt more confident<br/>after one session]
+    end
+
+    HEADER ~~~ HERO
+    HERO ~~~ SOCIAL
+
+    style BADGE fill:#9A2A2A,color:#fff
+    style CTA fill:#9A2A2A,color:#fff
+    style P1 fill:#F5E5E4,color:#3D1111
+    style P2 fill:#F5E5E4,color:#3D1111
+    style P3 fill:#F5E5E4,color:#3D1111
+    style REASSURE fill:#F5E5E4,color:#3D1111

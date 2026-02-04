@@ -1,3 +1,24 @@
+// Adaptive config from preflight-audio.js
+const getAdaptiveConfig = () => {
+  const config = window.PREPTALK_AUDIO_CONFIG || {
+    sampleRate: 24000,
+    frameSize: 20,
+    bufferSize: 2048,
+    profile: 'fallback'
+  };
+
+  // Log when adaptive config is applied
+  if (window.PREPTALK_AUDIO_CONFIG) {
+    console.log('🎙️ Using adaptive config:', config.profile, {
+      sampleRate: `${config.sampleRate / 1000}kHz`,
+      frameSize: `${config.frameSize}ms`,
+      bufferSize: config.bufferSize
+    });
+  }
+
+  return config;
+};
+
 const DEFAULT_SAMPLE_RATE = 24000;
 const DEFAULT_FRAME_MS = 20;
 const DEFAULT_SPEECH_THRESHOLD = 0.02;
@@ -74,6 +95,11 @@ export async function startMicrophoneCapture({
     throw new Error('Microphone capture not supported.');
   }
 
+  // Apply adaptive config with fallback defaults
+  const adaptiveConfig = getAdaptiveConfig();
+  targetSampleRate = adaptiveConfig.sampleRate;
+  frameDurationMs = adaptiveConfig.frameSize;
+
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: {
       channelCount: 1,
@@ -88,7 +114,7 @@ export async function startMicrophoneCapture({
     await context.resume();
   }
   const source = context.createMediaStreamSource(stream);
-  const processor = context.createScriptProcessor(2048, 1, 1);
+  const processor = context.createScriptProcessor(adaptiveConfig.bufferSize, 1, 1);
   const inputSampleRate = context.sampleRate;
   const frameSize = Math.round((targetSampleRate * frameDurationMs) / 1000);
 
@@ -147,6 +173,10 @@ export async function startMicrophoneCapture({
 }
 
 export function createAudioPlayback({ sampleRate = DEFAULT_SAMPLE_RATE } = {}) {
+  // Apply adaptive config with fallback defaults
+  const adaptiveConfig = getAdaptiveConfig();
+  sampleRate = adaptiveConfig.sampleRate;
+
   let context;
   try {
     context = new AudioContext({ sampleRate });

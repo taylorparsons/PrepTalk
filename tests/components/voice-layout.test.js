@@ -22,10 +22,10 @@ describe('voice layout', () => {
       expect.arrayContaining([
         'Candidate Setup',
         'Session Controls',
-        'Interview Questions',
+        'Practice Topics',
         'Question Insights',
         'Transcript',
-        'Score Summary'
+        'Session Insights'
       ])
     );
     expect(layout.querySelector('[data-testid="restart-interview-main"]')).toBeTruthy();

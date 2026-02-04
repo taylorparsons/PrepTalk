@@ -1,0 +1,45 @@
+flowchart TB
+    subgraph HEADER[Step 1 of 3 - Upload]
+        direction LR
+        BACK[Back]
+        TITLE[PrepTalk]
+    end
+
+    subgraph PROGRESS[Progress]
+        direction LR
+        S1[1 Upload]
+        S2[2 Preview]
+        S3[3 Practice]
+    end
+
+    subgraph COACH[Coach Message]
+        COACH_MSG[Hi I am your interview coach<br/><br/>Share your resume and the job<br/>and I will create a personalized<br/>practice session just for you]
+    end
+
+    subgraph UPLOADS[Upload Files]
+        direction LR
+        subgraph RESUME[Your Resume]
+            R_DROP[Drop resume here<br/>PDF DOCX TXT]
+            R_HELP[I will find the best stories<br/>from your experience]
+        end
+
+        subgraph JOB[Target Position]
+            J_DROP[Drop job description<br/>or paste URL]
+            J_HELP[I will tailor questions to<br/>what they are looking for]
+        end
+    end
+
+    subgraph FOOTER[Actions]
+        CONTINUE[Continue]
+    end
+
+    HEADER ~~~ PROGRESS
+    PROGRESS ~~~ COACH
+    COACH ~~~ UPLOADS
+    UPLOADS ~~~ FOOTER
+
+    style S1 fill:#9A2A2A,color:#fff
+    style COACH fill:#F5E5E4,color:#3D1111
+    style CONTINUE fill:#9A2A2A,color:#fff
+    style R_HELP fill:#F5E5E4,color:#3D1111
+    style J_HELP fill:#F5E5E4,color:#3D1111

@@ -16,6 +16,6 @@ describe('app entry', () => {
   it('uses the PrepTalk title in the template', () => {
     const templatePath = path.resolve(process.cwd(), 'app/templates/index.html');
     const template = fs.readFileSync(templatePath, 'utf-8');
-    expect(template).toContain('<title>PrepTalk Interview Coach</title>');
+    expect(template).toContain('<title>PrepTalk Practice Coach</title>');
   });
 });

@@ -62,7 +62,7 @@ describe('scoring UI', () => {
     const scoreValue = layout.querySelector('[data-testid="score-value"]');
     const scoreSummary = layout.querySelector('.ui-score__summary');
     expect(scoreValue?.textContent).toBe('--');
-    expect(scoreSummary?.textContent).toContain('Scoring');
+    expect(scoreSummary?.textContent).toContain('Preparing your coaching feedback');
 
     resolveScore({
       overall_score: 88,

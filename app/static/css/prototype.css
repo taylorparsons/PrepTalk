@@ -1,0 +1,573 @@
+/**
+ * PrepTalk Hybrid Prototype
+ * Serene Coach (colors/type) + Warm Encourager (celebration) + Zen Flow (structure)
+ */
+
+/* ========================================
+   DESIGN TOKENS
+   ======================================== */
+
+:root {
+  /* Serene Coach Colors */
+  --color-primary: #2D5A47;
+  --color-primary-hover: #234839;
+  --color-primary-light: #E8F2ED;
+  --color-secondary: #6B8A7A;
+  --color-background: #FAFBFA;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #F5F7F6;
+  --color-ink: #1A2B23;
+  --color-muted: #5C6B63;
+  --color-border: #E2E8E4;
+  --color-success: #3D8B6A;
+  --color-success-light: #E5F4EC;
+  --color-accent: #B8956B;
+  --color-accent-light: #FBF6F0;
+  --color-celebration: #E86F5C; /* From Warm Encourager */
+
+  /* Typography */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(26, 43, 35, 0.04), 0 2px 4px rgba(26, 43, 35, 0.02);
+  --shadow-md: 0 2px 4px rgba(26, 43, 35, 0.04), 0 4px 12px rgba(26, 43, 35, 0.06);
+  --shadow-lg: 0 4px 8px rgba(26, 43, 35, 0.04), 0 8px 24px rgba(26, 43, 35, 0.08);
+  --shadow-focus: 0 0 0 3px rgba(45, 90, 71, 0.2);
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+}
+
+/* ========================================
+   BASE
+   ======================================== */
+
+.proto-app {
+  min-height: 100vh;
+  background: var(--color-background);
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========================================
+   SCREEN CONTAINER
+   ======================================== */
+
+.proto-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  min-height: 100vh;
+  animation: fadeIn var(--duration-slow) var(--ease-out);
+}
+
+.proto-screen[hidden] {
+  display: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========================================
+   HEADER (minimal)
+   ======================================== */
+
+.proto-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: var(--space-md) var(--space-xl);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+}
+
+.proto-back {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.proto-back:hover {
+  color: var(--color-ink);
+}
+
+.proto-step {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-muted);
+  letter-spacing: 0.02em;
+}
+
+/* ========================================
+   CONTENT
+   ======================================== */
+
+.proto-content {
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+}
+
+/* ========================================
+   TYPOGRAPHY
+   ======================================== */
+
+.proto-logo {
+  width: 48px;
+  height: 48px;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  margin: 0 auto var(--space-lg);
+  animation: breathe 4s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+
+.proto-title {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  margin: 0 0 var(--space-md);
+  color: var(--color-ink);
+}
+
+.proto-subtitle {
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--color-muted);
+  margin: 0 0 var(--space-2xl);
+}
+
+.proto-heading {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.25;
+  margin: 0 0 var(--space-sm);
+}
+
+.proto-text {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
+
+.proto-btn {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 500;
+  padding: 16px 32px;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.proto-btn-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.proto-btn-primary:hover {
+  background: var(--color-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.proto-btn-primary:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.proto-btn-secondary {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border: 1px solid var(--color-border);
+}
+
+.proto-btn-secondary:hover {
+  background: var(--color-surface-raised);
+  border-color: var(--color-secondary);
+}
+
+.proto-btn-ghost {
+  background: transparent;
+  color: var(--color-muted);
+  padding: 12px 20px;
+}
+
+.proto-btn-ghost:hover {
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+/* ========================================
+   DROP ZONE
+   ======================================== */
+
+.proto-dropzone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2xl) var(--space-xl);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out);
+  background: var(--color-surface);
+  margin-bottom: var(--space-lg);
+}
+
+.proto-dropzone:hover,
+.proto-dropzone.dragover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.proto-dropzone-icon {
+  font-size: 32px;
+  margin-bottom: var(--space-md);
+  opacity: 0.6;
+}
+
+.proto-dropzone-text {
+  font-size: 16px;
+  color: var(--color-ink);
+  margin: 0 0 var(--space-xs);
+}
+
+.proto-dropzone-hint {
+  font-size: 14px;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+.proto-dropzone-file {
+  display: none;
+}
+
+.proto-dropzone.has-file {
+  border-color: var(--color-success);
+  background: var(--color-success-light);
+}
+
+.proto-dropzone.has-file .proto-dropzone-icon::after {
+  content: '✓';
+}
+
+/* ========================================
+   TOPIC CARD
+   ======================================== */
+
+.proto-topic-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-xl);
+  animation: slideUp var(--duration-slow) var(--ease-out);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.proto-topic-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin: 0 0 var(--space-sm);
+}
+
+.proto-topic-name {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.proto-topic-count {
+  font-size: 14px;
+  color: var(--color-muted);
+  margin-top: var(--space-xl);
+}
+
+/* ========================================
+   PRACTICE SCREEN
+   ======================================== */
+
+.proto-question {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--color-ink);
+  margin: 0 0 var(--space-2xl);
+  max-width: 560px;
+}
+
+.proto-mic {
+  width: 80px;
+  height: 80px;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-md);
+  font-size: 32px;
+  color: white;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(45, 90, 71, 0.4); }
+  50% { box-shadow: 0 0 0 20px rgba(45, 90, 71, 0); }
+}
+
+.proto-mic-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-primary);
+  margin-bottom: var(--space-2xl);
+}
+
+.proto-transcript {
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  text-align: left;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-ink);
+  min-height: 80px;
+  margin-bottom: var(--space-lg);
+}
+
+.proto-actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+}
+
+/* ========================================
+   FEEDBACK SCREEN
+   ======================================== */
+
+.proto-feedback-headline {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--color-success);
+  margin: 0 0 var(--space-xl);
+}
+
+.proto-feedback-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-xl);
+}
+
+.proto-feedback-section {
+  margin-bottom: var(--space-lg);
+}
+
+.proto-feedback-section:last-child {
+  margin-bottom: 0;
+}
+
+.proto-feedback-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin: 0 0 var(--space-sm);
+}
+
+.proto-feedback-text {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.proto-feedback-list {
+  margin: 0;
+  padding-left: var(--space-lg);
+}
+
+.proto-feedback-list li {
+  margin-bottom: var(--space-xs);
+  color: var(--color-ink);
+}
+
+.proto-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: var(--space-lg) 0;
+}
+
+/* ========================================
+   CELEBRATION SCREEN
+   ======================================== */
+
+.proto-celebration {
+  text-align: center;
+}
+
+.proto-confetti {
+  font-size: 48px;
+  margin-bottom: var(--space-lg);
+  animation: bounce 0.6s ease-out;
+}
+
+@keyframes bounce {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.proto-celebration-title {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 500;
+  color: var(--color-ink);
+  margin: 0 0 var(--space-sm);
+}
+
+.proto-celebration-subtitle {
+  font-size: 18px;
+  color: var(--color-muted);
+  margin: 0 0 var(--space-2xl);
+}
+
+.proto-progress-bar {
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-full);
+  height: 12px;
+  overflow: hidden;
+  margin-bottom: var(--space-xl);
+}
+
+.proto-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-success));
+  border-radius: var(--radius-full);
+  animation: fillProgress 1s var(--ease-out) forwards;
+}
+
+@keyframes fillProgress {
+  from { width: 0; }
+}
+
+.proto-strengths {
+  background: var(--color-success-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  text-align: left;
+  margin-bottom: var(--space-xl);
+}
+
+.proto-strengths-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-success);
+  margin: 0 0 var(--space-sm);
+}
+
+.proto-strengths-list {
+  margin: 0;
+  padding-left: var(--space-lg);
+  color: var(--color-ink);
+}
+
+.proto-strengths-list li {
+  margin-bottom: var(--space-xs);
+}
+
+/* ========================================
+   UTILITIES
+   ======================================== */
+
+.proto-mt-lg { margin-top: var(--space-lg); }
+.proto-mt-xl { margin-top: var(--space-xl); }
+.proto-mb-lg { margin-bottom: var(--space-lg); }
+.proto-mb-xl { margin-bottom: var(--space-xl); }
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 600px) {
+  .proto-screen {
+    padding: var(--space-lg);
+  }
+
+  .proto-title {
+    font-size: 28px;
+  }
+
+  .proto-question {
+    font-size: 20px;
+  }
+
+  .proto-actions {
+    flex-direction: column;
+  }
+}
