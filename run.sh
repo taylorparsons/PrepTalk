@@ -43,14 +43,15 @@ fi
 
 usage() {
   cat <<'USAGE'
-Usage: ./run.sh [install|ui|test|e2e|logs|deploy]
+Usage: ./run.sh [install|ui|test|e2e|logs|deploy|voice-check]
 
-install  Create venv (if missing), install Python deps (if requirements.txt), and npm install.
-ui       Install deps and serve UI (static server if no backend entrypoint).
-test     Run UI component tests (Vitest).
-e2e      Run Playwright E2E tests.
-logs     Install lnav helpers and open logs/app.log in lnav.
-deploy   Run deployment checks for Taylor (see docs/TAYLOR_CHECKLIST.md).
+install     Create venv (if missing), install Python deps (if requirements.txt), and npm install.
+ui          Install deps and serve UI (static server if no backend entrypoint).
+test        Run UI component tests (Vitest).
+e2e         Run Playwright E2E tests.
+logs        Install lnav helpers and open logs/app.log in lnav.
+deploy      Run deployment checks for Taylor (see docs/TAYLOR_CHECKLIST.md).
+voice-check Diagnose why voice/TTS isn't working.
 
 Env vars:
   VENV_DIR           Path to virtualenv directory (default: ./.venv)
@@ -298,6 +299,131 @@ deploy_check() {
   echo "================================================"
 }
 
+voice_diagnostic() {
+  echo "================================================"
+  echo "🎙️  Voice Feature Diagnostic"
+  echo "================================================"
+  echo ""
+
+  local errors=0
+  local warnings=0
+
+  # Check 1: Health endpoint
+  echo "[1/6] Checking health endpoint..."
+  if curl -s -f http://localhost:8000/health > /dev/null 2>&1; then
+    echo "  ✅ PASS: /health endpoint responding"
+  else
+    echo "  ❌ FAIL: /health endpoint not responding"
+    echo "     Is server running? Try: ./run.sh ui"
+    errors=$((errors + 1))
+  fi
+
+  # Check 2: Gemini API key
+  echo "[2/6] Checking Gemini API key..."
+  if [[ -f "$ROOT_DIR/.env" ]] && grep -q "GEMINI_API_KEY=" "$ROOT_DIR/.env"; then
+    local key_value=$(grep "GEMINI_API_KEY=" "$ROOT_DIR/.env" | cut -d'=' -f2)
+    if [[ -n "$key_value" && "$key_value" != "your_actual_key_here" && ${#key_value} -gt 20 ]]; then
+      echo "  ✅ PASS: Gemini API key configured (${#key_value} chars)"
+    else
+      echo "  ❌ FAIL: Gemini API key invalid or placeholder"
+      echo "     Get key from: https://aistudio.google.com/app/apikey"
+      errors=$((errors + 1))
+    fi
+  else
+    echo "  ❌ FAIL: GEMINI_API_KEY not found in .env"
+    errors=$((errors + 1))
+  fi
+
+  # Check 3: WebSocket endpoint exists
+  echo "[3/6] Checking WebSocket endpoint..."
+  local ws_response=$(curl -s -w "%{http_code}" -o /dev/null http://localhost:8000/api/live/test 2>/dev/null)
+  if [[ "$ws_response" == "426" || "$ws_response" == "101" ]]; then
+    echo "  ✅ PASS: WebSocket endpoint exists (426 Upgrade Required)"
+  elif [[ "$ws_response" == "404" ]]; then
+    echo "  ❌ FAIL: WebSocket endpoint not found (404)"
+    echo "     Check app/main.py for @app.websocket(\"/api/live/{session_id}\")"
+    errors=$((errors + 1))
+  else
+    echo "  ⚠️  WARN: WebSocket status unclear (HTTP $ws_response)"
+    warnings=$((warnings + 1))
+  fi
+
+  # Check 4: WebSocket accepts sample_rate
+  echo "[4/6] Checking WebSocket sample_rate handling..."
+  if grep -rq "sample_rate.*=.*init_msg\.get\|receive_json" "$ROOT_DIR/app" 2>/dev/null; then
+    echo "  ✅ PASS: WebSocket accepts init message with sample_rate"
+  else
+    echo "  ❌ FAIL: WebSocket doesn't accept sample_rate from client"
+    echo "     Add after websocket.accept():"
+    echo "     init_msg = await websocket.receive_json()"
+    echo "     sample_rate = init_msg.get('sample_rate', 24000)"
+    errors=$((errors + 1))
+  fi
+
+  # Check 5: Gemini config uses dynamic sample_rate
+  echo "[5/6] Checking Gemini sample_rate configuration..."
+  if grep -rq "\"sample_rate\".*:.*24000\|sample_rate.*=.*24000" "$ROOT_DIR/app/services" 2>/dev/null; then
+    echo "  ⚠️  WARN: Hardcoded sample_rate found (should be dynamic)"
+    echo "     Change: sample_rate: 24000 → sample_rate: sample_rate"
+    warnings=$((warnings + 1))
+  else
+    echo "  ✅ PASS: Using dynamic sample_rate (not hardcoded)"
+  fi
+
+  # Check 6: Front-end files present
+  echo "[6/6] Checking front-end audio files..."
+  local audio_files=(
+    "app/static/js/preflight-audio.js"
+    "app/static/js/voice.js"
+    "app/static/js/transport.js"
+  )
+
+  local missing=0
+  for file in "${audio_files[@]}"; do
+    if [[ ! -f "$ROOT_DIR/$file" ]]; then
+      missing=$((missing + 1))
+    fi
+  done
+
+  if [[ $missing -eq 0 ]]; then
+    echo "  ✅ PASS: Front-end audio files present"
+  else
+    echo "  ❌ FAIL: $missing front-end audio files missing"
+    errors=$((errors + 1))
+  fi
+
+  echo ""
+  echo "================================================"
+
+  if [[ $errors -eq 0 && $warnings -eq 0 ]]; then
+    echo "✅ All voice checks passed!"
+    echo ""
+    echo "If voice still doesn't work:"
+    echo "1. Open browser console (F12)"
+    echo "2. Check for WebSocket connection errors"
+    echo "3. Check server logs: tail -f logs/app.log"
+    echo "4. Try debug mode: http://localhost:8000/prototype-c?debug=1"
+    return 0
+  elif [[ $errors -eq 0 ]]; then
+    echo "⚠️  $warnings warning(s) - voice may work with degraded quality"
+    echo ""
+    echo "Next steps:"
+    echo "1. Fix warnings above for optimal quality"
+    echo "2. Test voice: http://localhost:8000/prototype-c"
+    echo "3. Check console (F12) for errors"
+    return 0
+  else
+    echo "❌ $errors error(s), $warnings warning(s) - voice will NOT work"
+    echo ""
+    echo "Fix these errors first:"
+    echo "1. Address each ❌ FAIL above"
+    echo "2. Re-run: ./run.sh voice-check"
+    echo "3. See: docs/VOICE_NOT_WORKING_FIX.md"
+    return 1
+  fi
+  echo "================================================"
+}
+
 case "$MODE" in
   install)
     ensure_venv
@@ -338,6 +464,9 @@ case "$MODE" in
     ;;
   deploy)
     deploy_check
+    ;;
+  voice-check)
+    voice_diagnostic
     ;;
   *)
     usage
