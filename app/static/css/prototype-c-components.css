@@ -442,11 +442,11 @@
    ======================================== */
 
 .progress-rings {
-  background: var(--color-background);
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
-  margin: 0 auto var(--space-lg);
+  margin: 0 auto var(--space-md);
   position: relative;
   width: 100%;
   max-width: 200px;
@@ -457,6 +457,19 @@
   justify-content: center;
   cursor: pointer;
   box-sizing: border-box;
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.progress-rings:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: var(--brand-primary);
+}
+
+.progress-rings .section-title {
+  color: var(--brand-primary);
+  margin-bottom: var(--space-sm);
+  text-align: center;
 }
 
 .progress-rings svg {

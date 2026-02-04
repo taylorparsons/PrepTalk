@@ -6,10 +6,7 @@
   pointer-events: stroke;
 }
 
-/* Background rings - subtle gray tracks */
-.ring-bg {
-  stroke: #E8E6E1;
-}
+/* Background rings - defined in prototype-c-stories-modal.css */
 
 .progress-rings-center {
   position: absolute;
