@@ -462,5 +462,27 @@ window.goToScreen = function(screenId) {
   }
 };
 
+// ============================================
+// EXPOSE FUNCTIONS TO GLOBAL SCOPE
+// Using namespaced approach to avoid global pollution
+// (Required for inline onclick handlers in HTML)
+// ============================================
+window.PrepTalk = window.PrepTalk || {};
+window.PrepTalk.practice = {
+  useStorySuggestion,
+  hideStorySuggestions,
+  closeStoryPractice,
+  toggleStoryRecording,
+  practiceAgain
+};
+
+// Backward compatibility - expose directly on window for existing onclick handlers
+// TODO: Migrate HTML to use PrepTalk.practice.functionName() and remove these
+window.useStorySuggestion = useStorySuggestion;
+window.hideStorySuggestions = hideStorySuggestions;
+window.closeStoryPractice = closeStoryPractice;
+window.toggleStoryRecording = toggleStoryRecording;
+window.practiceAgain = practiceAgain;
+
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', initPrototype);

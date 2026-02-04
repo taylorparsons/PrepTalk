@@ -556,3 +556,32 @@ function deleteDataAndClose() {
   }
 }
 
+// ============================================
+// EXPOSE FUNCTIONS TO GLOBAL SCOPE
+// Using namespaced approach to avoid global pollution
+// (Required for inline onclick handlers in HTML)
+// ============================================
+window.PrepTalk = window.PrepTalk || {};
+window.PrepTalk.core = {
+  goToScreen,
+  handleResumeUpload,
+  handleJobUpload,
+  showEndSession,
+  keepDataAndClose,
+  deleteDataAndClose,
+  exportPDF,
+  showRingTooltip,
+  hideRingTooltip
+};
+
+// Backward compatibility - expose directly on window for existing onclick handlers
+// TODO: Migrate HTML to use PrepTalk.core.functionName() and remove these
+window.goToScreen = goToScreen;
+window.handleResumeUpload = handleResumeUpload;
+window.handleJobUpload = handleJobUpload;
+window.showEndSession = showEndSession;
+window.keepDataAndClose = keepDataAndClose;
+window.deleteDataAndClose = deleteDataAndClose;
+window.exportPDF = exportPDF;
+window.showRingTooltip = showRingTooltip;
+window.hideRingTooltip = hideRingTooltip;
