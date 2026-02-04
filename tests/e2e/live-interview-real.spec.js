@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { runVoiceAgent } from './helpers/voice-agent.js';
 
-const isLive = Boolean(process.env.E2E_LIVE);
+const e2eLiveRaw = (process.env.E2E_LIVE || '').trim().toLowerCase();
+const isLive = e2eLiveRaw === '1' || e2eLiveRaw === 'true' || e2eLiveRaw === 'yes';
 const hasKey = Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
 const resumePath = process.env.E2E_RESUME_PATH;
 const jobPath = process.env.E2E_JOB_PATH;
