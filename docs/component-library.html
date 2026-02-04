@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrepTalk Component Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+
+  <!-- Import actual PrepTalk styles -->
+  <!-- Note: Open via http://localhost:8000/docs/component-library.html for styles to load -->
+  <link rel="stylesheet" href="/static/css/prototype-c-base.css" />
+  <link rel="stylesheet" href="/static/css/prototype-c-components.css" />
+  <link rel="stylesheet" href="/static/css/prototype-c-stories-shelf.css" />
+  <link rel="stylesheet" href="/static/css/prototype-c-stories-modal.css" />
+  <link rel="stylesheet" href="/static/css/prototype-c-responsive.css" />
+
+  <style>
+    /* Documentation styles */
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #FAFAFA;
+      padding: 40px 20px;
+      margin: 0;
+    }
+
+    .library-header {
+      max-width: 1200px;
+      margin: 0 auto 60px;
+      text-align: center;
+    }
+
+    .library-header h1 {
+      font-size: 36px;
+      font-weight: 600;
+      color: #161615;
+      margin-bottom: 12px;
+    }
+
+    .library-header p {
+      font-size: 16px;
+      color: #5f5d58;
+      margin: 0;
+    }
+
+    .component-section {
+      max-width: 1200px;
+      margin: 0 auto 60px;
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .component-section h2 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #161615;
+      margin: 0 0 8px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #E8E6E1;
+    }
+
+    .component-section .description {
+      font-size: 14px;
+      color: #5f5d58;
+      margin-bottom: 32px;
+    }
+
+    .component-variant {
+      margin-bottom: 40px;
+    }
+
+    .component-variant:last-child {
+      margin-bottom: 0;
+    }
+
+    .variant-title {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #5f5d58;
+      margin-bottom: 16px;
+    }
+
+    .component-demo {
+      background: #F7F6F4;
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .component-code {
+      background: #161615;
+      color: #E8E6E1;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin-bottom: 16px;
+    }
+
+    .component-code pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .component-props {
+      background: #F0F5F3;
+      border-left: 3px solid #2D8A5A;
+      padding: 16px 20px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .component-props strong {
+      color: #2D8A5A;
+      font-weight: 600;
+    }
+
+    .grid-demo {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      width: 100%;
+    }
+
+    .color-swatch {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    .toc {
+      max-width: 1200px;
+      margin: 0 auto 40px;
+      background: white;
+      border-radius: 12px;
+      padding: 24px 32px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .toc h3 {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #5f5d58;
+      margin: 0 0 16px;
+    }
+
+    .toc ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .toc a {
+      color: #2D8A5A;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+
+    .toc a:hover {
+      color: #1f6f5f;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="library-header">
+    <h1>📚 PrepTalk Component Library</h1>
+    <p>Visual design system and component documentation</p>
+  </div>
+
+  <!-- Table of Contents -->
+  <div class="toc">
+    <h3>Quick Navigation</h3>
+    <ul>
+      <li><a href="#colors">Colors & Tokens</a></li>
+      <li><a href="#typography">Typography</a></li>
+      <li><a href="#buttons">Buttons</a></li>
+      <li><a href="#cards">Cards</a></li>
+      <li><a href="#progress-rings">Progress Rings</a></li>
+      <li><a href="#forms">Forms</a></li>
+      <li><a href="#pills">Pills & Chips</a></li>
+      <li><a href="#legends">Legends & Lists</a></li>
+    </ul>
+  </div>
+
+  <!-- COLORS & TOKENS -->
+  <div class="component-section" id="colors">
+    <h2>Colors & Design Tokens</h2>
+    <p class="description">Core color palette and CSS custom properties used throughout PrepTalk</p>
+
+    <div class="component-variant">
+      <div class="variant-title">Brand Colors</div>
+      <div class="component-demo">
+        <div style="text-align: center;">
+          <span class="color-swatch" style="background: #2D8A5A;"></span>
+          <div style="font-size: 12px; margin-top: 8px;">
+            <strong>Primary</strong><br>
+            #2D8A5A
+          </div>
+        </div>
+        <div style="text-align: center;">
+          <span class="color-swatch" style="background: #4A7A9A;"></span>
+          <div style="font-size: 12px; margin-top: 8px;">
+            <strong>Accent</strong><br>
+            #4A7A9A
+          </div>
+        </div>
+        <div style="text-align: center;">
+          <span class="color-swatch" style="background: #9A7A4A;"></span>
+          <div style="font-size: 12px; margin-top: 8px;">
+            <strong>Warn</strong><br>
+            #9A7A4A
+          </div>
+        </div>
+        <div style="text-align: center;">
+          <span class="color-swatch" style="background: #161615;"></span>
+          <div style="font-size: 12px; margin-top: 8px;">
+            <strong>Ink</strong><br>
+            #161615
+          </div>
+        </div>
+      </div>
+
+      <div class="component-code"><pre>/* CSS Custom Properties */
+--brand-primary: #2D8A5A;
+--brand-accent: #4A7A9A;
+--color-ink: #161615;
+--color-muted: #5f5d58;
+--color-background: #FFFFFF;
+--color-surface: #FAFAFA;</pre></div>
+    </div>
+  </div>
+
+  <!-- TYPOGRAPHY -->
+  <div class="component-section" id="typography">
+    <h2>Typography</h2>
+    <p class="description">Text styles and hierarchy used across the application</p>
+
+    <div class="component-variant">
+      <div class="variant-title">Page Titles</div>
+      <div class="component-demo" style="flex-direction: column; align-items: flex-start;">
+        <h1 class="page-title text--title-hero">Page Title Hero</h1>
+        <h1 class="page-title">Standard Page Title</h1>
+        <p class="page-subtitle">Subtitle text provides context</p>
+      </div>
+      <div class="component-code"><pre>&lt;h1 class="page-title text--title-hero"&gt;Page Title Hero&lt;/h1&gt;
+&lt;p class="page-subtitle"&gt;Subtitle text&lt;/p&gt;</pre></div>
+    </div>
+
+    <div class="component-variant">
+      <div class="variant-title">Section Titles</div>
+      <div class="component-demo" style="flex-direction: column; align-items: flex-start;">
+        <p class="section-title">Section Title</p>
+        <p class="tip-title">Tip Card Title</p>
+      </div>
+      <div class="component-code"><pre>&lt;p class="section-title"&gt;Section Title&lt;/p&gt;
+&lt;p class="tip-title"&gt;Tip Card Title&lt;/p&gt;</pre></div>
+      <div class="component-props">
+        <strong>Usage:</strong> Use section-title for card headers and sidebar sections. Uppercase, small, muted color.
+      </div>
+    </div>
+  </div>
+
+  <!-- BUTTONS -->
+  <div class="component-section" id="buttons">
+    <h2>Buttons</h2>
+    <p class="description">Interactive button components with multiple variants and sizes</p>
+
+    <div class="component-variant">
+      <div class="variant-title">Primary Buttons</div>
+      <div class="component-demo">
+        <button class="btn btn-primary">Primary</button>
+        <button class="btn btn-primary btn--large">Large Primary</button>
+        <button class="btn btn-primary" disabled>Disabled</button>
+      </div>
+      <div class="component-code"><pre>&lt;button class="btn btn-primary"&gt;Primary&lt;/button&gt;
+&lt;button class="btn btn-primary btn--large"&gt;Large&lt;/button&gt;</pre></div>
+    </div>
+
+    <div class="component-variant">
+      <div class="variant-title">Secondary & Outline</div>
+      <div class="component-demo">
+        <button class="btn btn-secondary">Secondary</button>
+        <button class="btn btn-outline">Outline</button>
+        <button class="btn btn-ghost">Ghost</button>
+      </div>
+      <div class="component-code"><pre>&lt;button class="btn btn-secondary"&gt;Secondary&lt;/button&gt;
+&lt;button class="btn btn-outline"&gt;Outline&lt;/button&gt;
+&lt;button class="btn btn-ghost"&gt;Ghost&lt;/button&gt;</pre></div>
+    </div>
+
+    <div class="component-variant">
+      <div class="variant-title">Accent & Danger</div>
+      <div class="component-demo">
+        <button class="btn btn-accent">Accent</button>
+        <button class="btn btn-danger">Danger</button>
+      </div>
+      <div class="component-code"><pre>&lt;button class="btn btn-accent"&gt;Accent&lt;/button&gt;
+&lt;button class="btn btn-danger"&gt;Danger&lt;/button&gt;</pre></div>
+    </div>
+
+    <div class="component-variant">
+      <div class="variant-title">Button Sizes</div>
+      <div class="component-demo">
+        <button class="btn btn-primary btn-sm">Small</button>
+        <button class="btn btn-primary">Medium (default)</button>
+        <button class="btn btn-primary btn--large">Large</button>
+      </div>
+      <div class="component-props">
+        <strong>Sizes:</strong> btn-sm (compact), default (medium), btn--large (hero actions)
+      </div>
+    </div>
+  </div>
+
+  <!-- CARDS -->
+  <div class="component-section" id="cards">
+    <h2>Cards</h2>
+    <p class="description">Content containers with consistent styling and hover behaviors</p>
+
+    <div class="component-variant">
+      <div class="variant-title">Tip Cards</div>
+      <div class="component-demo" style="flex-direction: column; align-items: stretch;">
+        <div class="tip-card" style="max-width: 400px;">
+          <p class="tip-title">Default Tip Card</p>
+          <p class="tip-text">This is a standard tip card with neutral styling. Used for general guidance and tips.</p>
+        </div>
+        <div class="tip-card tip-card-accent" style="max-width: 400px;">
+          <p class="tip-title">Accent Tip Card</p>
+          <p class="tip-text">Accent variant with green-tinted background. Used for positive insights and highlights.</p>
+        </div>
+        <div class="tip-card tip-card-highlight" style="max-width: 400px;">
+          <p class="tip-title">Highlight Tip Card</p>
+          <p class="tip-text">Highlight variant with warm background. Used for important contextual information.</p>
+        </div>
+      </div>
+      <div class="component-code"><pre>&lt;div class="tip-card"&gt;
+  &lt;p class="tip-title"&gt;Title&lt;/p&gt;
+  &lt;p class="tip-text"&gt;Content&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div class="tip-card tip-card-accent"&gt;...&lt;/div&gt;
+&lt;div class="tip-card tip-card-highlight"&gt;...&lt;/div&gt;</pre></div>
+      <div class="component-props">
+        <strong>Hover:</strong> 2px lift with soft shadow<br>
+        <strong>Background:</strong> tip-card (#F7F6F4), tip-card-accent (#F0F5F3), tip-card-highlight (#F5F3F0)
+      </div>
+    </div>
+
+    <div class="component-variant">
+      <div class="variant-title">Story Cards</div>
+      <div class="component-demo" style="flex-direction: column; align-items: stretch;">
+        <div class="story-card" data-status="ready" style="max-width: 400px; cursor: default;">
+          <div class="story-card-header">
+            <span class="story-card-icon">💼</span>
+            <span class="story-card-name">Project Leadership Story</span>
+          </div>
+          <div class="story-card-tags">
+            <span class="story-tag">leadership</span>
+            <span class="story-tag">collaboration</span>
+            <span class="story-tag">results-driven</span>
+          </div>
+          <div class="story-card-readiness">
+            <div class="readiness-bar">
+              <div class="readiness-fill" style="width: 85%;"></div>
+            </div>
+            <span class="readiness-label">85% ready</span>
+          </div>
+          <div class="story-card-meta">
+            <span class="story-card-practices">Practiced 3 times</span>
+            <span class="story-card-action">Click to practice →</span>
+          </div>
+        </div>
+      </div>
+      <div class="component-code"><pre>&lt;div class="story-card" data-status="ready"&gt;
+  &lt;div class="story-card-header"&gt;
+    &lt;span class="story-card-icon"&gt;💼&lt;/span&gt;
+    &lt;span class="story-card-name"&gt;Story Name&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;div class="story-card-tags"&gt;
+    &lt;span class="story-tag"&gt;tag&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;div class="story-card-readiness"&gt;...&lt;/div&gt;
+&lt;/div&gt;</pre></div>
+      <div class="component-props">
+        <strong>Status:</strong> data-status="ready" (green), "practicing" (blue), "new" (amber)<br>
+        <strong>Border:</strong> 3px left border indicates status
+      </div>
+    </div>
+  </div>
+
+  <!-- PROGRESS RINGS -->
+  <div class="component-section" id="progress-rings">
+    <h2>Progress Rings</h2>
+    <p class="description">Apple Watch-style concentric progress visualization with tooltips</p>
+
+    <div class="component-variant">
+      <div class="variant-title">Session Progress Rings</div>
+      <div class="component-demo">
+        <div class="progress-rings" style="cursor: default;">
+          <p class="section-title">Session Progress</p>
+          <svg viewBox="0 0 160 160" aria-label="Session progress rings" style="transform: rotate(-90deg); max-width: 140px; max-height: 140px;">
+            <!-- Background tracks -->
+            <circle class="ring-bg" cx="80" cy="80" r="70" stroke-width="12"/>
+            <circle class="ring-bg" cx="80" cy="80" r="52" stroke-width="12"/>
+            <circle class="ring-bg" cx="80" cy="80" r="34" stroke-width="12"/>
+            <!-- Filled rings (67%, 83%, 90%) -->
+            <circle class="ring-outer" cx="80" cy="80" r="70" stroke-width="12"
+                    stroke-dasharray="439.8" stroke-dashoffset="145.1"/>
+            <circle class="ring-middle" cx="80" cy="80" r="52" stroke-width="12"
+                    stroke-dasharray="326.7" stroke-dashoffset="55.5"/>
+            <circle class="ring-inner" cx="80" cy="80" r="34" stroke-width="12"
+                    stroke-dasharray="213.6" stroke-dashoffset="21.4"/>
+          </svg>
+          <!-- Ring legend -->
+          <div class="ring-legend" style="margin-top: 12px;">
+            <div class="ring-legend-item">
+              <span class="ring-legend-dot ring-legend-dot--topics"></span>
+              <span><strong>Topics</strong> 2 of 3</span>
+            </div>
+            <div class="ring-legend-item">
+              <span class="ring-legend-dot ring-legend-dot--questions"></span>
+              <span><strong>Questions</strong> 5 of 6</span>
+            </div>
+            <div class="ring-legend-item">
+              <span class="ring-legend-dot ring-legend-dot--time"></span>
+              <span><strong>Time</strong> 18 of 20 min</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="component-code"><pre>&lt;div class="progress-rings"&gt;
+  &lt;p class="section-title"&gt;Session Progress&lt;/p&gt;
+  &lt;svg viewBox="0 0 160 160"&gt;
+    &lt;circle class="ring-bg" cx="80" cy="80" r="70"/&gt;
+    &lt;circle class="ring-outer" cx="80" cy="80" r="70"
+            stroke-dasharray="439.8"
+            stroke-dashoffset="145.1"/&gt;
+  &lt;/svg&gt;
+  &lt;div class="ring-legend"&gt;...&lt;/div&gt;
+&lt;/div&gt;</pre></div>
+      <div class="component-props">
+        <strong>Data:</strong> Topics, Questions, Time<br>
+        <strong>Colors:</strong> Outer (#2D5A47), Middle (#5B8A7A), Inner (#8FB5A5)<br>
+        <strong>Location:</strong> Progress page sidebar<br>
+        <strong>Hover:</strong> Ring stroke-width expands to 14px
+      </div>
+    </div>
+
+    <div class="component-variant">
+      <div class="variant-title">Story Collection Rings</div>
+      <div class="component-demo">
+        <div class="progress-rings" style="cursor: default;">
+          <p class="section-title">Story Collection</p>
+          <div class="progress-rings-wrapper">
+            <svg class="progress-rings-svg" viewBox="0 0 160 160" aria-label="Story progress rings">
+              <circle class="ring-bg" cx="80" cy="80" r="70" stroke-width="10"/>
+              <circle class="ring-bg" cx="80" cy="80" r="52" stroke-width="10"/>
+              <circle class="ring-bg" cx="80" cy="80" r="34" stroke-width="10"/>
+              <circle class="ring-outer" cx="80" cy="80" r="70" stroke-width="10"
+                      stroke-dasharray="439.8" stroke-dashoffset="110"/>
+              <circle class="ring-middle" cx="80" cy="80" r="52" stroke-width="10"
+                      stroke-dasharray="326.7" stroke-dashoffset="163"/>
+              <circle class="ring-inner" cx="80" cy="80" r="34" stroke-width="10"
+                      stroke-dasharray="213.6" stroke-dashoffset="107"/>
+            </svg>
+            <div class="rings-center-sidebar" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+              <span class="rings-value-sidebar">7</span>
+              <span class="rings-label-sidebar">Stories</span>
+            </div>
+          </div>
+          <div class="ring-legend ring-legend--compact" style="margin-top: 12px;">
+            <div class="ring-legend-item">
+              <span class="ring-legend-dot ring-legend-dot--outer"></span>
+              <span>Total <strong>7</strong></span>
+            </div>
+            <div class="ring-legend-item">
+              <span class="ring-legend-dot ring-legend-dot--middle"></span>
+              <span>Ready <strong>2</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="component-props">
+        <strong>Data:</strong> Total stories, Ready stories, Filtered count<br>
+        <strong>Colors:</strong> Outer (#2D8A5A), Middle (#4A9A8A), Inner (#7A5A9A)<br>
+        <strong>Location:</strong> My Stories page sidebar<br>
+        <strong>Center:</strong> Large number shows total count
+      </div>
+    </div>
+
+    <div class="component-variant">
+      <div class="variant-title">Ring Styling</div>
+      <div class="component-props">
+        <strong>Background:</strong> #F0F5F3 (soft green-tinted gray)<br>
+        <strong>Border:</strong> 1px solid #D4E4DD<br>
+        <strong>Padding:</strong> var(--space-lg) = 20px<br>
+        <strong>Aspect Ratio:</strong> 1:1 (square)<br>
+        <strong>Max Width:</strong> 200px desktop, 160px mobile, 140px small mobile<br>
+        <strong>Hover:</strong> 2px lift + shadow + border color change
+      </div>
+    </div>
+  </div>
+
+  <!-- FORMS -->
+  <div class="component-section" id="forms">
+    <h2>Form Elements</h2>
+    <p class="description">Input fields, dropzones, and form controls</p>
+
+    <div class="component-variant">
+      <div class="variant-title">Dropzone</div>
+      <div class="component-demo" style="flex-direction: column; align-items: stretch;">
+        <div class="dropzone" style="max-width: 500px;">
+          <p class="dropzone-text">Drop file here or click to upload</p>
+          <p class="dropzone-hint">PDF, DOCX, or TXT • Max 5MB</p>
+        </div>
+      </div>
+      <div class="component-code"><pre>&lt;div class="dropzone" onclick="..."&gt;
+  &lt;p class="dropzone-text"&gt;Drop file here&lt;/p&gt;
+  &lt;p class="dropzone-hint"&gt;PDF, DOCX, or TXT&lt;/p&gt;
+&lt;/div&gt;</pre></div>
+      <div class="component-props">
+        <strong>State:</strong> Add .has-file class when file selected<br>
+        <strong>Hover:</strong> Border color changes to accent
+      </div>
+    </div>
+  </div>
+
+  <!-- PILLS & CHIPS -->
+  <div class="component-section" id="pills">
+    <h2>Pills & Chips</h2>
+    <p class="description">Tag filters, status indicators, and badge components</p>
+
+    <div class="component-variant">
+      <div class="variant-title">Tag Chips (Filters)</div>
+      <div class="component-demo">
+        <button class="tag-chip tag-chip--active">All</button>
+        <button class="tag-chip">Leadership</button>
+        <button class="tag-chip">Technical</button>
+        <button class="tag-chip">Collaboration</button>
+      </div>
+      <div class="component-code"><pre>&lt;button class="tag-chip tag-chip--active"&gt;All&lt;/button&gt;
+&lt;button class="tag-chip"&gt;Leadership&lt;/button&gt;</pre></div>
+      <div class="component-props">
+        <strong>Active State:</strong> Add tag-chip--active class<br>
+        <strong>Background:</strong> Default (surface), Active (brand primary)<br>
+        <strong>Usage:</strong> Filter controls on My Stories page
+      </div>
+    </div>
+
+    <div class="component-variant">
+      <div class="variant-title">Story Tags</div>
+      <div class="component-demo">
+        <span class="story-tag">leadership</span>
+        <span class="story-tag">technical</span>
+        <span class="story-tag">collaboration</span>
+        <span class="story-tag">problem-solving</span>
+      </div>
+      <div class="component-code"><pre>&lt;span class="story-tag"&gt;leadership&lt;/span&gt;</pre></div>
+      <div class="component-props">
+        <strong>Usage:</strong> Tags within story cards<br>
+        <strong>Clickable:</strong> Can trigger filter when clicked
+      </div>
+    </div>
+  </div>
+
+  <!-- LEGENDS & LISTS -->
+  <div class="component-section" id="legends">
+    <h2>Legends & Lists</h2>
+    <p class="description">Visual legends for data visualization components</p>
+
+    <div class="component-variant">
+      <div class="variant-title">Ring Legend</div>
+      <div class="component-demo" style="background: white; flex-direction: column; align-items: flex-start;">
+        <div class="ring-legend">
+          <div class="ring-legend-item">
+            <span class="ring-legend-dot ring-legend-dot--topics"></span>
+            <span><strong>Topics</strong> 2 of 3</span>
+          </div>
+          <div class="ring-legend-item">
+            <span class="ring-legend-dot ring-legend-dot--questions"></span>
+            <span><strong>Questions</strong> 5 of 6</span>
+          </div>
+          <div class="ring-legend-item">
+            <span class="ring-legend-dot ring-legend-dot--time"></span>
+            <span><strong>Time</strong> 18 of 20 min</span>
+          </div>
+        </div>
+      </div>
+      <div class="component-code"><pre>&lt;div class="ring-legend"&gt;
+  &lt;div class="ring-legend-item"&gt;
+    &lt;span class="ring-legend-dot ring-legend-dot--topics"&gt;&lt;/span&gt;
+    &lt;span&gt;&lt;strong&gt;Topics&lt;/strong&gt; 2 of 3&lt;/span&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</pre></div>
+    </div>
+
+    <div class="component-variant">
+      <div class="variant-title">Compact Ring Legend</div>
+      <div class="component-demo" style="background: white; flex-direction: column; align-items: flex-start;">
+        <div class="ring-legend ring-legend--compact">
+          <div class="ring-legend-item">
+            <span class="ring-legend-dot ring-legend-dot--outer"></span>
+            <span>Total <strong>7</strong></span>
+          </div>
+          <div class="ring-legend-item">
+            <span class="ring-legend-dot ring-legend-dot--middle"></span>
+            <span>Ready <strong>2</strong></span>
+          </div>
+        </div>
+      </div>
+      <div class="component-props">
+        <strong>Variant:</strong> ring-legend--compact for sidebar use<br>
+        <strong>Alignment:</strong> Compact version has justified spacing
+      </div>
+    </div>
+  </div>
+
+  <div class="library-header" style="margin-top: 80px;">
+    <p>📝 Generated from PrepTalk prototype-c styles • 2026-02-04</p>
+  </div>
+</body>
+</html>

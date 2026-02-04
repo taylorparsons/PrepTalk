@@ -637,3 +637,24 @@ function exportStories() {
   URL.revokeObjectURL(url);
 }
 
+// ============================================
+// EXPOSE FUNCTIONS TO GLOBAL SCOPE
+// Using namespaced approach to avoid global pollution
+// (Required for inline onclick handlers in HTML)
+// ============================================
+window.PrepTalk = window.PrepTalk || {};
+window.PrepTalk.stories = {
+  filterByTag,
+  hideStoryCaptureCard,
+  exportStories,
+  showStoriesRingTooltip,
+  hideStoriesRingTooltip
+};
+
+// Backward compatibility - expose directly on window for existing onclick handlers
+// TODO: Migrate HTML to use PrepTalk.stories.functionName() and remove these
+window.filterByTag = filterByTag;
+window.hideStoryCaptureCard = hideStoryCaptureCard;
+window.exportStories = exportStories;
+window.showStoriesRingTooltip = showStoriesRingTooltip;
+window.hideStoriesRingTooltip = hideStoriesRingTooltip;
