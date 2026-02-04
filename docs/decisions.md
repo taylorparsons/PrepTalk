@@ -698,3 +698,20 @@ Alternatives considered:
 
 Acceptance / test:
 - Unit test verifies PDF generation succeeds when enums are absent (skips if `fpdf` missing).
+
+## D-20260203-1504
+Date: 2026-02-03 15:04
+Inputs: CR-20260203-1503, CR-20260203-1504
+PRD: Hackathon submission docs
+
+Decision:
+Create a hackathon submission doc with draft write-up + video script and leave explicit placeholders for the demo URL/video link until provided.
+
+Rationale:
+The plan can be implemented without guessing live links, while giving a complete, ready-to-fill submission package.
+
+Alternatives considered:
+- Block on exact demo/video URLs (rejected: would stall deliverables and planning progress).
+
+Acceptance / test:
+- README links to the hackathon submission doc and lists placeholders for required links.

@@ -735,3 +735,23 @@ the pdf export is still broken add the to the cta docs so I can come back and fi
 
 Notes:
 - Document the unresolved PDF export failure in CTA docs for follow-up.
+
+## CR-20260203-1503
+Date: 2026-02-03 15:03
+Source: chat
+
+Request (verbatim):
+help me plan how to with the hackathon with this app, i will give you the rules
+
+Notes:
+- Provide a compliance-first hackathon submission plan aligned to Gemini 3 rules.
+
+## CR-20260203-1504
+Date: 2026-02-03 15:04
+Source: chat
+
+Request (verbatim):
+Implement the plan.
+
+Notes:
+- Create submission docs, write-up draft, and video script/checklist for the hackathon.

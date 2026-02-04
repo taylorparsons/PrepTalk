@@ -1668,3 +1668,30 @@ NEXT
 NOTES
 - Commands run: none.
 - Commit: `5a410c231c63fc9fa7bca949610943d920faa34c`.
+
+---
+
+Session: 2026-02-03 15:04
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260203-hackathon-submission
+Input: CR-20260203-1503, CR-20260203-1504
+Decisions: D-20260203-1504
+Spec: docs/specs/20260203-hackathon-submission/spec.md
+Tasks: docs/specs/20260203-hackathon-submission/tasks.md
+Goal: Implement hackathon submission docs and README deliverables.
+
+DONE
+- [2026-02-03 15:04] T-001: Draft hackathon submission doc with checklist, write-up, and video script. (Skills: ralph)
+- [2026-02-03 15:04] T-002: Update README Hackathon Deliverables to link to the submission doc and placeholders. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- Fill in demo URL + video URL placeholders.
+
+NOTES
+- Commands run: none.
+- Tests: Not applicable (documentation-only changes).
