@@ -3,6 +3,7 @@ import { defineConfig } from '@playwright/test';
 const e2eLiveRaw = (process.env.E2E_LIVE || '').trim().toLowerCase();
 const isLive = e2eLiveRaw === '1' || e2eLiveRaw === 'true' || e2eLiveRaw === 'yes';
 const adapter = isLive ? 'gemini' : 'mock';
+const voiceMode = isLive ? (process.env.VOICE_MODE || 'live') : 'turn';
 const launchOptions = isLive
   ? { args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] }
   : {};
@@ -26,7 +27,7 @@ export default defineConfig({
     launchOptions
   },
   webServer: {
-    command: `INTERVIEW_ADAPTER=${adapter} RELOAD=0 PORT=${port} ./run.sh ui`,
+    command: `INTERVIEW_ADAPTER=${adapter} VOICE_MODE=${voiceMode} RELOAD=0 PORT=${port} ./run.sh ui`,
     url: `${baseURL}/health`,
     reuseExistingServer: !process.env.CI,
     timeout: 120000

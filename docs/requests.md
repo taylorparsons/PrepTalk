@@ -765,3 +765,23 @@ using $ralph
 
 Notes:
 - Confirm RALPH workflow and capture status.
+
+## CR-20260204-1426
+Date: 2026-02-04 14:26
+Source: chat
+
+Request (verbatim):
+$ralph I want to merge the to main what needs to be done this will need to be supported so that I can host in on my google cloud account
+
+Notes:
+- Provide a merge readiness checklist and required deployment steps for Google Cloud hosting.
+
+## CR-20260204-1515
+Date: 2026-02-04 15:15
+Source: chat
+
+Request (verbatim):
+3 ignore it and make a note in $ralph about this
+
+Notes:
+- Note that mock E2E failure was intentionally ignored for now per user request.

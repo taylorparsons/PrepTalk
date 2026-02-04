@@ -1,7 +1,11 @@
 import { test, expect } from '@playwright/test';
+import fs from 'node:fs';
 
-const isLive = Boolean(process.env.E2E_LIVE);
+const e2eLiveRaw = (process.env.E2E_LIVE || '').trim().toLowerCase();
+const isLive = e2eLiveRaw === '1' || e2eLiveRaw === 'true' || e2eLiveRaw === 'yes';
 const hasKey = Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
+const resumePath = process.env.E2E_RESUME_PATH;
+const jobPath = process.env.E2E_JOB_PATH;
 
 function buildPdfBuffer(label) {
   const content = `%PDF-1.4
@@ -48,20 +52,28 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
   const voiceMode = await page.evaluate(() => window.__APP_CONFIG__?.voiceMode || 'live');
   test.skip(voiceMode !== 'turn', 'Requires VOICE_MODE=turn for turn-based voice.');
 
-  const resumeBuffer = buildPdfBuffer('Resume');
-  const jobBuffer = buildPdfBuffer('Job');
+  const resumeFileInput = page.getByTestId('resume-file');
+  const jobFileInput = page.getByTestId('job-file');
 
-  await page.getByTestId('resume-file').setInputFiles({
-    name: 'resume.pdf',
-    mimeType: 'application/pdf',
-    buffer: resumeBuffer
-  });
+  if (resumePath && jobPath && fs.existsSync(resumePath) && fs.existsSync(jobPath)) {
+    await resumeFileInput.setInputFiles(resumePath);
+    await jobFileInput.setInputFiles(jobPath);
+  } else {
+    const resumeBuffer = buildPdfBuffer('Resume');
+    const jobBuffer = buildPdfBuffer('Job');
 
-  await page.getByTestId('job-file').setInputFiles({
-    name: 'job.pdf',
-    mimeType: 'application/pdf',
-    buffer: jobBuffer
-  });
+    await resumeFileInput.setInputFiles({
+      name: 'resume.pdf',
+      mimeType: 'application/pdf',
+      buffer: resumeBuffer
+    });
+
+    await jobFileInput.setInputFiles({
+      name: 'job.pdf',
+      mimeType: 'application/pdf',
+      buffer: jobBuffer
+    });
+  }
 
   const generateButton = page.getByTestId('generate-questions');
   const startButton = page.getByTestId('start-interview');

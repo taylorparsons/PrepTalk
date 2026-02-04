@@ -2,9 +2,11 @@ import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const isLive = Boolean(process.env.E2E_LIVE);
+const e2eLiveRaw = (process.env.E2E_LIVE || '').trim().toLowerCase();
+const isLive = e2eLiveRaw === '1' || e2eLiveRaw === 'true' || e2eLiveRaw === 'yes';
 const hasKey = Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
-const isBarge = Boolean(process.env.E2E_LIVE_LONG_BARGE);
+const e2eLiveBargeRaw = (process.env.E2E_LIVE_LONG_BARGE || '').trim().toLowerCase();
+const isBarge = e2eLiveBargeRaw === '1' || e2eLiveBargeRaw === 'true' || e2eLiveBargeRaw === 'yes';
 const bargeDurationMs = Number.parseInt(process.env.E2E_LIVE_BARGE_DURATION_MS || '60000', 10);
 const audioBurstFrames = Number.parseInt(process.env.E2E_LIVE_AUDIO_BURST_FRAMES || '6', 10);
 const audioFrequencyHz = Number.parseFloat(process.env.E2E_LIVE_AUDIO_FREQUENCY_HZ || '440');
