@@ -1,0 +1,327 @@
+/**
+ * PrepTalk Prototype - Option C: Confident Pro
+ * Linear/Notion inspired. Typography-first. Tool tips in margins.
+ */
+
+:root {
+  /* ============================================
+     BRAND COLORS - Easy to swap for rebranding
+     ============================================
+     To rebrand, update these 5 values:
+     - brand-primary: Main action color (buttons, links)
+     - brand-primary-dark: Hover state
+     - brand-primary-light: Backgrounds, highlights
+     - brand-accent: Secondary emphasis
+     - brand-ring: Progress rings gradient
+  */
+  --brand-primary: #2D5A47;       /* Serene coach green */
+  --brand-primary-dark: #234839;  /* Hover/active state */
+  --brand-primary-light: #E8F2ED; /* Light backgrounds */
+  --brand-accent: #4A7A65;        /* Secondary green */
+  /* Progress ring colors - distinct tones */
+  --brand-ring-topics: #2D5A47;      /* Outer ring - Topics (darkest green) */
+  --brand-ring-questions: #5B8A7A;   /* Middle ring - Questions (teal-green) */
+  --brand-ring-time: #8FB5A5;        /* Inner ring - Time (sage/lightest) */
+
+  /* Starfish feedback colors - alternating blue/green */
+  --brand-starfish-blue: #4A6A8A;                 /* Calm blue accent */
+  --brand-starfish-green: #2D5A47;                /* Brand green */
+  --brand-continue: var(--brand-starfish-blue);   /* Continue - blue */
+  --brand-lean-into: var(--brand-starfish-green); /* Lean into - green */
+  --brand-try-adding: var(--brand-starfish-blue); /* Add - blue */
+  --brand-refine: #5B8A7A;                        /* Refine - green */
+  --brand-stop: #A85A5A;                          /* Stop (warning - rarely used) */
+
+  /* Tag palette (synced with design-tokens.json) */
+  --tag-color-leadership: #2D8A5A;
+  --tag-color-technical: #4A7A9A;
+  --tag-color-conflict: #9A4A4A;
+  --tag-color-communication: #7A5A9A;
+  --tag-color-results-driven: #8A6A4A;
+  --tag-color-problem-solving: #4A7A8A;
+  --tag-color-innovation: #6A4A9A;
+  --tag-color-collaboration: #5A8A7A;
+  --tag-color-mentorship: #9A7A5A;
+  --tag-color-negotiation: #8A5A7A;
+  --tag-color-customer-focus: #6A8A5A;
+  --tag-color-data-driven: #5A7A8A;
+
+  /* Story status colors */
+  --status-ready: #2D8A5A;
+  --status-practicing: #4A7A9A;
+  --status-new: #9A7A4A;
+
+  /* Typography scale */
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-md: 13px;
+  --font-size-base: 14px;
+  --font-size-lg: 15px;
+  --font-size-xl: 16px;
+
+  /* Footnote/helper text - consistent across pages */
+  --font-footnote: var(--font-size-sm);
+  --color-footnote: var(--color-muted);
+
+  /* ============================================
+     UI COLORS - Neutral palette (rarely change)
+     ============================================ */
+  --color-primary: #1A1A1A;
+  --color-primary-hover: #333333;
+  --color-secondary: #666666;
+  --color-background: #FFFFFF;
+  --color-surface: #FAFAFA;
+  --color-surface-raised: #F5F5F5;
+  --color-ink: #111111;
+  --color-muted: #737373;
+  --color-border: #E5E5E5;
+  --color-border-strong: #D4D4D4;
+  --color-success: #10B981;
+  --color-success-light: #ECFDF5;
+  --color-accent: #6366F1;
+  --color-accent-hover: #4F46E5;
+  --color-accent-light: #EEF2FF;
+  --color-danger: #EF4444;
+  --color-warning: #F59E0B;
+  --color-warning-light: #FFFBEB;
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* Spacing - tighter */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 20px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* Radius - subtle */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Shadows - crisp */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 1px 3px rgba(0,0,0,0.06), 0 4px 8px rgba(0,0,0,0.04);
+  --shadow-lg: 0 2px 4px rgba(0,0,0,0.04), 0 8px 16px rgba(0,0,0,0.06);
+  --shadow-focus: 0 0 0 2px #FFF, 0 0 0 4px var(--color-accent);
+
+  /* Animation timings */
+  --animation-breathe: 4s;
+  --animation-pulse-mic: 1.5s;
+  --animation-ring-progress: 0.8s;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-ink);
+  background: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ========================================
+   LAYOUT: Header + Main + Sidebar
+   ======================================== */
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  height: 56px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-lg);
+  background: var(--color-background);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.header-logo:visited,
+.header-logo:active,
+.header-logo:focus {
+  color: inherit;
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+/* Pulsing presence indicator - caring, grounded assistant */
+.logo-pulse {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 2px solid var(--brand-primary);
+  border-radius: 50%;
+  animation: breathe 4s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.85; box-shadow: 0 0 0 0 rgba(45, 90, 71, 0.2); }
+  50% { transform: scale(1.08); opacity: 1; box-shadow: 0 0 0 6px rgba(45, 90, 71, 0); }
+}
+
+.header-nav {
+  display: flex;
+  gap: var(--space-lg);
+  font-size: 14px;
+  color: var(--color-muted);
+}
+
+.header-nav a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.header-nav a:hover {
+  color: var(--color-ink);
+}
+
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 4px;
+  background: var(--brand-primary);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 100px;
+}
+
+.main-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.main-content {
+  padding: var(--space-xl);
+  border-right: 1px solid var(--color-border);
+}
+
+.sidebar {
+  padding: var(--space-xl);
+  background: var(--color-surface);
+}
+
+/* ========================================
+   TYPOGRAPHY
+   ======================================== */
+
+.page-title {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-sm);
+  line-height: 1.2;
+}
+
+.page-subtitle {
+  font-size: 15px;
+  color: var(--color-muted);
+  margin: 0 0 var(--space-xl);
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin: 0 0 var(--space-md);
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0 0 var(--space-sm);
+}
+
+/* ========================================
+   STEP INDICATOR
+   ======================================== */
+
+.steps {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xl);
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.step-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.step.active .step-number {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.step.complete .step-number {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: white;
+}
+
+.step-line {
+  width: 32px;
+  height: 1px;
+  background: var(--color-border);
+}
+
+/* ========================================
+   CARDS & PANELS
+   ======================================== */
+
+.card {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}

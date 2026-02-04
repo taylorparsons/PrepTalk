@@ -1,0 +1,920 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PrepTalk - Confident Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+  <!-- Modular CSS (split for maintainability) -->
+  <link rel="stylesheet" href="/static/css/prototype-c-base.css" />
+  <link rel="stylesheet" href="/static/css/prototype-c-components.css" />
+  <link rel="stylesheet" href="/static/css/prototype-c-screens.css" />
+  <link rel="stylesheet" href="/static/css/prototype-c-stories-shelf.css" />
+  <link rel="stylesheet" href="/static/css/prototype-c-stories-modal.css" />
+  <!-- PDF generation library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Configuration loader (must load first) -->
+  <script src="/static/js/config-loader.js"></script>
+</head>
+<body>
+  <div class="app">
+
+    <!-- Header -->
+    <header class="header">
+      <a href="#screen-welcome" class="header-logo" onclick="goToScreen('screen-welcome'); return false;">
+        <div class="logo-pulse" title="PrepTalk is ready to help"></div>
+        <span>PrepTalk</span>
+      </a>
+      <nav class="header-nav" aria-label="Main navigation">
+        <a href="#screen-welcome" onclick="goToScreen('screen-welcome'); return false;">Home</a>
+        <a href="#screen-complete" onclick="goToScreen('screen-complete'); return false;">Progress</a>
+        <a href="#screen-stories" onclick="goToScreen('screen-stories'); return false;" id="nav-stories">My Stories</a>
+        <a href="#screen-end" onclick="showEndSession(); return false;">End Session</a>
+      </nav>
+    </header>
+
+    <!-- Screen 0: Welcome/Intro -->
+    <div class="screen active" id="screen-welcome" role="main">
+      <div class="main-layout layout--centered">
+        <main class="main-content content--centered">
+          <div class="logo-pulse logo-pulse--large"></div>
+
+          <h1 class="page-title text--title-hero">Hey, I'm Prep</h1>
+          <p class="page-subtitle text--subtitle-large">
+            I'm here to help you see what's already there. Practice saying it out loud, build confidence in your delivery, and walk in knowing exactly what you'll share.
+          </p>
+
+          <p class="text--body-large">
+            You already have the stories. Let's find them together.
+          </p>
+
+          <button class="btn btn-primary btn--large" onclick="goToScreen('screen-setup')">
+            Let's get started →
+          </button>
+
+          <p class="footnote">
+            About 15 minutes. Pause anytime.
+          </p>
+        </main>
+      </div>
+    </div>
+
+    <!-- Screen 1: Setup - Resume -->
+    <div class="screen" id="screen-setup" role="main">
+      <div class="main-layout">
+        <main class="main-content">
+          <div class="steps" aria-label="Progress steps">
+            <div class="step active" aria-current="step">
+              <span class="step-number">1</span>
+              <span>Resume</span>
+            </div>
+            <div class="step-line" aria-hidden="true"></div>
+            <div class="step">
+              <span class="step-number">2</span>
+              <span>Role</span>
+            </div>
+            <div class="step-line" aria-hidden="true"></div>
+            <div class="step">
+              <span class="step-number">3</span>
+              <span>Practice</span>
+            </div>
+            <div class="step-line" aria-hidden="true"></div>
+            <div class="step">
+              <span class="step-number">4</span>
+              <span>Insights</span>
+            </div>
+          </div>
+
+          <h1 class="page-title">Upload your resume</h1>
+          <p class="page-subtitle">We'll analyze your experience to generate personalized questions and coaching.</p>
+
+          <div class="dropzone" id="dropzone-resume" role="button" tabindex="0"
+               onclick="document.getElementById('file-resume').click()"
+               onkeypress="if(event.key==='Enter')document.getElementById('file-resume').click()">
+            <p class="dropzone-text">Drop file here or click to upload</p>
+            <p class="dropzone-hint">PDF, DOCX, or TXT • Max 5MB</p>
+            <input type="file" id="file-resume" class="visually-hidden"
+                   accept=".pdf,.doc,.docx,.txt" onchange="handleResumeUpload(this)"
+                   aria-label="Upload resume file">
+          </div>
+
+          <p class="text--security">
+            🔒 Your data is encrypted and never shared with third parties.
+          </p>
+
+          <div class="flex-row--right">
+            <button class="btn btn-primary" onclick="goToScreen('screen-job')">Continue →</button>
+          </div>
+        </main>
+
+        <aside class="sidebar">
+          <div class="tip-card">
+            <p class="tip-title">What we look for</p>
+            <p class="tip-text">• Leadership experiences<br>• Technical projects<br>• Measurable achievements<br>• Career transitions</p>
+          </div>
+
+          <div class="tip-card tip-card-accent">
+            <p class="tip-title">Best results</p>
+            <p class="tip-text">Use your most recent resume. We'll identify key achievements and skills to build practice around.</p>
+          </div>
+
+          <div class="tip-card tip-card-highlight">
+            <p class="tip-title">Your data stays private</p>
+            <p class="tip-text">Your resume is processed locally and deleted after your session.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Screen 2: Setup - Role -->
+    <div class="screen" id="screen-job" role="main">
+      <div class="main-layout">
+        <main class="main-content">
+          <div class="steps" aria-label="Progress steps">
+            <div class="step complete">
+              <span class="step-number">✓</span>
+              <span>Resume</span>
+            </div>
+            <div class="step-line" aria-hidden="true"></div>
+            <div class="step active" aria-current="step">
+              <span class="step-number">2</span>
+              <span>Role</span>
+            </div>
+            <div class="step-line" aria-hidden="true"></div>
+            <div class="step">
+              <span class="step-number">3</span>
+              <span>Practice</span>
+            </div>
+            <div class="step-line" aria-hidden="true"></div>
+            <div class="step">
+              <span class="step-number">4</span>
+              <span>Insights</span>
+            </div>
+          </div>
+
+          <h1 class="page-title">What role are you preparing for?</h1>
+          <p class="page-subtitle">We'll match your experience to the role requirements.</p>
+
+          <div class="dropzone" id="dropzone-job" role="button" tabindex="0"
+               onclick="document.getElementById('file-job').click()"
+               onkeypress="if(event.key==='Enter')document.getElementById('file-job').click()">
+            <p class="dropzone-text">Drop job description here or click to upload</p>
+            <p class="dropzone-hint">PDF, DOCX, TXT, or paste URL below</p>
+            <input type="file" id="file-job" class="visually-hidden"
+                   accept=".pdf,.doc,.docx,.txt" onchange="handleJobUpload(this)"
+                   aria-label="Upload job description file">
+          </div>
+
+          <div class="url-input-wrapper">
+            <label class="label" for="job-url">Or paste job posting URL</label>
+            <input type="url" id="job-url" class="url-input"
+                   placeholder="https://company.com/careers/role"
+                   aria-describedby="job-url-hint">
+          </div>
+
+          <div class="flex-row--between mt-xl">
+            <button class="btn btn-secondary" onclick="goToScreen('screen-setup')">← Back</button>
+            <button class="btn btn-primary" onclick="goToScreen('screen-topics')">Continue →</button>
+          </div>
+        </main>
+
+        <aside class="sidebar">
+          <div class="tip-card">
+            <p class="tip-title">For best results</p>
+            <p class="tip-text">Include the full job description, not just the title. We use requirements and responsibilities to tailor practice.</p>
+          </div>
+
+          <div class="tip-card tip-card-accent">
+            <p class="tip-title">What happens next</p>
+            <p class="tip-text">We'll identify overlaps between your experience and the role, then generate 4-6 targeted practice questions.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Screen 3: Topics -->
+    <div class="screen" id="screen-topics" role="main">
+      <div class="main-layout">
+        <main class="main-content">
+          <div class="steps" aria-label="Progress steps">
+            <div class="step complete"><span class="step-number">✓</span><span>Resume</span></div>
+            <div class="step-line" aria-hidden="true"></div>
+            <div class="step complete"><span class="step-number">✓</span><span>Role</span></div>
+            <div class="step-line" aria-hidden="true"></div>
+            <div class="step active" aria-current="step"><span class="step-number">3</span><span>Practice</span></div>
+            <div class="step-line" aria-hidden="true"></div>
+            <div class="step"><span class="step-number">4</span><span>Insights</span></div>
+          </div>
+
+          <h1 class="page-title">Here's what we'll explore together</h1>
+          <p class="page-subtitle">I've matched your background to topics that matter for this role.</p>
+
+          <div class="coach-intro">
+            <p>
+              Take a breath. What you see below isn't a test. It's a map of the conversation we'll have together.
+              I've looked at your experience and this role, and I've found the places where your story
+              really shines. Each topic is a chance to practice telling it, not to prove anything.
+              We'll take them one at a time, and I'll be here with suggestions whenever you need them.
+            </p>
+          </div>
+
+          <p class="section-title mb-md">Choose where you'd like to start</p>
+
+          <div class="card card--clickable" onclick="goToScreen('screen-learn')" role="button" tabindex="0"
+               onkeypress="if(event.key==='Enter')goToScreen('screen-learn')">
+            <div class="card-row">
+              <div>
+                <p class="card-title">Leadership & Team Management</p>
+                <p class="card-text">3 questions • ~10 min</p>
+              </div>
+              <span class="card-arrow">→</span>
+            </div>
+          </div>
+
+          <div class="card card--disabled">
+            <p class="card-title">Technical Problem Solving</p>
+            <p class="card-text">2 questions • ~8 min</p>
+          </div>
+
+          <div class="card card--disabled">
+            <p class="card-title">Why This Role</p>
+            <p class="card-text">1 question • ~3 min</p>
+          </div>
+
+          <div class="mt-xl">
+            <button class="btn btn-accent" onclick="goToScreen('screen-learn')">Begin exploring →</button>
+            <p class="footnote">
+              There's no timer running. Go at your own pace.
+            </p>
+          </div>
+        </main>
+
+        <aside class="sidebar">
+          <p class="section-title">Your Session</p>
+
+          <div class="tip-card tip-card-accent">
+            <p class="tip-title">Your topics</p>
+            <p class="tip-text">6 topics to explore<br>About 20 minutes, at your pace<br>Tailored to the Senior PM role</p>
+          </div>
+
+          <div class="tip-card">
+            <p class="tip-title">Suggestion</p>
+            <p class="tip-text">Leadership is a great starting point. These stories often become your most memorable moments to share.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Screen 4: Learn First -->
+    <div class="screen" id="screen-learn" role="main">
+      <div class="main-layout">
+        <main class="main-content">
+          <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-fill progress-fill--0"></div>
+          </div>
+
+          <p class="text--meta">Question 1 of 3 • Leadership</p>
+
+          <h1 class="page-title">Before you answer...</h1>
+          <p class="page-subtitle">Here's an example from your experience you can use.</p>
+
+          <div class="card">
+            <p class="section-title">From your resume</p>
+            <p class="card-quote">
+              "Led cross-functional team of 8 engineers to deliver payment integration, reducing checkout abandonment by 23%"
+            </p>
+          </div>
+
+          <div class="card">
+            <p class="section-title">How to structure your answer</p>
+            <p class="card-structure">
+              <strong>Situation:</strong> Payment checkout had high abandonment<br>
+              <strong>Task:</strong> You led the team to fix it<br>
+              <strong>Action:</strong> Integrated new payment provider<br>
+              <strong>Result:</strong> 23% reduction in abandonment
+            </p>
+          </div>
+
+          <div class="mt-xl">
+            <button class="btn btn-primary" onclick="goToScreen('screen-practice')">I'm ready to answer →</button>
+          </div>
+        </main>
+
+        <aside class="sidebar">
+          <p class="section-title">Coaching Tips</p>
+
+          <div class="tip-card tip-card-accent">
+            <p class="tip-title">STAR Method</p>
+            <p class="tip-text">Situation → Task → Action → Result. Keep each section to 1-2 sentences.</p>
+          </div>
+
+          <div class="tip-card">
+            <p class="tip-title">Numbers matter</p>
+            <p class="tip-text">Include metrics: team size, timeline, percentage improvements. "23% reduction" is more memorable than "significant improvement."</p>
+          </div>
+
+          <div class="tip-card tip-card-highlight">
+            <p class="tip-title">You've got this</p>
+            <p class="tip-text">This is practice. There's no wrong answer, just opportunities to improve.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Screen 5: Practice -->
+    <div class="screen" id="screen-practice" role="main">
+      <div class="main-layout">
+        <main class="main-content">
+          <div class="progress-bar" role="progressbar" aria-valuenow="33" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-fill progress-fill--33"></div>
+          </div>
+
+          <p class="text--meta">Question 1 of 3 • Leadership</p>
+
+          <div class="question-display">
+            Tell me about a time you led a team through a challenging project. What was your approach?
+          </div>
+
+          <!-- Story suggestions from Story Shelf (upstream integration) -->
+          <div class="story-suggestions" id="story-suggestions" style="display: none;">
+            <div class="story-suggestions-header">
+              <span class="story-suggestions-icon">📚</span>
+              <span class="story-suggestions-label">From your Story Shelf</span>
+            </div>
+            <div class="story-suggestions-body">
+              <p class="story-suggestions-intro">You have stories that could work here:</p>
+              <div class="story-suggestions-list" id="story-suggestions-list">
+                <!-- Populated by JS -->
+              </div>
+              <div class="story-suggestions-actions">
+                <button class="btn btn-sm btn-outline" onclick="useStorySuggestion()">Use this story</button>
+                <button class="btn btn-sm btn-ghost" onclick="hideStorySuggestions()">Tell a different one</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mic-container">
+            <div class="mic-icon recording" aria-hidden="true">🎙️</div>
+            <div class="mic-status" aria-live="polite">
+              <p class="mic-label">Recording your answer...</p>
+              <p class="mic-hint">Speak naturally. Click Done when finished.</p>
+            </div>
+          </div>
+
+          <div class="transcript-box" aria-label="Live transcript">
+            <p class="transcript-label">Live transcript</p>
+            <p class="transcript-placeholder">Your answer will appear here as you speak...</p>
+          </div>
+
+          <div class="actions-bar">
+            <button class="btn btn-secondary" onclick="goToScreen('screen-learn')">← Need help</button>
+            <button class="btn btn-primary" onclick="goToScreen('screen-feedback')">Done →</button>
+          </div>
+        </main>
+
+        <aside class="sidebar">
+          <!-- Debug telemetry card (shown only with ?debug=1) -->
+          <div class="debug-telemetry-card" id="debug-telemetry-card" style="display: none;">
+            <p class="section-title">Audio Telemetry</p>
+
+            <div class="debug-quality-indicator">
+              <div class="debug-quality-label">
+                <span id="debug-quality-text">MEDIUM</span>
+                <span class="debug-quality-dot" id="debug-quality-dot"></span>
+              </div>
+              <div class="debug-quality-bar">
+                <div class="debug-quality-fill" id="debug-quality-fill" style="width: 60%"></div>
+              </div>
+            </div>
+
+            <div class="debug-telemetry-stats">
+              <div class="debug-stat-row">
+                <span class="debug-stat-label">Sample Rate</span>
+                <span class="debug-stat-value" id="debug-sample-rate">24 kHz</span>
+              </div>
+              <div class="debug-stat-row">
+                <span class="debug-stat-label">Frame Size</span>
+                <span class="debug-stat-value" id="debug-frame-size">40 ms</span>
+              </div>
+              <div class="debug-stat-row">
+                <span class="debug-stat-label">Network</span>
+                <span class="debug-stat-value" id="debug-network-type">4g</span>
+              </div>
+              <div class="debug-stat-row">
+                <span class="debug-stat-label">Latency</span>
+                <span class="debug-stat-value" id="debug-latency">85 ms</span>
+              </div>
+              <div class="debug-stat-row">
+                <span class="debug-stat-label">Bandwidth</span>
+                <span class="debug-stat-value" id="debug-bandwidth">8.2 Mbps</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="section-title">Quick Reference</p>
+
+          <div class="tip-card tip-card-accent">
+            <p class="tip-title">Your resume cue</p>
+            <p class="tip-text">"Led cross-functional team of 8 engineers to deliver payment integration..."</p>
+          </div>
+
+          <div class="tip-card">
+            <p class="tip-title">Remember</p>
+            <p class="tip-text">• Start with context (1 sentence)<br>• Focus on YOUR actions<br>• End with measurable result</p>
+          </div>
+
+          <div class="timer-display mt-lg">
+            <p class="timer-value">1:24</p>
+            <p class="timer-label">Target: 2-3 min</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Screen 6: Feedback -->
+    <div class="screen" id="screen-feedback" role="main">
+      <div class="main-layout">
+        <main class="main-content">
+          <div class="progress-bar" role="progressbar" aria-valuenow="33" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-fill progress-fill--33"></div>
+          </div>
+
+          <div class="feedback-headline">
+            <div class="feedback-icon" aria-hidden="true">✓</div>
+            <h1 class="feedback-title">Strong answer!</h1>
+          </div>
+
+          <div class="feedback-section">
+            <p class="feedback-label">What worked well</p>
+            <ul class="feedback-list">
+              <li><span class="icon-success">✓</span> Clear situation setup. The interviewer understood the context.</li>
+              <li><span class="icon-success">✓</span> Used specific numbers (team of 8, 23% improvement)</li>
+              <li><span class="icon-success">✓</span> Focused on your personal contributions</li>
+            </ul>
+          </div>
+
+          <div class="feedback-section">
+            <p class="feedback-label">To strengthen next time</p>
+            <ul class="feedback-list">
+              <li><span class="icon-tip">→</span> Add one specific challenge you overcame</li>
+              <li><span class="icon-tip">→</span> Mention how you handled a disagreement or blocker</li>
+            </ul>
+          </div>
+
+          <div class="flex-row mt-xl">
+            <button class="btn btn-secondary">Try again</button>
+            <button class="btn btn-primary" onclick="goToScreen('screen-complete')">Next question →</button>
+          </div>
+        </main>
+
+        <aside class="sidebar">
+          <p class="section-title">Your Answer</p>
+          <div class="card card-transcript">
+            "In my previous role, I led a team of 8 engineers on a payment integration project. The challenge was that our checkout abandonment rate was really high..."
+          </div>
+
+          <p class="section-title mt-lg">Stats</p>
+          <div class="stat-grid">
+            <div class="card stat-card">
+              <p class="stat-card-value">2:12</p>
+              <p class="stat-card-label">Duration</p>
+            </div>
+            <div class="card stat-card">
+              <p class="stat-card-value--success">Good</p>
+              <p class="stat-card-label">Pacing</p>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Screen 7: Insights (Complete) -->
+    <div class="screen" id="screen-complete" role="main">
+      <div class="main-layout">
+        <main class="main-content">
+          <div class="steps" aria-label="Progress steps">
+            <div class="step complete"><span class="step-number">✓</span><span>Resume</span></div>
+            <div class="step-line" aria-hidden="true"></div>
+            <div class="step complete"><span class="step-number">✓</span><span>Role</span></div>
+            <div class="step-line" aria-hidden="true"></div>
+            <div class="step complete"><span class="step-number">✓</span><span>Practice</span></div>
+            <div class="step-line" aria-hidden="true"></div>
+            <div class="step active" aria-current="step"><span class="step-number">4</span><span>Insights</span></div>
+          </div>
+
+          <div class="text--centered mt-lg">
+            <p class="text--session-complete">
+              SESSION COMPLETE
+            </p>
+            <h1 class="page-title">You showed up. That matters.</h1>
+            <p class="page-subtitle page-subtitle--narrow">
+              You explored 3 topics in about 12 minutes. That takes courage, and you did it.
+            </p>
+          </div>
+
+          <div class="insights-intro">
+            <p>
+              Here are some insights. These are patterns I noticed, organized to help you see what's already working and what might be worth exploring next. Your stories are uniquely yours. My role is to help you tell them with confidence.
+            </p>
+          </div>
+
+          <p class="section-title text--centered mb-lg">
+            From our latest session
+          </p>
+
+          <!-- Starfish Framework - warm, personal, progression-focused -->
+
+          <div class="card starfish-continue">
+            <div class="starfish-header">
+              <p class="section-title">Continue</p>
+              <p class="starfish-explain">These are working beautifully. Keep doing exactly this.</p>
+            </div>
+            <ul class="feedback-list">
+              <li><span class="icon-success">✓</span> Your stories flow naturally and are easy to follow. Interviewers can track your thinking without getting lost.</li>
+              <li><span class="icon-success">✓</span> Using specific numbers like "23% improvement" sticks in memory far longer than saying "significant impact."</li>
+              <li><span class="icon-success">✓</span> Your pace is steady and grounded. That calm energy builds trust and makes you sound confident.</li>
+            </ul>
+          </div>
+
+          <div class="card starfish-more">
+            <div class="starfish-header">
+              <p class="section-title">Lean into</p>
+              <p class="starfish-explain">You're already doing this well. A bit more would make it shine.</p>
+            </div>
+            <ul class="feedback-list">
+              <li><span class="icon-success">✦</span> The payment integration story is your strongest. Use it for leadership, technical, and collaboration questions.</li>
+              <li><span class="icon-success">✦</span> Naming specific tools like Kubernetes and Terraform sounds more credible than "various technologies."</li>
+              <li><span class="icon-success">✦</span> Quantified outcomes are what interviewers remember when comparing candidates at the end of the day.</li>
+            </ul>
+          </div>
+
+          <div class="card starfish-start">
+            <div class="starfish-header">
+              <p class="section-title">Add</p>
+              <p class="starfish-explain">New elements that could elevate your answers.</p>
+            </div>
+            <ul class="feedback-list">
+              <li><span class="icon-tip">+</span> A "lesson learned" ending shows self-awareness and growth mindset. Interviewers love candidates who reflect.</li>
+              <li><span class="icon-tip">+</span> Mentioning what you'd do differently demonstrates maturity and continuous improvement. It's disarming and authentic.</li>
+              <li><span class="icon-tip">+</span> Connecting your past to this role shows you've done your homework and can see yourself in their future.</li>
+            </ul>
+          </div>
+
+          <div class="card starfish-less">
+            <div class="starfish-header">
+              <p class="section-title">Refine</p>
+              <p class="starfish-explain">Small adjustments that could tighten your stories.</p>
+            </div>
+            <ul class="feedback-list">
+              <li><span class="icon-success">✓</span> Your action moments are the most compelling part. Getting there faster gives you more time for the good stuff.</li>
+            </ul>
+          </div>
+
+          <div class="section-divider">
+            <p class="text--closing">
+              Remember, interview skills are just that: skills. They improve with practice,
+              and you've already started. Whatever you do next, you're more prepared than you were
+              twelve minutes ago.
+            </p>
+            <div class="flex-row--center">
+              <button class="btn btn-secondary" onclick="goToScreen('screen-setup')">Explore more topics</button>
+              <button class="btn btn-primary" onclick="exportPDF()">Export study guide</button>
+            </div>
+          </div>
+        </main>
+
+        <aside class="sidebar">
+          <!-- Apple Watch-style concentric rings with tooltips -->
+          <div class="progress-rings" id="progress-rings">
+            <p class="section-title">Your Progress</p>
+            <svg viewBox="0 0 160 160" aria-label="Session progress rings">
+              <!-- Background tracks -->
+              <circle class="ring-bg" cx="80" cy="80" r="70" stroke-width="12"/>
+              <circle class="ring-bg" cx="80" cy="80" r="52" stroke-width="12"/>
+              <circle class="ring-bg" cx="80" cy="80" r="34" stroke-width="12"/>
+              <!-- Filled rings with hover targets -->
+              <circle class="ring-outer" cx="80" cy="80" r="70" stroke-width="12"
+                      stroke-dasharray="439.8" stroke-dashoffset="145.1"
+                      onmouseenter="showRingTooltip('Topics: 2 of 3 complete (67%)')"
+                      onmouseleave="hideRingTooltip()"/>
+              <circle class="ring-middle" cx="80" cy="80" r="52" stroke-width="12"
+                      stroke-dasharray="326.7" stroke-dashoffset="55.5"
+                      onmouseenter="showRingTooltip('Questions: 5 of 6 answered (83%)')"
+                      onmouseleave="hideRingTooltip()"/>
+              <circle class="ring-inner" cx="80" cy="80" r="34" stroke-width="12"
+                      stroke-dasharray="213.6" stroke-dashoffset="21.4"
+                      onmouseenter="showRingTooltip('Time: 18 of 20 minutes (90%)')"
+                      onmouseleave="hideRingTooltip()"/>
+            </svg>
+            <div class="ring-tooltip" id="ring-tooltip" role="tooltip"></div>
+
+            <!-- Ring legend with values -->
+            <div class="ring-legend">
+              <div class="ring-legend-item">
+                <span class="ring-legend-dot ring-legend-dot--topics"></span>
+                <span><strong>Topics</strong> 2 of 3</span>
+              </div>
+              <div class="ring-legend-item">
+                <span class="ring-legend-dot ring-legend-dot--questions"></span>
+                <span><strong>Questions</strong> 5 of 6</span>
+              </div>
+              <div class="ring-legend-item">
+                <span class="ring-legend-dot ring-legend-dot--time"></span>
+                <span><strong>Time</strong> 18 of 20 min</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tip-card tip-card-accent mt-md">
+            <p class="tip-title">Great progress</p>
+            <p class="tip-text">Leadership topic complete! STAR structure improved noticeably this session.</p>
+          </div>
+
+          <div class="tip-card">
+            <p class="tip-title">Next up</p>
+            <p class="tip-text">Technical questions build on leadership skills. Ready when you are.</p>
+          </div>
+
+          <p class="footnote">
+            Progress saved automatically
+          </p>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Screen: My Stories (Story Shelf) -->
+    <div class="screen" id="screen-stories" role="main">
+      <div class="main-layout">
+        <main class="main-content">
+          <div class="stories-header">
+            <h1 class="page-title">Stories Only You Can Tell</h1>
+            <p class="page-subtitle">You've already done the hard part—living these experiences. Let's make them easy to remember when it counts.</p>
+          </div>
+
+          <!-- Tag filter chips (above story grid) -->
+          <div class="tag-filter" id="tag-filter-section" style="display: none;">
+            <span class="tag-filter-label">Filter by topic:</span>
+            <div class="tag-filter-chips" id="tag-filter-chips">
+              <button class="tag-chip tag-chip--active" data-tag="all" onclick="filterByTag('all')">All</button>
+              <!-- Dynamic tags populated by JS -->
+            </div>
+          </div>
+
+          <!-- Story Shelf Grid -->
+          <div class="stories-shelf" id="stories-shelf">
+            <!-- Empty state -->
+            <div class="stories-empty" id="stories-empty">
+              <div class="logo-pulse logo-pulse--medium"></div>
+              <h3>Your shelf is waiting</h3>
+              <p>You already have the stories inside you. Practice brings them out, and I'll save them here so you never lose track of what makes you remarkable.</p>
+              <button class="btn btn-primary mt-md" onclick="goToScreen('screen-practice')">Start discovering</button>
+            </div>
+          </div>
+
+          <!-- Story capture prompt -->
+          <div class="story-capture-card" id="story-capture-card" style="display: none;">
+            <div class="story-capture-header">
+              <span class="story-capture-icon">✨</span>
+              <h3>Nice. That's one worth keeping.</h3>
+            </div>
+            <div class="story-capture-name" id="captured-story-name">-</div>
+            <div class="story-capture-tags" id="captured-story-tags"></div>
+            <p class="story-capture-insight" id="captured-story-insight">-</p>
+            <button class="btn btn-outline btn-sm" onclick="hideStoryCaptureCard()">Thanks, Prep</button>
+          </div>
+
+          <!-- Stats row -->
+          <div class="stories-stats" id="stories-stats" style="display: none;">
+            <div class="stat-item">
+              <span class="stat-value" id="stat-story-count">0</span>
+              <span class="stat-label">Stories captured</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value" id="stat-ready-count">0</span>
+              <span class="stat-label">Interview-ready</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value" id="stat-practice-count">0</span>
+              <span class="stat-label">Time invested</span>
+            </div>
+          </div>
+
+          <!-- Filler word trend (subtle) -->
+          <div class="filler-trend-card" id="filler-trend-card" style="display: none;">
+            <p class="filler-trend-title">How your speaking is evolving</p>
+            <div class="filler-trend-chart" id="filler-trend-chart">
+              <!-- Mini chart bars -->
+            </div>
+            <p class="filler-trend-insight" id="filler-trend-insight">After a few more practice rounds, I'll show you patterns in how you speak.</p>
+          </div>
+
+          <!-- Export -->
+          <div class="stories-actions" id="stories-actions" style="display: none;">
+            <button class="btn btn-outline" onclick="exportStories()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Take these with you
+            </button>
+          </div>
+        </main>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <h2 class="sidebar-title">What Strong Storytellers Remember</h2>
+
+          <div class="tip-card">
+            <p class="tip-title">You were there</p>
+            <p class="tip-text">Start with what you saw and felt. The best stories follow a simple rhythm: what was broken, what you did, what changed.</p>
+          </div>
+
+          <div class="tip-card">
+            <p class="tip-title">One story, many doors</p>
+            <p class="tip-text">Here's a secret: interviewers ask different questions, but they're often looking for the same things. One strong story can answer five different questions.</p>
+          </div>
+
+          <div class="tip-card tip-card-accent" id="tip-filler-words" style="display: none;">
+            <p class="tip-title">Trust the pause</p>
+            <p class="tip-text" id="tip-filler-text">Pausing more deliberately isn't hesitation—it's confidence. Keep trusting the silence.</p>
+          </div>
+
+          <!-- Progress Rings (same style as Progress page) -->
+          <div class="progress-rings" id="sidebar-rings-section" style="display: none;">
+            <p class="section-title">Your Progress</p>
+            <div class="progress-rings-wrapper">
+              <svg class="progress-rings-svg" viewBox="0 0 160 160" aria-label="Story progress rings">
+                <!-- Background rings -->
+                <circle class="ring-bg" cx="80" cy="80" r="70" stroke-width="10"/>
+                <circle class="ring-bg" cx="80" cy="80" r="52" stroke-width="10"/>
+                <circle class="ring-bg" cx="80" cy="80" r="34" stroke-width="10"/>
+                <!-- Progress rings with hover -->
+                <circle class="ring-outer" id="ring-total" cx="80" cy="80" r="70" stroke-width="10"
+                        stroke-dasharray="439.8" stroke-dashoffset="439.8"
+                        onmouseenter="showStoriesRingTooltip('Total stories collected')"
+                        onmouseleave="hideStoriesRingTooltip()"/>
+                <circle class="ring-middle" id="ring-ready" cx="80" cy="80" r="52" stroke-width="10"
+                        stroke-dasharray="326.7" stroke-dashoffset="326.7"
+                        onmouseenter="showStoriesRingTooltip('Interview-ready (80%+ readiness)')"
+                        onmouseleave="hideStoriesRingTooltip()"/>
+                <circle class="ring-inner" id="ring-filter" cx="80" cy="80" r="34" stroke-width="10"
+                        stroke-dasharray="213.6" stroke-dashoffset="213.6"
+                        onmouseenter="showStoriesRingTooltip('Stories in current filter')"
+                        onmouseleave="hideStoriesRingTooltip()"/>
+              </svg>
+              <div class="ring-tooltip" id="stories-ring-tooltip" role="tooltip"></div>
+              <!-- Center value -->
+              <div class="rings-center-sidebar">
+                <span class="rings-value-sidebar" id="rings-main-value">0</span>
+                <span class="rings-label-sidebar" id="rings-main-label">Stories</span>
+              </div>
+            </div>
+
+            <!-- Ring legend -->
+            <div class="ring-legend ring-legend--compact">
+              <div class="ring-legend-item">
+                <span class="ring-legend-dot ring-legend-dot--outer"></span>
+                <span>Total <strong id="legend-total">0</strong></span>
+              </div>
+              <div class="ring-legend-item">
+                <span class="ring-legend-dot ring-legend-dot--middle"></span>
+                <span>Ready <strong id="legend-ready">0</strong></span>
+              </div>
+              <div class="ring-legend-item" id="legend-filter-row" style="display: none;">
+                <span class="ring-legend-dot ring-legend-dot--inner"></span>
+                <span id="legend-filter-text">Filter</span> <strong id="legend-filter">0</strong>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Screen 8: End Session -->
+    <div class="screen" id="screen-end" role="main">
+      <div class="main-layout layout--centered">
+        <main class="main-content content--centered-narrow">
+          <div class="logo-pulse logo-pulse--large-tight"></div>
+
+          <h1 class="page-title">Before you go</h1>
+          <p class="page-subtitle">We want to let you know that your session data is stored locally on your device.</p>
+
+          <div class="end-session-box end-session-box--left">
+            <p class="section-title">Here's where you can find your local file</p>
+            <div class="storage-info">
+              <strong>Browser localStorage</strong><br>
+              Key: preptalk_session
+            </div>
+
+            <p class="section-title mt-lg">What's in your data</p>
+            <div class="data-preview" id="data-preview" aria-label="Session data preview">
+              Loading...
+            </div>
+
+            <p class="text--privacy">
+              Your data is never sent to our servers. It's yours alone.
+            </p>
+            <p class="text--privacy-subtle">
+              You can keep it to resume future sessions, or delete it when you want. Your data, your way.
+            </p>
+          </div>
+
+          <div class="flex-row--center mt-xl">
+            <button class="btn btn-primary" onclick="keepDataAndClose()">Keep & close</button>
+            <button class="btn btn-danger" onclick="deleteDataAndClose()">Delete & close</button>
+          </div>
+        </main>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Story Practice Modal -->
+  <div class="modal-overlay" id="story-practice-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="practice-modal-title">
+    <div class="modal-content modal-content--large">
+      <button class="modal-close" onclick="closeStoryPractice()" aria-label="Close">&times;</button>
+
+      <div class="practice-modal-header">
+        <h2 id="practice-modal-title" class="practice-modal-title">Practice Your Story</h2>
+        <p class="practice-modal-subtitle" id="practice-story-name">-</p>
+      </div>
+
+      <!-- Story info -->
+      <div class="practice-modal-info">
+        <div class="practice-info-item">
+          <span class="practice-info-label">Current readiness</span>
+          <div class="practice-info-readiness">
+            <div class="readiness-bar readiness-bar--large">
+              <div class="readiness-fill" id="practice-readiness-bar" style="width: 0%"></div>
+            </div>
+            <span class="readiness-value" id="practice-readiness-value">0%</span>
+          </div>
+        </div>
+        <div class="practice-info-item">
+          <span class="practice-info-label">Times practiced</span>
+          <span class="practice-info-value" id="practice-count">0</span>
+        </div>
+        <div class="practice-info-item">
+          <span class="practice-info-label">Tags</span>
+          <div class="practice-info-tags" id="practice-tags"></div>
+        </div>
+      </div>
+
+      <!-- Practice prompt -->
+      <div class="practice-modal-prompt">
+        <p class="practice-prompt-label">Tell this story again. Focus on clarity and confidence.</p>
+        <div class="practice-prompt-tip" id="practice-tip">
+          <!-- Dynamic tip based on story state -->
+        </div>
+      </div>
+
+      <!-- Recording area -->
+      <div class="practice-modal-recording" id="practice-recording-area">
+        <div class="practice-mic-container">
+          <button class="practice-mic-btn" id="practice-mic-btn" onclick="toggleStoryRecording()">
+            <span class="practice-mic-icon">🎙️</span>
+            <span class="practice-mic-label" id="practice-mic-label">Start recording</span>
+          </button>
+        </div>
+        <div class="practice-timer" id="practice-timer">0:00</div>
+        <p class="practice-recording-hint">Click to start, click again when done</p>
+      </div>
+
+      <!-- Results (shown after recording) -->
+      <div class="practice-modal-results" id="practice-results" style="display: none;">
+        <div class="practice-result-header">
+          <span class="practice-result-icon" id="practice-result-icon">✓</span>
+          <h3 class="practice-result-title" id="practice-result-title">Nice work!</h3>
+        </div>
+        <div class="practice-result-comparison">
+          <div class="practice-result-before">
+            <span class="result-label">Before</span>
+            <span class="result-value" id="result-before">-</span>
+          </div>
+          <div class="practice-result-arrow">→</div>
+          <div class="practice-result-after">
+            <span class="result-label">After</span>
+            <span class="result-value" id="result-after">-</span>
+          </div>
+        </div>
+        <p class="practice-result-insight" id="practice-result-insight">-</p>
+        <div class="practice-result-actions">
+          <button class="btn btn-outline" onclick="practiceAgain()">Practice again</button>
+          <button class="btn btn-primary" onclick="closeStoryPractice()">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Adaptive Audio Scout (runs first to optimize voice quality) -->
+  <script src="/static/js/preflight-audio.js"></script>
+
+  <!-- External JavaScript (modular - load in dependency order) -->
+  <script src="/static/js/prototype-c/core.js"></script>
+  <script src="/static/js/prototype-c/stories.js"></script>
+  <script src="/static/js/prototype-c/practice.js"></script>
+</body>
+</html>

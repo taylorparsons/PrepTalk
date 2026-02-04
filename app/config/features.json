@@ -1,0 +1,31 @@
+{
+  "features": {
+    "debug_telemetry": {
+      "enabled": false,
+      "environments": ["development"],
+      "override_url_param": "debug",
+      "description": "Show audio quality telemetry in sidebar"
+    },
+    "story_suggestions": {
+      "enabled": true,
+      "environments": ["all"],
+      "description": "Suggest relevant stories during practice"
+    },
+    "demo_seeding": {
+      "enabled": true,
+      "environments": ["development", "staging"],
+      "description": "Auto-populate demo stories on first load"
+    },
+    "pdf_export": {
+      "enabled": true,
+      "environments": ["all"],
+      "description": "Export practice summary as PDF"
+    },
+    "story_practice_modal": {
+      "enabled": true,
+      "environments": ["all"],
+      "description": "Practice modal for rescoring stories"
+    }
+  },
+  "environment": "development"
+}
