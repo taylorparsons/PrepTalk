@@ -148,6 +148,7 @@ PLAYWRIGHT_INSTALL=1 ./run.sh e2e
 
 ## Hackathon Deliverables
 
-- AI Studio demo link: TODO
-- Gemini integration write-up: TODO
-- 3-minute demo video: TODO
+- Demo URL (Cloud Run): TODO (see `docs/hackathon-submission.md`)
+- Public repo: https://github.com/taylorparsons/PrepTalk
+- Gemini integration write-up: `docs/hackathon-submission.md`
+- 3-minute demo video: TODO (see `docs/hackathon-submission.md`)
