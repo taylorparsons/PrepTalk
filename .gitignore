@@ -4,6 +4,7 @@ coverage/
 dist/
 .vite/
 .env
+.env.bac
 .venv/
 __pycache__/
 *.pyc

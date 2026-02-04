@@ -1,9 +1,13 @@
 import { test, expect } from '@playwright/test';
+import fs from 'node:fs';
 
-const isLive = Boolean(process.env.E2E_LIVE);
+const e2eLiveRaw = (process.env.E2E_LIVE || '').trim().toLowerCase();
+const isLive = e2eLiveRaw === '1' || e2eLiveRaw === 'true' || e2eLiveRaw === 'yes';
 const hasKey = Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
 const liveDurationMs = Number.parseInt(process.env.E2E_LIVE_DURATION_MS || '45000', 10);
 const livePollIntervalMs = Number.parseInt(process.env.E2E_LIVE_POLL_MS || '1000', 10);
+const resumePath = process.env.E2E_RESUME_PATH;
+const jobPath = process.env.E2E_JOB_PATH;
 
 function buildPdfBuffer(label) {
   const content = `%PDF-1.4
@@ -46,20 +50,28 @@ test('candidate interview flow (gemini live)', async ({ page }) => {
   const voiceMode = await page.evaluate(() => window.__APP_CONFIG__?.voiceMode || 'live');
   test.skip(voiceMode === 'turn', 'Turn-based voice mode does not run live sessions.');
 
-  const resumeBuffer = buildPdfBuffer('Resume');
-  const jobBuffer = buildPdfBuffer('Job');
+  const resumeInput = page.getByTestId('resume-file');
+  const jobInput = page.getByTestId('job-file');
 
-  await page.getByTestId('resume-file').setInputFiles({
-    name: 'resume.pdf',
-    mimeType: 'application/pdf',
-    buffer: resumeBuffer
-  });
+  if (resumePath && jobPath && fs.existsSync(resumePath) && fs.existsSync(jobPath)) {
+    await resumeInput.setInputFiles(resumePath);
+    await jobInput.setInputFiles(jobPath);
+  } else {
+    const resumeBuffer = buildPdfBuffer('Resume');
+    const jobBuffer = buildPdfBuffer('Job');
 
-  await page.getByTestId('job-file').setInputFiles({
-    name: 'job.pdf',
-    mimeType: 'application/pdf',
-    buffer: jobBuffer
-  });
+    await resumeInput.setInputFiles({
+      name: 'resume.pdf',
+      mimeType: 'application/pdf',
+      buffer: resumeBuffer
+    });
+
+    await jobInput.setInputFiles({
+      name: 'job.pdf',
+      mimeType: 'application/pdf',
+      buffer: jobBuffer
+    });
+  }
 
   await page.getByTestId('generate-questions').click();
   await expect(page.getByTestId('start-interview')).toBeEnabled({ timeout: 120000 });

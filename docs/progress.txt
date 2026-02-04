@@ -1722,3 +1722,34 @@ NEXT
 NOTES
 - Commands run: `date "+%Y-%m-%d %H:%M"` -> 2026-02-03 18:34
 - Commit: `57b0636b8a98592057df8c3f2de076e7d3f91c86`.
+
+---
+
+Session: 2026-02-04 14:26
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260204-merge-main-gcp
+Input: CR-20260204-1426
+Decisions: (none)
+Spec: (pending)
+Tasks: (pending)
+Goal: Determine merge readiness for main and document Google Cloud hosting requirements.
+
+DONE
+- [2026-02-04 14:26] Capture request and begin merge+hosting readiness checklist. (Skills: ralph)
+ - [2026-02-04 15:15] Note mock E2E failure intentionally ignored per user request. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- Compare target branch to `main` and list required merges/conflicts. (Skills: ralph)
+- Inventory required tests for merge readiness (pytest, Vitest, Playwright mock/live) and current status. (Skills: ralph)
+- Identify Google Cloud hosting steps in docs (Cloud Run) and gaps to fill. (Skills: ralph)
+
+NOTES
+- Commands run: `date "+%Y-%m-%d %H:%M"` -> 2026-02-04 14:26
+- Commands run: `E2E_LIVE=0 npm run test:e2e` -> failed (mock `tests/e2e/interview-flow.spec.js` help-turn disabled / transcript not populated; ignored per CR-20260204-1515).
+- Decisions: None.
+- Risks / open questions: Confirm which branch should merge to `main` and whether hosting target is Cloud Run or another GCP service.

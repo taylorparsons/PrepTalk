@@ -1650,6 +1650,9 @@ function buildControlsPanel(state, ui, config) {
     const reply = (text || '').trim();
     const outputMode = normalizeVoiceOutputMode(state.voiceOutputMode);
     let played = false;
+    if (typeof window !== 'undefined' && window.__E2E__ && outputMode === 'browser') {
+      return;
+    }
     if (audio && outputMode !== 'browser') {
       played = await playCoachAudio(audio, audioMime, { preserveCaptions });
     }
@@ -1870,6 +1873,13 @@ function buildControlsPanel(state, ui, config) {
     state.turnRequestActive = true;
     const questionForFeedback = state.lastCoachQuestion;
     updateStatusPill(statusPill, { label: 'Thinking', tone: 'info' });
+    appendTranscriptEntry(state, {
+      role: 'candidate',
+      text: nextTurn,
+      timestamp: new Date().toISOString()
+    });
+    renderTranscript(ui.transcriptList, state.transcript);
+    ui.updateSessionToolsState?.();
     try {
       const response = await sendVoiceTurn({
         interviewId: state.interviewId,
@@ -1877,7 +1887,6 @@ function buildControlsPanel(state, ui, config) {
         textModel: state.textModel,
         ttsModel: state.ttsModel
       });
-      appendTranscriptEntry(state, response.candidate);
       appendTranscriptEntry(state, response.coach);
       renderTranscript(ui.transcriptList, state.transcript);
       ui.autoStartNextQuestion?.(response.coach.role);

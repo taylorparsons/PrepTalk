@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
 
-const isLive = Boolean(process.env.E2E_LIVE);
+const e2eLiveRaw = (process.env.E2E_LIVE || '').trim().toLowerCase();
+const isLive = e2eLiveRaw === '1' || e2eLiveRaw === 'true' || e2eLiveRaw === 'yes';
 const hasKey = Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
-const isLong = Boolean(process.env.E2E_LIVE_LONG);
+const e2eLiveLongRaw = (process.env.E2E_LIVE_LONG || '').trim().toLowerCase();
+const isLong = e2eLiveLongRaw === '1' || e2eLiveLongRaw === 'true' || e2eLiveLongRaw === 'yes';
 const liveDurationMs = Number.parseInt(process.env.E2E_LIVE_DURATION_MS || '180000', 10);
 const livePollIntervalMs = Number.parseInt(process.env.E2E_LIVE_POLL_MS || '1000', 10);
 const audioBurstFrames = Number.parseInt(process.env.E2E_LIVE_AUDIO_BURST_FRAMES || '6', 10);
