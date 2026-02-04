@@ -1,0 +1,708 @@
+
+.card:hover {
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 var(--space-sm);
+}
+
+.card-text {
+  font-size: 14px;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+/* ========================================
+   DROP ZONE
+   ======================================== */
+
+.dropzone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-xl);
+  text-align: center;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+  background: var(--color-surface);
+}
+
+.dropzone:hover {
+  border-color: var(--color-accent);
+  background: var(--color-accent-light);
+}
+
+.dropzone.has-file {
+  border-color: var(--color-success);
+  background: var(--color-success-light);
+  border-style: solid;
+}
+
+.dropzone-text {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0 0 var(--space-xs);
+}
+
+.dropzone-hint {
+  font-size: 13px;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
+
+.btn {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+}
+
+.btn-secondary {
+  background: var(--color-background);
+  color: var(--color-ink);
+  border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+}
+
+.btn-accent {
+  background: var(--color-accent);
+  color: white;
+}
+
+.btn-accent:hover {
+  background: var(--color-accent-hover);
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+/* ========================================
+   SIDEBAR TIPS
+   ======================================== */
+
+/* Tip cards - on-brand neutral palette */
+.tip-card {
+  background: #F7F6F4;
+  border: 1px solid #E8E6E1;
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.tip-card-accent {
+  background: #F0F5F3;
+  border-color: #D4E4DD;
+}
+
+.tip-card-highlight {
+  background: #F5F3F0;
+  border-color: #E0DCD5;
+}
+
+.tip-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--brand-primary);
+  margin: 0 0 var(--space-xs);
+}
+
+.tip-card-accent .tip-title { color: var(--brand-primary); }
+.tip-card-highlight .tip-title { color: #5C5A55; }
+
+/* ========================================
+   STARFISH RETRO CARDS
+   ======================================== */
+
+.starfish-header {
+  margin-bottom: var(--space-md);
+}
+
+.starfish-header .section-title {
+  margin-bottom: var(--space-xs);
+}
+
+.starfish-explain {
+  font-size: 13px;
+  color: var(--color-muted);
+  margin: 0;
+  font-style: italic;
+}
+
+.starfish-continue .section-title { color: var(--brand-continue); }
+.starfish-more .section-title { color: var(--brand-lean-into); }
+.starfish-start .section-title { color: var(--brand-try-adding); }
+.starfish-less .section-title { color: var(--brand-refine); }
+.starfish-stop .section-title { color: var(--brand-stop); }
+
+/* ========================================
+   FOOTNOTE TEXT - Consistent across pages
+   ======================================== */
+
+.footnote {
+  font-size: var(--font-footnote);
+  color: var(--color-footnote);
+  margin-top: var(--space-md);
+  text-align: center;
+}
+
+/* Muted icon for "consider trimming" */
+.icon-muted {
+  color: var(--color-muted);
+}
+
+/* ========================================
+   ROLLOVER / HOVER BEHAVIORS
+   ======================================== */
+
+/* Tip cards - subtle lift on hover */
+.tip-card {
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  cursor: default;
+}
+
+.tip-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Progress/Starfish cards - expand on hover */
+.starfish-continue,
+.starfish-more,
+.starfish-start,
+.starfish-less,
+.starfish-stop {
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  cursor: pointer;
+}
+
+.starfish-continue:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(74, 106, 138, 0.15);
+  border-color: var(--brand-continue);
+}
+
+.starfish-more:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(45, 90, 71, 0.15);
+  border-color: var(--brand-lean-into);
+}
+
+.starfish-start:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(74, 106, 138, 0.15);
+  border-color: var(--brand-try-adding);
+}
+
+.starfish-less:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(91, 138, 122, 0.15);
+  border-color: var(--brand-refine);
+}
+
+/* Topic ring items - hover highlight */
+.topic-ring-item {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  transition: background-color 200ms ease;
+  cursor: pointer;
+}
+
+.topic-ring-item:hover {
+  background-color: rgba(45, 90, 71, 0.08);
+}
+
+/* Session summary stats - pulse on hover */
+.summary-stat {
+  transition: transform 200ms ease;
+  cursor: default;
+}
+
+.summary-stat:hover {
+  transform: scale(1.05);
+}
+
+.summary-stat:hover .stat-value {
+  color: var(--brand-primary);
+}
+
+.tip-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+/* ========================================
+   PRACTICE SCREEN
+   ======================================== */
+
+.question-display {
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-xl);
+  padding: var(--space-lg);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-accent);
+}
+
+.mic-container {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+}
+
+.mic-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--color-accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+}
+
+.mic-icon.recording {
+  animation: pulse-mic 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-mic {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(99, 102, 241, 0); }
+}
+
+.mic-status {
+  flex: 1;
+}
+
+.mic-label {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0 0 2px;
+}
+
+.mic-hint {
+  font-size: 12px;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+.transcript-box {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  min-height: 120px;
+  font-size: 14px;
+  margin-bottom: var(--space-lg);
+}
+
+.transcript-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+  margin: 0 0 var(--space-sm);
+}
+
+.actions-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ========================================
+   FEEDBACK SCREEN
+   ======================================== */
+
+.feedback-headline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.feedback-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--color-success-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.feedback-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.feedback-section {
+  margin-bottom: var(--space-lg);
+}
+
+.feedback-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-muted);
+  margin: 0 0 var(--space-sm);
+}
+
+.feedback-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feedback-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+  font-size: 14px;
+}
+
+.feedback-list .icon-success { color: var(--color-success); }
+.feedback-list .icon-tip { color: var(--color-accent); }
+
+/* ========================================
+   PROGRESS BAR
+   ======================================== */
+
+.progress-bar {
+  height: 4px;
+  background: var(--color-surface-raised);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: var(--space-lg);
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--color-success);
+  transition: width 300ms ease-out;
+}
+
+/* ========================================
+   SCREENS (for prototype navigation)
+   ======================================== */
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ========================================
+   APPLE WATCH-STYLE PROGRESS RINGS (SVG)
+   Three concentric rings like Activity app
+   ======================================== */
+
+.progress-rings {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin: 0 auto var(--space-lg);
+  position: relative;
+  width: 160px;
+  height: 160px;
+  cursor: pointer;
+}
+
+.progress-rings svg {
+  transform: rotate(-90deg);
+  width: 100%;
+  height: 100%;
+  transition: transform 300ms ease;
+}
+
+.progress-rings:hover svg {
+  transform: rotate(-90deg) scale(1.05);
+}
+
+.progress-rings circle {
+  fill: none;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 800ms cubic-bezier(0.4, 0, 0.2, 1), stroke-width 200ms ease;
+}
+
+/* Ring colors - using design tokens */
+.ring-outer {
+  fill: none;
+  stroke: var(--brand-ring-topics);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s ease-out;
+  cursor: pointer;
+}
+
+.ring-middle {
+  fill: none;
+  stroke: var(--brand-ring-questions);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s ease-out;
+  cursor: pointer;
+}
+
+.ring-inner {
+  fill: none;
+  stroke: var(--brand-ring-time);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s ease-out, stroke 0.3s ease;
+  cursor: pointer;
+}
+
+/* Ring hover effects */
+.progress-rings:hover .ring-outer { stroke-width: 14; }
+.progress-rings:hover .ring-middle { stroke-width: 14; }
+.progress-rings:hover .ring-inner { stroke-width: 14; }
+
+/* Ring tooltip */
+.ring-tooltip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--color-ink);
+  color: white;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms ease;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.ring-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ========================================
+   DEBUG TELEMETRY OVERLAY
+   ======================================== */
+
+.debug-telemetry-card {
+  background: #2A2A2E;
+  border: 1px solid #3E3E42;
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+  color: #E8E8EA;
+  font-family: var(--font-mono);
+}
+
+.debug-telemetry-card .section-title {
+  color: #A0A0A5;
+  font-size: var(--font-size-xs);
+  margin-bottom: var(--space-sm);
+}
+
+/* Quality indicator with color-coded dot */
+.debug-quality-indicator {
+  margin-bottom: var(--space-md);
+}
+
+.debug-quality-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-xs);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.debug-quality-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-warning);
+  box-shadow: 0 0 8px currentColor;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.debug-quality-dot.quality-high {
+  background: var(--color-success);
+}
+
+.debug-quality-dot.quality-medium {
+  background: var(--color-warning);
+}
+
+.debug-quality-dot.quality-low {
+  background: var(--color-danger);
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Quality progress bar */
+.debug-quality-bar {
+  height: 6px;
+  background: #3E3E42;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.debug-quality-fill {
+  height: 100%;
+  background: var(--color-warning);
+  transition: width 500ms ease, background 500ms ease;
+  border-radius: 3px;
+}
+
+.debug-quality-fill.quality-high {
+  background: var(--color-success);
+}
+
+.debug-quality-fill.quality-medium {
+  background: var(--color-warning);
+}
+
+.debug-quality-fill.quality-low {
+  background: var(--color-danger);
+}
+
+/* Telemetry stats grid */
+.debug-telemetry-stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.debug-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  padding: 4px 0;
+  border-bottom: 1px solid #3E3E42;
+}
+
+.debug-stat-row:last-child {
+  border-bottom: none;
+}
+
+.debug-stat-label {
+  color: #A0A0A5;
+  font-weight: 400;
+}
+
+.debug-stat-value {
+  color: #E8E8EA;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* Toast notification for quality changes */
+.debug-toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #2A2A2E;
+  color: #E8E8EA;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid #3E3E42;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-sans);
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 300ms ease, transform 300ms ease;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  max-width: 320px;
+}
+
+.debug-toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.debug-toast-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.debug-toast-content {
+  flex: 1;
+}
+
+.debug-toast-title {
+  font-weight: 600;
+  margin: 0 0 2px 0;
+  font-size: var(--font-size-sm);
+}
+
+.debug-toast-message {
+  margin: 0;
+  color: #A0A0A5;
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+}
+
+.debug-toast.toast-success {
+  border-color: var(--color-success);
+}
+
+.debug-toast.toast-warning {
+  border-color: var(--color-warning);
+}
+
+.debug-toast.toast-danger {
+  border-color: var(--color-danger);
+}
+
