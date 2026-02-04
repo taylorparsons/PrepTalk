@@ -4,7 +4,7 @@ Deadline: 2026-02-09 5:00pm PST
 Freeze target: 2026-02-07 (48-hour buffer)
 
 ## Submission checklist
-- Demo URL (Cloud Run): TODO
+- Demo URL (Cloud Run): https://preptalk-west-cz47ti6tbq-uw.a.run.app
 - Public repo URL: https://github.com/taylorparsons/PrepTalk
 - 3-minute demo video (English): TODO
 - Gemini integration write-up (200 words): see draft below
