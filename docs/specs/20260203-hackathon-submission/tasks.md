@@ -11,3 +11,4 @@ Spec: docs/specs/20260203-hackathon-submission/spec.md
 ## DONE
 - [2026-02-03 15:04] T-001: Draft hackathon submission doc with checklist, write-up, and video script. (Implements: FR-001, FR-002, FR-003)
 - [2026-02-03 15:04] T-002: Update README Hackathon Deliverables to link to the submission doc and placeholders. (Implements: FR-004)
+- [2026-02-03 18:34] T-003: Record RALPH status update for hackathon submission. (Implements: FR-001)
