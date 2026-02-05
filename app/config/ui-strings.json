@@ -1,0 +1,78 @@
+{
+  "welcome": {
+    "title": "Hey, I'm Prep",
+    "subtitle": "I'm here to help you see what's already there. Practice saying it out loud, build confidence in your delivery, and walk in knowing exactly what you'll share.",
+    "cta_primary": "Let's get started →",
+    "cta_secondary": "How this works"
+  },
+  "setup": {
+    "title": "Upload your resume",
+    "resume_label": "Resume or CV",
+    "resume_hint": "PDF, DOCX, or TXT • Max 5MB",
+    "job_label": "Job description",
+    "job_hint": "Paste URL or upload file",
+    "role_label": "Role title (optional)",
+    "cta": "Continue →"
+  },
+  "topics": {
+    "title": "Here's what we'll explore together",
+    "subtitle": "I've matched your background to topics that matter for this role."
+  },
+  "learn": {
+    "title": "Before you answer...",
+    "subtitle": "Here's an example from your experience you can use.",
+    "resume_section_title": "From your resume",
+    "star_section_title": "How to structure your answer",
+    "cta": "I'm ready to answer →"
+  },
+  "practice": {
+    "recording_hint": "Speak naturally. Click Done when finished.",
+    "help_prompt": "Need a hand?",
+    "help_cta": "Show me how to approach this",
+    "submit_cta": "Done →",
+    "next_cta": "Next question →"
+  },
+  "progress": {
+    "title": "You showed up. That matters.",
+    "export_cta": "Export study guide",
+    "explore_more_cta": "Explore more topics"
+  },
+  "stories": {
+    "title": "Stories Only You Can Tell",
+    "empty_state": "You already have the stories inside you. Practice brings them out, and I'll save them here so you never lose track of what makes you remarkable.",
+    "filter_label": "Filter by topic:",
+    "filter_clear": "Show all stories",
+    "progress_title": "Your Progress"
+  },
+  "errors": {
+    "resume_required": "Please upload a resume to continue.",
+    "resume_unsupported": "Resume must be a PDF, DOCX, or TXT file.",
+    "resume_too_large": "Resume file is too large. Max 5MB.",
+    "job_required": "Provide a job description file or URL.",
+    "job_url_invalid": "Unable to fetch job description URL.",
+    "processing_failed": "Something went wrong. Please try again."
+  },
+  "sidebar_tips": {
+    "what_we_look_for": {
+      "title": "What we look for",
+      "text": "• Leadership experiences\n• Technical projects\n• Measurable achievements\n• Career transitions"
+    },
+    "best_results": {
+      "title": "Best results",
+      "text": "Use your most recent resume. We'll identify key achievements and skills to build practice around."
+    },
+    "your_data": {
+      "title": "Your data stays private",
+      "text": "Your resume is processed locally and deleted after your session."
+    },
+    "trust_pause": {
+      "title": "Trust the pause",
+      "text": "Pausing more deliberately isn't hesitation—it's confidence. Keep trusting the silence."
+    }
+  },
+  "pdf": {
+    "title": "PrepTalk",
+    "subtitle": "Interview Practice Report",
+    "footer": "You already have the stories. Now go tell them. — Prep"
+  }
+}

@@ -1194,7 +1194,6 @@ NOTES
 - Commands run: `./run.sh test` -> 57 passed (warned about --localstorage-file path).
 - Decisions: Format focus areas on the client, stack question controls vertically, enable setup collapse once interview exists, and mirror restart in main controls.
 - Risks / open questions: None.
-
 ---
 
 Session: 2026-02-03 10:01
@@ -2437,3 +2436,31 @@ NEXT
 NOTES
 - Commands run: `./run.sh test` -> 67/67 passed (Vitest). Warnings about `--localstorage-file` path.
 - Commit: b7beeaa (T-012: Add visible resize handle).
+
+---
+
+Session: 2026-02-05 21:38
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260205-turn-interrupt
+Input: CR-20260205-2138
+Decisions: D-20260205-2138
+Spec: docs/specs/20260205-turn-interrupt/spec.md
+Tasks: docs/specs/20260205-turn-interrupt/tasks.md
+Goal: Capture the turn-mode interrupt request in the RALPH trail.
+
+DONE
+- [2026-02-05 21:56] T-001: Implement turn-mode interrupt behavior for coach speech cancellation + state updates. (Skills: ralph)
+- [2026-02-05 21:56] T-002: Update UI tests to cover interrupt control behavior in turn mode. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `rg`, `date`, `./run.sh test` -> 65/65 passed (Vitest). Warnings about `--localstorage-file` path.
+- Decisions: D-20260205-2138 (turn-mode interrupt cancels speech without auto-skip).
+- Commit: 22666b4 (T-001/T-002: Add turn-mode interrupt for coach speech).

@@ -1,0 +1,95 @@
+{
+  "readiness": {
+    "thresholds": {
+      "ready": 80,
+      "practicing": 40
+    },
+    "calculation": {
+      "filler_penalty_multiplier": 15,
+      "min_score": 20,
+      "max_score": 100,
+      "base_bonus": 20
+    },
+    "tiers": [
+      {
+        "min": 90,
+        "label": "Interview-ready. You own this story.",
+        "class": "ready"
+      },
+      {
+        "min": 75,
+        "label": "Getting sharp. A bit more practice and you're there.",
+        "class": "strong"
+      },
+      {
+        "min": 50,
+        "label": "Good progress. The structure is solid.",
+        "class": "developing"
+      },
+      {
+        "min": 0,
+        "label": "Keep practicing. Each time gets easier.",
+        "class": "new"
+      }
+    ]
+  },
+  "filler_words": {
+    "words": ["um", "uh", "like", "you know", "so", "basically", "actually", "right", "i mean"],
+    "thresholds": {
+      "excellent": {
+        "max": 2.0,
+        "insight": "Smooth delivery! This story is getting interview-ready."
+      },
+      "acceptable": {
+        "max": 5.0,
+        "insight": "Keep practicing to polish this story."
+      },
+      "needs_work": {
+        "min": 5.0,
+        "insight": "Try taking a breath between thoughts to reduce filler words."
+      }
+    }
+  },
+  "practice_improvement": {
+    "practice_bonus": {
+      "base": 12,
+      "diminishing_returns_multiplier": 1.5,
+      "minimum": 2
+    },
+    "duration_sweet_spot": {
+      "optimal_min_seconds": 60,
+      "optimal_max_seconds": 240,
+      "optimal_bonus": 3,
+      "acceptable_min_seconds": 30,
+      "acceptable_max_seconds": 300,
+      "acceptable_bonus": 1
+    },
+    "readiness_modifiers": [
+      {
+        "threshold": 80,
+        "multiplier": 0.3
+      },
+      {
+        "threshold": 60,
+        "multiplier": 0.6
+      }
+    ],
+    "filler_improvement_range": [0.1, 0.3]
+  },
+  "timings": {
+    "story_capture_autohide_ms": 8000,
+    "processing_delay_ms": 800,
+    "ring_animation_duration_ms": 800
+  },
+  "limits": {
+    "max_stories_for_full_ring": 10,
+    "demo_stories_count": 7,
+    "top_suggestions_to_show": 2,
+    "max_tags_per_card": 3,
+    "max_tags_in_filter": 6,
+    "filter_cutoff_stories": 80,
+    "story_name_max_chars": 50,
+    "resume_max_mb": 5,
+    "job_max_mb": 5
+  }
+}

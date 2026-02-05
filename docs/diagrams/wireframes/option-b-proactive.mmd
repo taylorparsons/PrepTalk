@@ -1,0 +1,10 @@
+flowchart LR
+    Q["Coach asks<br/>question"] --> W{"User silent<br/>5+ seconds?"}
+    W -->|No| A["User answers<br/>confidently"]
+    W -->|Yes| O["Coach offers:<br/>'Want to see an example<br/>from your resume?'"]
+    O -->|Yes| E["Shows resume-<br/>grounded example"]
+    O -->|No| A
+    E --> A
+
+    style O fill:#1f6f5f,color:#fff
+    style E fill:#1f6f5f,color:#fff

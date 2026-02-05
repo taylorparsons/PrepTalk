@@ -1,0 +1,13 @@
+flowchart LR
+    Q["1. Question Asked"] --> F["2. User Freezes"]
+    F --> P["3. Panic Sets In"]
+    P --> H{"4. Finds Help?"}
+    H -->|No| S["5a. Struggles Alone"]
+    H -->|Yes| E["5b. Gets Example"]
+    E --> R["6. Tries to Recover"]
+    S --> R
+
+    style F fill:#c2453b,color:#fff
+    style P fill:#c2453b,color:#fff
+    style H fill:#e0a03b,color:#000
+    style E fill:#1f6f5f,color:#fff

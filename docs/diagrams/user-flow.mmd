@@ -1,0 +1,44 @@
+flowchart TD
+    subgraph Setup["1. Setup Phase"]
+        direction LR
+        S1[Land on App] --> S2[Upload Resume<br/>PDF/DOCX/TXT]
+        S2 --> S3[Enter Job Description<br/>Paste or URL]
+        S3 --> S4[Click Generate Questions]
+    end
+
+    subgraph Review["2. Review Phase"]
+        direction LR
+        R1[View Generated<br/>Questions 5-7] --> R2[See Focus Areas]
+        R2 --> R3[Optional: Add<br/>Custom Question]
+        R3 --> R4[Click Start Interview]
+    end
+
+    subgraph Practice["3. Practice Loop"]
+        direction TB
+        P1[Hear Coach<br/>Ask Question] --> P2[Record Your<br/>Voice Answer]
+        P2 --> P3[Click Submit Answer]
+        P3 --> P4[Receive Coaching<br/>Feedback + Audio]
+        P4 --> P5{More Questions?}
+        P5 -->|Yes| P6[Next Question]
+        P6 --> P1
+        P5 -->|No| P7[Click End Session]
+    end
+
+    subgraph Help["Help Actions"]
+        direction LR
+        H1[Request Help] --> H2[Get Resume-Based<br/>Guidance]
+        H2 --> H3[Return to Answer]
+    end
+
+    subgraph Complete["4. Completion Phase"]
+        direction LR
+        C1[View Overall Score] --> C2[See Strengths +<br/>Improvements]
+        C2 --> C3[Export Study Guide<br/>PDF or TXT]
+        C3 --> C4[Start New Session<br/>or Exit]
+    end
+
+    Setup --> Review
+    Review --> Practice
+    Practice -.-> Help
+    Help -.-> Practice
+    Practice --> Complete

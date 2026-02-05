@@ -1,0 +1,49 @@
+flowchart TB
+    subgraph HEADER[Question 1 of 5 Complete]
+        direction LR
+        BACK[Back]
+        NEXT[Next Question]
+    end
+
+    subgraph CELEBRATE[Celebration]
+        ICON[Great job!]
+    end
+
+    subgraph FEEDBACK[Coaching Feedback]
+        subgraph STRENGTHS[WHAT YOU DID WELL]
+            S1[Used specific numbers<br/>50+ services 60% reduction]
+            S2[Clear problem-solution-result<br/>structure]
+            S3[Demonstrated leadership<br/>and ownership]
+        end
+
+        subgraph GROWTH[WAYS TO STRENGTHEN]
+            G1[Consider adding what you<br/>learned from the experience]
+            G2[Mention how you handled<br/>obstacles along the way]
+        end
+
+        subgraph TIP[COACH TIP]
+            ADVICE[Try the STAR method next time<br/>Situation Task Action Result<br/>You naturally did most of this!]
+        end
+    end
+
+    subgraph ANSWER[Your Answer]
+        TEXT[In my previous role I led the<br/>migration of 50+ microservices...]
+        EXPAND[Show Full Answer]
+    end
+
+    subgraph ACTIONS[Next Steps]
+        direction LR
+        RETRY[Practice Again]
+        SAVE[Save to Guide]
+        CONTINUE[Continue]
+    end
+
+    HEADER ~~~ CELEBRATE
+    CELEBRATE ~~~ FEEDBACK
+    FEEDBACK ~~~ ANSWER
+    ANSWER ~~~ ACTIONS
+
+    style ICON fill:#9A2A2A,color:#fff
+    style STRENGTHS fill:#F5E5E4,color:#3D1111
+    style TIP fill:#F5E5E4,color:#3D1111
+    style CONTINUE fill:#9A2A2A,color:#fff

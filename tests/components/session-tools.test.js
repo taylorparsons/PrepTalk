@@ -11,7 +11,7 @@ describe('session tools drawer', () => {
     const layout = buildVoiceLayout();
     document.body.appendChild(layout);
 
-    expect(layout.querySelector('[data-testid="barge-in-toggle"]')).toBeFalsy();
+    expect(layout.querySelector('[data-testid="barge-in-toggle"]')).toBeTruthy();
     expect(layout.querySelector('[data-testid="live-model-input"]')).toBeFalsy();
     expect(layout.querySelector('[data-testid="text-model-input"]')).toBeFalsy();
     expect(layout.querySelector('[data-testid="tts-model-input"]')).toBeFalsy();

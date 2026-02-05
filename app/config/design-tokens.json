@@ -1,0 +1,30 @@
+{
+  "colors": {
+    "tags": {
+      "leadership": "#2D8A5A",
+      "technical": "#4A7A9A",
+      "conflict": "#9A4A4A",
+      "collaboration": "#7A5A9A",
+      "results-driven": "#5A8A7A",
+      "problem-solving": "#8A7A4A",
+      "mentorship": "#4A9A8A",
+      "communication": "#9A6A4A",
+      "innovation": "#6A4A9A",
+      "growth": "#4A8A6A",
+      "negotiation": "#8A4A6A",
+      "pressure": "#6A8A4A"
+    },
+    "status": {
+      "ready": "#2D8A5A",
+      "practicing": "#4A7A9A",
+      "new": "#9A7A4A"
+    }
+  },
+  "animations": {
+    "breathe_duration_ms": 4000,
+    "pulse_mic_duration_ms": 1500,
+    "ring_progress_duration_ms": 800,
+    "transition_default_ms": 200,
+    "transition_slow_ms": 300
+  }
+}

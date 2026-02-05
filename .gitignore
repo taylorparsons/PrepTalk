@@ -20,3 +20,14 @@ logs/
 !tools/logs/lnav/*
 AGENTS.md
 .worktrees/
+app/static/css/dist.css
+
+# Development tools
+.docx-venv/
+screenshot.mjs
+screenshot.png
+
+# IDE/Editor
+.claude/
+.mcp.json
+.codex/

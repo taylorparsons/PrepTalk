@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PrepTalk - Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/prototype.css" />
+</head>
+<body>
+  <div class="proto-app" id="app">
+
+    <!-- Screen 1: Welcome -->
+    <div class="proto-screen" id="screen-welcome">
+      <div class="proto-content">
+        <div class="proto-logo"></div>
+        <h1 class="proto-title">PrepTalk</h1>
+        <p class="proto-subtitle">Your interview confidence, unlocked.</p>
+        <button class="proto-btn proto-btn-primary" onclick="showScreen('screen-resume')">
+          Begin
+          <span>→</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Screen 2: Resume Upload -->
+    <div class="proto-screen" id="screen-resume" hidden>
+      <header class="proto-header">
+        <button class="proto-back" onclick="showScreen('screen-welcome')">← Back</button>
+        <span class="proto-step">Step 1 of 2</span>
+      </header>
+      <div class="proto-content">
+        <h2 class="proto-heading">Let's start with your story.</h2>
+        <p class="proto-text proto-mb-xl">We'll find the best stories to tell.</p>
+
+        <div class="proto-dropzone" id="dropzone-resume" onclick="document.getElementById('file-resume').click()">
+          <div class="proto-dropzone-icon">📄</div>
+          <p class="proto-dropzone-text">Drop your resume here</p>
+          <p class="proto-dropzone-hint">or click to browse • PDF, DOC, TXT</p>
+          <input type="file" id="file-resume" class="proto-dropzone-file" accept=".pdf,.doc,.docx,.txt" onchange="handleFile(this, 'dropzone-resume', 'screen-job')">
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Job Description -->
+    <div class="proto-screen" id="screen-job" hidden>
+      <header class="proto-header">
+        <button class="proto-back" onclick="showScreen('screen-resume')">← Back</button>
+        <span class="proto-step">Step 2 of 2</span>
+      </header>
+      <div class="proto-content">
+        <h2 class="proto-heading">What role are you preparing for?</h2>
+        <p class="proto-text proto-mb-xl">We'll tailor practice to match.</p>
+
+        <div class="proto-dropzone" id="dropzone-job" onclick="document.getElementById('file-job').click()">
+          <div class="proto-dropzone-icon">💼</div>
+          <p class="proto-dropzone-text">Drop job description here</p>
+          <p class="proto-dropzone-hint">or click to browse • PDF, DOC, TXT, URL</p>
+          <input type="file" id="file-job" class="proto-dropzone-file" accept=".pdf,.doc,.docx,.txt" onchange="handleFile(this, 'dropzone-job', 'screen-topics')">
+        </div>
+
+        <button class="proto-btn proto-btn-ghost" onclick="showScreen('screen-topics')">
+          Skip for now
+        </button>
+      </div>
+    </div>
+
+    <!-- Screen 4: Topics Reveal -->
+    <div class="proto-screen" id="screen-topics" hidden>
+      <header class="proto-header">
+        <button class="proto-back" onclick="showScreen('screen-job')">← Back</button>
+        <span class="proto-step">Ready</span>
+      </header>
+      <div class="proto-content">
+        <h2 class="proto-heading">Today we'll practice...</h2>
+
+        <div class="proto-topic-card">
+          <p class="proto-topic-label">Based on your background</p>
+          <h3 class="proto-topic-name">Leadership & Collaboration</h3>
+          <p class="proto-topic-count">3 questions ready</p>
+        </div>
+
+        <button class="proto-btn proto-btn-primary" onclick="showScreen('screen-learn')">
+          I'm Ready
+          <span>→</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Screen 5: Learn First -->
+    <div class="proto-screen" id="screen-learn" hidden>
+      <header class="proto-header">
+        <button class="proto-back" onclick="showScreen('screen-topics')">← Back</button>
+        <span class="proto-step">Question 1 of 3</span>
+      </header>
+      <div class="proto-content">
+        <h2 class="proto-heading">Before we practice...</h2>
+        <p class="proto-text proto-mb-lg">Here's an example from your experience:</p>
+
+        <div class="proto-feedback-card">
+          <div class="proto-feedback-section">
+            <p class="proto-feedback-label">From your resume</p>
+            <p class="proto-feedback-text">"Led migration of 50+ microservices to Kubernetes, reducing deployment time by 60%"</p>
+          </div>
+          <div class="proto-divider"></div>
+          <div class="proto-feedback-section">
+            <p class="proto-feedback-label">How to use this</p>
+            <p class="proto-feedback-text">Start with the challenge (legacy system), then your approach (Kubernetes migration), then the result (60% faster).</p>
+          </div>
+        </div>
+
+        <button class="proto-btn proto-btn-primary" onclick="showScreen('screen-practice')">
+          I'm Ready to Answer
+          <span>→</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Screen 6: Practice -->
+    <div class="proto-screen" id="screen-practice" hidden>
+      <header class="proto-header">
+        <button class="proto-back" onclick="showScreen('screen-learn')">← Back</button>
+        <span class="proto-step">Question 1 of 3</span>
+      </header>
+      <div class="proto-content">
+        <p class="proto-question">Tell me about a time you led a team through a challenging technical project.</p>
+
+        <div class="proto-mic">🎙️</div>
+        <p class="proto-mic-label">Listening...</p>
+
+        <div class="proto-transcript">
+          <em style="color: var(--color-muted);">Your answer will appear here...</em>
+        </div>
+
+        <div class="proto-actions">
+          <button class="proto-btn proto-btn-ghost" onclick="showScreen('screen-learn')">
+            Need a hint?
+          </button>
+          <button class="proto-btn proto-btn-primary" onclick="showScreen('screen-feedback')">
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 7: Feedback -->
+    <div class="proto-screen" id="screen-feedback" hidden>
+      <header class="proto-header">
+        <span></span>
+        <span class="proto-step">Question 1 of 3</span>
+      </header>
+      <div class="proto-content">
+        <h2 class="proto-feedback-headline">Nice structure!</h2>
+
+        <div class="proto-feedback-card">
+          <div class="proto-feedback-section">
+            <p class="proto-feedback-label">What worked</p>
+            <p class="proto-feedback-text">Your response showed clear STAR format. You set up the situation well and explained your specific actions.</p>
+          </div>
+          <div class="proto-divider"></div>
+          <div class="proto-feedback-section">
+            <p class="proto-feedback-label">Next time, try</p>
+            <ul class="proto-feedback-list">
+              <li>Quantify the impact ("20% faster delivery")</li>
+              <li>Name one specific leadership technique you used</li>
+            </ul>
+          </div>
+        </div>
+
+        <button class="proto-btn proto-btn-primary" onclick="showScreen('screen-complete')">
+          Continue
+          <span>→</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Screen 8: Complete -->
+    <div class="proto-screen" id="screen-complete" hidden>
+      <div class="proto-content proto-celebration">
+        <div class="proto-confetti">🎉</div>
+        <h2 class="proto-celebration-title">Practice complete!</h2>
+        <p class="proto-celebration-subtitle">You covered 3 topics today.</p>
+
+        <div class="proto-progress-bar">
+          <div class="proto-progress-fill" style="width: 85%"></div>
+        </div>
+
+        <div class="proto-strengths">
+          <p class="proto-strengths-title">Your strengths today</p>
+          <ul class="proto-strengths-list">
+            <li>Clear opening statements</li>
+            <li>Good use of specific examples</li>
+            <li>Confident delivery</li>
+          </ul>
+        </div>
+
+        <div class="proto-actions">
+          <button class="proto-btn proto-btn-secondary" onclick="showScreen('screen-welcome')">
+            Practice More
+          </button>
+          <button class="proto-btn proto-btn-primary">
+            Export Guide
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function showScreen(id) {
+      document.querySelectorAll('.proto-screen').forEach(s => s.hidden = true);
+      const screen = document.getElementById(id);
+      if (screen) {
+        screen.hidden = false;
+        screen.style.animation = 'none';
+        screen.offsetHeight; // trigger reflow
+        screen.style.animation = null;
+      }
+    }
+
+    function handleFile(input, dropzoneId, nextScreen) {
+      const dropzone = document.getElementById(dropzoneId);
+      if (input.files.length > 0) {
+        dropzone.classList.add('has-file');
+        dropzone.querySelector('.proto-dropzone-text').textContent = input.files[0].name;
+        dropzone.querySelector('.proto-dropzone-hint').textContent = 'File ready ✓';
+        setTimeout(() => showScreen(nextScreen), 500);
+      }
+    }
+
+    // Drag and drop
+    document.querySelectorAll('.proto-dropzone').forEach(zone => {
+      zone.addEventListener('dragover', e => {
+        e.preventDefault();
+        zone.classList.add('dragover');
+      });
+      zone.addEventListener('dragleave', () => {
+        zone.classList.remove('dragover');
+      });
+      zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        const input = zone.querySelector('input[type="file"]');
+        if (e.dataTransfer.files.length > 0) {
+          input.files = e.dataTransfer.files;
+          input.dispatchEvent(new Event('change'));
+        }
+      });
+    });
+  </script>
+</body>
+</html>
