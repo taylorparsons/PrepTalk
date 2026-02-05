@@ -2614,3 +2614,4 @@ NOTES
 - Tests not run: Playwright e2e (mock/live).
 - Commit: 2d97008 (T-001..T-005).
 - Commit: d90aec1 (Ready-state setup hidden fix).
+- Commit: d5add7e (Full-width active panels when setup hidden).
