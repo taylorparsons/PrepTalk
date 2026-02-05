@@ -3059,10 +3059,18 @@ function buildSessionToolsDrawer(state, ui, config) {
   body.setAttribute('data-testid', 'insights-resize');
   body.appendChild(container);
 
+  const resizeHandle = document.createElement('div');
+  resizeHandle.className = 'ui-resize-handle flex items-center justify-center h-4 cursor-ns-resize';
+  resizeHandle.setAttribute('data-testid', 'insights-resize-handle');
+  const resizeBar = document.createElement('div');
+  resizeBar.className = 'w-12 h-1 rounded-full bg-base-300';
+  resizeHandle.appendChild(resizeBar);
+
   const panel = createPanel({
     title: 'Question Insights',
     subtitle: 'Hover a question or click Pin to keep details visible.',
     content: body,
+    footer: resizeHandle,
     attrs: { 'data-testid': 'question-insights-panel' }
   });
   panel.classList.add('ui-panel--sticky', 'resize-y', 'overflow-auto');
