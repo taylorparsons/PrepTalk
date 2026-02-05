@@ -2608,3 +2608,4 @@ NOTES
 - Commands run: date '+%Y-%m-%d %H:%M'; npm run test -> 22 files, 75 tests passed (localstorage-file warnings).
 - Branch: work already on feature/session-layout-menu per CR-20260205-1144.
 - Tests not run: Playwright e2e (mock/live).
+- Commit: 2d97008 (T-001..T-005).
