@@ -3055,7 +3055,7 @@ function buildSessionToolsDrawer(state, ui, config) {
   ui.insightsJob = jobList;
 
   const body = document.createElement('div');
-  body.className = 'ui-insights__body overflow-auto';
+  body.className = 'ui-insights__body';
   body.setAttribute('data-testid', 'insights-resize');
   body.appendChild(container);
 
@@ -3065,7 +3065,7 @@ function buildSessionToolsDrawer(state, ui, config) {
     content: body,
     attrs: { 'data-testid': 'question-insights-panel' }
   });
-  panel.classList.add('ui-panel--sticky', 'resize-y', 'overflow-hidden');
+  panel.classList.add('ui-panel--sticky', 'resize-y', 'overflow-auto');
   ui.insightsPanel = panel;
   return panel;
 }
