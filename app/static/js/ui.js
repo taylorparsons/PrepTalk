@@ -3836,7 +3836,7 @@ export function buildVoiceLayout() {
     const showScore = hasScore || state.scorePending;
     const inResults = showScore && !state.sessionActive;
     const showControls = hasQuestions || state.sessionActive || inResults;
-    const restartPrimary = hasScore && !state.sessionActive;
+    const restartPrimary = inResults;
     const nameValue = ui.sessionNameInput?.value.trim() || '';
     const questionValue = ui.customQuestionInput?.value.trim() || '';
     const selectedSession = ui.sessionSelect?.value || '';
@@ -3910,7 +3910,7 @@ export function buildVoiceLayout() {
     }
 
     const showQuestions = hasQuestions && !inResults;
-    const showTranscript = state.sessionActive || hasTranscript;
+    const showTranscript = state.sessionActive || (hasTranscript && !inResults);
 
     if (ui.questionRow) {
       ui.questionRow.hidden = !showQuestions;

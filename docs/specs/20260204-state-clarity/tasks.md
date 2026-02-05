@@ -16,3 +16,4 @@ Spec: docs/specs/20260204-state-clarity/spec.md
 - [2026-02-05 10:25] T-005: Keep Extras/Restart visible after stop via results-safe controls panel. (Implements: FR-005)
 - [2026-02-05 10:25] T-006: Persist Request Help answers in Question Insights and auto-pin active question. (Implements: FR-006)
 - [2026-02-05 10:25] T-007: Update component tests for state text, hero collapse, setup collapse, transcript placement, results controls, and help insights. (Implements: FR-001, FR-002, FR-003, FR-004, FR-005, FR-006)
+- [2026-02-05 20:40] T-008: Hide transcript panel while results are visible. (Implements: FR-007)

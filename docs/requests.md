@@ -989,3 +989,14 @@ export pdf from the Score summary is not working and shows a internal server err
 
 Notes:
 - Fix PDF export regression (unicode text crash) and add unit + E2E coverage for PDF/TXT exports.
+
+
+## CR-20260204-2034
+Date: 2026-02-04 20:34
+Source: chat
+
+Request (verbatim):
+yes run it on localhost:8000
+
+Notes:
+- Run Playwright E2E on localhost:8000 and generate HTML reports.
