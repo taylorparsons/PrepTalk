@@ -625,7 +625,27 @@ Alternatives considered:
 Acceptance / test:
 - The UI spec and Mermaid flow diagram show a single primary CTA per stage with explicit gating rules.
 - PRD backlog includes the staged CTA hierarchy update.
+## D-20260203-2100
+Date: 2026-02-03 21:00
+Inputs: CR-20260203-2100
+PRD: Core user flow, Next / backlog
 
+Decision:
+Implement Option A (Learning Mode) for teach-first coaching: show resume-grounded examples BEFORE presenting each question, enabling users to know which story to tell before being asked.
+
+Rationale:
+Target users freeze because they don't know which story to tell, not because they lack experience (ACCESS gap, not knowledge gap). Showing the example first prevents the freeze rather than rescuing from it. This aligns with proven pedagogy: "I do, we do, you do."
+
+Alternatives considered:
+- Option B: Proactive Guidance (rejected: requires hesitation detection tuning, still allows freeze to occur)
+- Option C: Always-Visible Context (incorporated: split panel with resume cues will be part of practice phase)
+- Keep current test-first model (rejected: positions PrepTalk as simulator, not coach)
+
+Acceptance / test:
+- Learning Card component shows resume fact + example answer + "why this works" before each question.
+- "Show Example First" toggle defaults ON for new users.
+- Split panel displays resume cues during answer phase.
+- Messaging across all 5 journey phases reflects teach-first positioning.
 ## D-20260203-1138
 Date: 2026-02-03 11:38
 Inputs: CR-20260203-1138
@@ -995,3 +1015,21 @@ Alternatives considered:
 Acceptance / test:
 - Unit test builds a PDF with smart quotes/em dashes without raising errors.
 - E2E export buttons trigger PDF/TXT downloads successfully.
+
+## D-20260205-2138
+Date: 2026-02-05 21:38
+Inputs: CR-20260205-2138
+PRD: Next / backlog
+
+Decision:
+Interpret the request as a turn-mode interrupt action that cancels coach speech (browser TTS or server audio) and re-enables user interaction without auto-skipping.
+
+Rationale:
+This is the smallest, safest behavior that lets faster readers move on while avoiding state errors.
+
+Alternatives considered:
+- Auto-skip to the next question (rejected: changes flow and could drop answers).
+- Leave as-is and require waiting (rejected: does not meet the request).
+
+Acceptance / test:
+- In turn mode while the coach is speaking, activating Interrupt stops speech immediately and updates Help/Submit state without errors.

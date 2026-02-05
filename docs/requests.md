@@ -488,8 +488,8 @@ Date: 2026-02-02 18:16
 Source: chat
 
 Request (verbatim):
-I have a few details to be updated in the UI 
-1. the question insights show json, this needs to be mapped to a formatted display 
+I have a few details to be updated in the UI
+1. the question insights show json, this needs to be mapped to a formatted display
 eg """ocus areas
 {'area': 'Technical Depth in Distributed Systems & AI', 'description': "Assess candidate's ability to discuss architectural trade-offs (CAP theorem, latency vs. accuracy) in data platforms and their specific knowledge of ML/LLM lifecycles beyond high-level buzzwords."}
 {'area': 'Cross-Functional Dependency Management', 'description': "Evaluate experience in navigating complex organizational structures to align stakeholders (Engineering, Product, Data Science) on critical path schedules, specifically in high-stakes environments like Nordstrom's peak events."}
@@ -513,11 +513,28 @@ Request (verbatim):
 $minimalist-voice-ux-enforcer with with  $ralph to create an update to this app to imrove the call to action
 
 Notes:
+
+## CR-20260203-2100
+Date: 2026-02-03 21:00
+Source: chat
+
+Request (verbatim):
+Transform PrepTalk from interview simulator to confidence builder using the teach-first coaching model. Show users resume-grounded examples BEFORE asking questions, preventing the freeze that occurs when users don't know which story to tell.
+
+Option A (Learning Mode) approved: Show resume-grounded examples BEFORE presenting each question, enabling users to know which story to tell before being asked.
+
+Notes:
+- Target users freeze because they don't know which story to tell (ACCESS gap, not knowledge gap).
+- Learning Card component shows resume fact + example answer + "why this works" before each question.
+- "Show Example First" toggle defaults ON for new users.
+- Split panel displays resume cues during answer phase.
+- Messaging across all 5 journey phases reflects teach-first positioning.
+- Garnet color palette to replace current design tokens.
+- Accessibility fixes: focus-visible, aria-live, skip-link, reduced-motion support.
 - Stage 1 CTA emphasis: upload resume/job, generate questions, start interview (start gated by inputs).
 - Stage 2 CTA emphasis: turn-based controls, request help button, rubric-based help info when not responding.
 - Stage 3 CTA emphasis: score creation/notification, export PDF/TXT, restart session as the most prominent action.
 - Provide a Mermaid flow diagram for the CTA flow across all stages.
-
 ## CR-20260203-1011
 Date: 2026-02-03 10:11
 Source: chat
@@ -1044,3 +1061,13 @@ add the handle
 
 Notes:
 - Add a visible resize handle to Question Insights.
+
+## CR-20260205-2138
+Date: 2026-02-05 21:38
+Source: chat
+
+Request (verbatim):
+I want to see if I can interup the coach so I can move on. I can read faster then she can. Can that be done without causing an error
+
+Notes:
+- Turn-based mode context; interrupt coach speech and allow Submit without errors.

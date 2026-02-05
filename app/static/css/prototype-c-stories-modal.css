@@ -1,0 +1,487 @@
+
+.modal-close:hover {
+  background: var(--color-border);
+  color: var(--color-ink);
+}
+
+/* Practice modal header */
+.practice-modal-header {
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+
+.practice-modal-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: var(--space-xs);
+}
+
+.practice-modal-subtitle {
+  font-size: 18px;
+  color: var(--brand-primary);
+  font-weight: 500;
+}
+
+/* Practice modal info section */
+.practice-modal-info {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.practice-info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) 0;
+}
+
+.practice-info-item:not(:last-child) {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.practice-info-label {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.practice-info-value {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.practice-info-readiness {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.readiness-bar--large {
+  width: 120px;
+  height: 8px;
+}
+
+.readiness-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--brand-primary);
+  min-width: 40px;
+}
+
+.practice-info-tags {
+  display: flex;
+  gap: 4px;
+}
+
+/* Practice prompt */
+.practice-modal-prompt {
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+
+.practice-prompt-label {
+  font-size: 15px;
+  color: var(--color-ink);
+  margin-bottom: var(--space-sm);
+}
+
+.practice-prompt-tip {
+  font-size: 13px;
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+/* Recording area */
+.practice-modal-recording {
+  text-align: center;
+  padding: var(--space-xl) 0;
+}
+
+.practice-mic-container {
+  margin-bottom: var(--space-md);
+}
+
+.practice-mic-btn {
+  background: var(--color-surface);
+  border: 2px solid var(--brand-primary);
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.practice-mic-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 20px rgba(45, 138, 90, 0.2);
+}
+
+.practice-mic-btn.recording {
+  background: var(--brand-primary);
+  animation: pulse 1.5s infinite;
+}
+
+.practice-mic-btn.recording .practice-mic-icon {
+  color: white;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(45, 138, 90, 0.4); }
+  50% { box-shadow: 0 0 0 15px rgba(45, 138, 90, 0); }
+}
+
+.practice-mic-icon {
+  font-size: 32px;
+}
+
+.practice-mic-label {
+  font-size: 10px;
+  color: var(--brand-primary);
+  margin-top: 4px;
+}
+
+.practice-mic-btn.recording .practice-mic-label {
+  color: white;
+}
+
+.practice-timer {
+  font-size: 32px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--color-ink);
+  margin-bottom: var(--space-sm);
+}
+
+.practice-recording-hint {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+/* Results section */
+.practice-modal-results {
+  text-align: center;
+}
+
+.practice-result-header {
+  margin-bottom: var(--space-lg);
+}
+
+.practice-result-icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: var(--space-sm);
+}
+
+.practice-result-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.practice-result-comparison {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  padding: var(--space-lg);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+}
+
+.practice-result-before,
+.practice-result-after {
+  text-align: center;
+}
+
+.practice-result-before .result-value {
+  color: var(--color-muted);
+}
+
+.practice-result-after .result-value {
+  color: var(--brand-primary);
+}
+
+.result-label {
+  display: block;
+  font-size: 12px;
+  color: var(--color-muted);
+  margin-bottom: 4px;
+}
+
+.result-value {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.practice-result-arrow {
+  font-size: 24px;
+  color: var(--color-muted);
+}
+
+.practice-result-insight {
+  font-size: 14px;
+  color: var(--color-muted);
+  margin-bottom: var(--space-lg);
+  line-height: 1.5;
+}
+
+.practice-result-actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+}
+
+/* Dark mode for modal */
+@media (prefers-color-scheme: dark) {
+  .modal-content {
+    background: var(--color-background-dark, #121212);
+  }
+
+  .practice-modal-info,
+  .practice-result-comparison {
+    background: var(--color-surface-dark, #1A1A1A);
+  }
+
+  .practice-mic-btn {
+    background: var(--color-surface-dark, #1A1A1A);
+  }
+}
+
+/* ==========================================
+   Shared Ring Background Style
+   Used by both Progress and My Stories pages
+   ========================================== */
+
+.ring-bg {
+  fill: none;
+  stroke: var(--color-border);
+  stroke-width: 10;
+}
+
+.tag-filter-label {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.tag-filter-chips {
+  display: flex;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.tag-chip {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tag-chip:hover {
+  border-color: var(--brand-primary);
+  background: rgba(45, 138, 90, 0.05);
+}
+
+.tag-chip--active {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: white;
+}
+
+.tag-count {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* Filter empty state */
+.stories-empty--filter {
+  background: transparent;
+  border: none;
+  text-align: center;
+  padding: var(--space-xl);
+}
+
+.stories-empty--filter p {
+  color: var(--color-muted);
+  margin-bottom: var(--space-md);
+}
+
+/* Clickable tags in story cards */
+.story-card .story-tag {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.story-card .story-tag:hover {
+  background: var(--brand-primary);
+  color: white;
+}
+
+/* Dark mode for tag chips */
+@media (prefers-color-scheme: dark) {
+  .ring-bg {
+    stroke: var(--color-border-dark, #333);
+  }
+
+  .tag-chip {
+    background: var(--color-surface-dark, #1A1A1A);
+    border-color: var(--color-border-dark, #333);
+  }
+}
+
+/* Responsive: stack tag filter on mobile */
+@media (max-width: 600px) {
+  .tag-filter {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ==========================================
+   Sidebar Progress Rings (My Stories)
+   Matches Progress page ring style
+   ========================================== */
+
+/* Progress rings wrapper for My Stories sidebar (inner SVG container) */
+.progress-rings-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 180px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto var(--space-md);
+}
+
+.progress-rings-svg {
+  width: 100%;
+  height: 100%;
+  max-width: 140px;
+  max-height: 140px;
+  transform: rotate(-90deg);
+  display: block;
+  margin: 0 auto;
+}
+
+/* Center stats overlay */
+.rings-center-sidebar {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.rings-value-sidebar {
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-ink);
+  line-height: 1;
+}
+
+.rings-label-sidebar {
+  display: block;
+  font-size: 11px;
+  color: var(--color-muted);
+  text-transform: capitalize;
+  margin-top: 2px;
+}
+
+/* Compact legend for sidebar */
+.ring-legend--compact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ring-legend--compact .ring-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.ring-legend--compact .ring-legend-item strong {
+  color: var(--color-ink);
+  margin-left: auto;
+}
+
+/* Ring legend dots */
+.ring-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ring-legend-dot--outer {
+  background: #2D8A5A;
+}
+
+.ring-legend-dot--middle {
+  background: #4A9A8A;
+}
+
+.ring-legend-dot--inner {
+  background: #7A5A9A;
+}
+
+/* Tooltip styling (matches Progress page) */
+#stories-ring-tooltip {
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-ink);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: normal;
+  max-width: 180px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+#stories-ring-tooltip.visible {
+  opacity: 1;
+}
+
+/* Tag filter in main content */
+.tag-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+}
+
+/* Dark mode for sidebar rings */
+@media (prefers-color-scheme: dark) {
+  .sidebar-rings {
+    border-top-color: var(--color-border-dark, #333);
+  }
+
+  #stories-ring-tooltip {
+    background: var(--color-surface-dark, #1A1A1A);
+    border: 1px solid var(--color-border-dark, #333);
+  }
+}

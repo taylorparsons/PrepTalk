@@ -1,0 +1,111 @@
+{
+  "stories": [
+    {
+      "id": "demo_1",
+      "name": "Payment Integration Launch",
+      "tags": ["leadership", "technical", "results-driven"],
+      "readiness": 92,
+      "fillersPerMinute": 1.2,
+      "fillerCounts": {
+        "um": 1,
+        "like": 1
+      },
+      "insight": "Strong story with clear metrics. Interview-ready.",
+      "questionType": "Leadership",
+      "created": "2024-01-10T09:00:00.000Z",
+      "practices": 4
+    },
+    {
+      "id": "demo_2",
+      "name": "Cross-Team Conflict Resolution",
+      "tags": ["conflict", "collaboration", "leadership"],
+      "readiness": 78,
+      "fillersPerMinute": 2.4,
+      "fillerCounts": {
+        "um": 2,
+        "you_know": 1
+      },
+      "insight": "Good structure. Practice the resolution section once more.",
+      "questionType": "Conflict",
+      "created": "2024-01-12T11:00:00.000Z",
+      "practices": 3
+    },
+    {
+      "id": "demo_3",
+      "name": "Database Migration Project",
+      "tags": ["technical", "problem-solving", "results-driven"],
+      "readiness": 85,
+      "fillersPerMinute": 1.8,
+      "fillerCounts": {
+        "so": 2,
+        "basically": 1
+      },
+      "insight": "Technical details are crisp. Consider adding team dynamics.",
+      "questionType": "Technical",
+      "created": "2024-01-13T16:00:00.000Z",
+      "practices": 3
+    },
+    {
+      "id": "demo_4",
+      "name": "Mentoring Junior Developer",
+      "tags": ["leadership", "mentorship", "growth"],
+      "readiness": 65,
+      "fillersPerMinute": 3.1,
+      "fillerCounts": {
+        "like": 3,
+        "um": 2
+      },
+      "insight": "Great story choice. Practice the outcome section.",
+      "questionType": "Leadership",
+      "created": "2024-01-15T15:00:00.000Z",
+      "practices": 2
+    },
+    {
+      "id": "demo_5",
+      "name": "Stakeholder Pushback on Timeline",
+      "tags": ["conflict", "communication", "negotiation"],
+      "readiness": 71,
+      "fillersPerMinute": 2.8,
+      "fillerCounts": {
+        "um": 2,
+        "right": 2
+      },
+      "insight": "Strong opening. The compromise section needs polish.",
+      "questionType": "Conflict",
+      "created": "2024-01-16T08:30:00.000Z",
+      "practices": 2
+    },
+    {
+      "id": "demo_6",
+      "name": "Product Launch Under Pressure",
+      "tags": ["leadership", "pressure", "results-driven"],
+      "readiness": 45,
+      "fillersPerMinute": 4.5,
+      "fillerCounts": {
+        "um": 4,
+        "like": 3,
+        "so": 2
+      },
+      "insight": "Compelling story. Try slowing down during the crisis section.",
+      "questionType": "Leadership",
+      "created": "2024-01-17T13:00:00.000Z",
+      "practices": 1
+    },
+    {
+      "id": "demo_7",
+      "name": "API Redesign Initiative",
+      "tags": ["technical", "innovation", "collaboration"],
+      "readiness": 38,
+      "fillersPerMinute": 5.2,
+      "fillerCounts": {
+        "um": 5,
+        "basically": 3,
+        "you_know": 2
+      },
+      "insight": "Just captured. Practice a few more times to build confidence.",
+      "questionType": "Technical",
+      "created": "2024-01-18T12:00:00.000Z",
+      "practices": 1
+    }
+  ]
+}
