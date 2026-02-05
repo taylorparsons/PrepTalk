@@ -34,8 +34,8 @@ def test_build_study_guide_pdf_sanitizes_unicode():
     record = InterviewRecord(
         interview_id='int-789',
         user_id='user-789',
-        adapter='mock',
-        role_title='Role',
+        adapter="mock \u2014 adapter",
+        role_title="Senior PM \u2019s role",
         questions=['Q1'],
         focus_areas=['Focus'],
         transcript=[{'role': 'coach', 'text': 'It\u2019s great \u2014 really.', 'timestamp': '00:02'}],
