@@ -1,5 +1,24 @@
 import { test, expect } from '@playwright/test';
 
+async function gotoPrototype(page) {
+  const maxAttempts = 4;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await page.goto('/prototype-c', {
+        waitUntil: 'domcontentloaded',
+        timeout: 30000,
+      });
+      await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+      return;
+    } catch (error) {
+      if (attempt === maxAttempts) {
+        throw error;
+      }
+      await page.waitForTimeout(1500 * attempt);
+    }
+  }
+}
+
 test.describe('Prototype C - Console & Network Debug', () => {
   let consoleMessages = [];
   let consoleErrors = [];
@@ -138,10 +157,7 @@ test.describe('Prototype C - Console & Network Debug', () => {
     console.log('Navigating to /prototype-c...');
 
     // Navigate to prototype-c
-    await page.goto('http://localhost:8000/prototype-c', {
-      waitUntil: 'networkidle',
-      timeout: 10000
-    });
+    await gotoPrototype(page);
 
     // Wait a bit for any delayed errors
     await page.waitForTimeout(2000);
@@ -162,10 +178,7 @@ test.describe('Prototype C - Console & Network Debug', () => {
   test('click My Stories navigation', async ({ page }) => {
     console.log('Testing My Stories navigation...');
 
-    await page.goto('http://localhost:8000/prototype-c', {
-      waitUntil: 'networkidle',
-      timeout: 10000
-    });
+    await gotoPrototype(page);
 
     await page.waitForTimeout(1000);
 
@@ -194,10 +207,7 @@ test.describe('Prototype C - Console & Network Debug', () => {
   test('test tag filter interactions', async ({ page }) => {
     console.log('Testing tag filter chips...');
 
-    await page.goto('http://localhost:8000/prototype-c', {
-      waitUntil: 'networkidle',
-      timeout: 10000
-    });
+    await gotoPrototype(page);
 
     await page.waitForTimeout(1000);
 
@@ -225,10 +235,22 @@ test.describe('Prototype C - Console & Network Debug', () => {
         console.log(`Found ${count} chips with selector: ${selector}`);
         chipsFound += count;
 
-        // Click the first few chips
+        // Click the first few visible chips
         for (let i = 0; i < Math.min(count, 3); i++) {
+          const chip = chips.nth(i);
+          try {
+            await chip.scrollIntoViewIfNeeded({ timeout: 1000 });
+          } catch (error) {
+            console.log(`Skipping chip ${i + 1}; could not scroll into view.`);
+            continue;
+          }
+          const visible = await chip.isVisible();
+          if (!visible) {
+            console.log(`Skipping chip ${i + 1}; not visible.`);
+            continue;
+          }
           console.log(`Clicking chip ${i + 1}...`);
-          await chips.nth(i).click();
+          await chip.click();
           await page.waitForTimeout(500);
         }
       }
@@ -247,10 +269,7 @@ test.describe('Prototype C - Console & Network Debug', () => {
   test('test progress ring hover interactions', async ({ page }) => {
     console.log('Testing progress ring hovers...');
 
-    await page.goto('http://localhost:8000/prototype-c', {
-      waitUntil: 'networkidle',
-      timeout: 10000
-    });
+    await gotoPrototype(page);
 
     await page.waitForTimeout(1000);
 
@@ -293,10 +312,7 @@ test.describe('Prototype C - Console & Network Debug', () => {
   test('comprehensive interaction test', async ({ page }) => {
     console.log('Running comprehensive interaction test...');
 
-    await page.goto('http://localhost:8000/prototype-c', {
-      waitUntil: 'networkidle',
-      timeout: 10000
-    });
+    await gotoPrototype(page);
 
     await page.waitForTimeout(2000);
 

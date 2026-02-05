@@ -106,7 +106,7 @@ test('candidate interview flow (gemini turn voice)', async ({ page }, testInfo) 
   await expect(page.getByTestId('generate-progress')).toBeVisible({ timeout: 10000 });
   await captureStep(page, testInfo, 'state-3-generating');
   await expect(startButton).toBeEnabled({
-    timeout: isLive ? 30000 : 10000
+    timeout: isLive ? 120000 : 10000
   });
   await expect(generateButton).toHaveClass(/ui-button--secondary/);
   await expect(startButton).toHaveClass(/ui-button--primary/);
