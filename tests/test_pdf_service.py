@@ -27,6 +27,26 @@ def test_build_study_guide_pdf_falls_back_without_enums(monkeypatch):
     assert len(data) > 50
 
 
+def test_build_study_guide_pdf_sanitizes_unicode():
+    if pdf_service.FPDF is None:
+        pytest.skip('fpdf not installed')
+
+    record = InterviewRecord(
+        interview_id='int-789',
+        user_id='user-789',
+        adapter='mock',
+        role_title='Role',
+        questions=['Q1'],
+        focus_areas=['Focus'],
+        transcript=[{'role': 'coach', 'text': 'It\u2019s great \u2014 really.', 'timestamp': '00:02'}],
+        score={'overall_score': 85, 'summary': 'Solid \u2014 with notes'}
+    )
+
+    data = pdf_service.build_study_guide_pdf(record)
+    assert isinstance(data, (bytes, bytearray))
+    assert len(data) > 50
+
+
 def test_build_study_guide_text_formats_focus_areas():
     record = InterviewRecord(
         interview_id='int-456',

@@ -976,3 +976,22 @@ Alternatives considered:
 
 Acceptance / test:
 - Playwright mock and live reports include screenshots for each labeled state-change step.
+
+
+## D-20260204-2026
+Date: 2026-02-04 20:26
+Inputs: CR-20260204-2024
+PRD: Export study guide (Score Summary)
+
+Decision:
+Sanitize PDF export text to a Latin-1-safe subset (map smart quotes/dashes and drop unsupported characters) instead of switching fonts.
+
+Rationale:
+This is the smallest, least risky fix that prevents 500 errors without introducing new font assets or layout changes.
+
+Alternatives considered:
+- Add a Unicode font and register it in FPDF (rejected because it adds asset management and larger changes).
+
+Acceptance / test:
+- Unit test builds a PDF with smart quotes/em dashes without raising errors.
+- E2E export buttons trigger PDF/TXT downloads successfully.

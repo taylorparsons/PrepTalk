@@ -978,3 +978,14 @@ Notes:
 - Run the full test suite (pytest, Vitest, Playwright mock + live).
 - Add Playwright screenshots for each state-change step and attach them to HTML reports.
 - Create local commits for completed work.
+
+
+## CR-20260204-2024
+Date: 2026-02-04 20:24
+Source: chat
+
+Request (verbatim):
+export pdf from the Score summary is not working and shows a internal server error, this is a refression that failed make sure you are testing both of these in the end to end test and unit tests [Image #1]
+
+Notes:
+- Fix PDF export regression (unicode text crash) and add unit + E2E coverage for PDF/TXT exports.
