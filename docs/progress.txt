@@ -2379,6 +2379,7 @@ NEXT
 
 NOTES
 - Commands run: `./run.sh test` -> 67/67 passed (Vitest). Warnings about `--localstorage-file` path.
+- Commit: b7beeaa (T-012: Add visible resize handle).
 - Commit: 6b929fb (T-011: Make insights resize handle visible).
 - Commit: 3d8d22e (T-011: Make insights panel resize handle visible).
 - Commit: 23c2992 (T-010: Make Question Insights resizable).
@@ -2407,6 +2408,7 @@ NEXT
 
 NOTES
 - Commands run: `./run.sh test` -> 67/67 passed (Vitest). Warnings about `--localstorage-file` path.
+- Commit: b7beeaa (T-012: Add visible resize handle).
 - Commit: 6b929fb (T-011: Make insights resize handle visible).
 - Commit: 3d8d22e (T-011: Make insights panel resize handle visible).
 
@@ -2434,3 +2436,4 @@ NEXT
 
 NOTES
 - Commands run: `./run.sh test` -> 67/67 passed (Vitest). Warnings about `--localstorage-file` path.
+- Commit: b7beeaa (T-012: Add visible resize handle).
