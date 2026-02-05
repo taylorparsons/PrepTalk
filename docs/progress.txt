@@ -2327,3 +2327,4 @@ NOTES
 - Commands run: `set -a; source .env; set +a; E2E_LIVE=1 E2E_HOST=127.0.0.1 E2E_PORT=8000 PLAYWRIGHT_HTML_REPORT=playwright-report-live npx playwright test --reporter=html --output test-results-live` -> failed (start-interview never enabled in live turn flow).
 - Notes: Adjusted results-state UI to hide transcript and make restart primary; increased mock flow timeout for stability.
 - Risks / open questions: Live E2E blocked until Gemini credentials/network allow question generation.
+- Commit: bef2213 (T-008: Hide transcript in results and stabilize mock E2E).
