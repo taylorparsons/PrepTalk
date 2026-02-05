@@ -1123,25 +1123,6 @@ function buildControlsPanel(state, ui, config) {
     }
   });
 
-  // Learning Mode toggle (teach-first coaching)
-  const learningModeToggle = createButton({
-    label: state.showExampleFirst ? 'Learning Mode: ON' : 'Learning Mode: OFF',
-    variant: state.showExampleFirst ? 'primary' : 'ghost',
-    size: 'sm',
-    attrs: {
-      'data-testid': 'learning-mode-toggle',
-      'aria-pressed': String(state.showExampleFirst),
-      'title': 'When ON, shows a resume-grounded example before each question'
-    },
-    onClick: () => {
-      setLearningModePreference(!state.showExampleFirst);
-      learningModeToggle.className = state.showExampleFirst
-        ? 'ui-button ui-button--primary ui-button--sm'
-        : 'ui-button ui-button--ghost ui-button--sm';
-    }
-  });
-  ui.learningModeToggle = learningModeToggle;
-
   const restartMainLabel = document.createElement('div');
   restartMainLabel.className = 'ui-field__label';
   restartMainLabel.textContent = 'Restart Practice';
@@ -2707,7 +2688,6 @@ function buildControlsPanel(state, ui, config) {
 
   const toolsRow = document.createElement('div');
   toolsRow.className = 'ui-controls__row ui-controls__row--tools';
-  toolsRow.appendChild(learningModeToggle);
   toolsRow.appendChild(sessionToolsButton);
 
   const restartRow = document.createElement('div');
