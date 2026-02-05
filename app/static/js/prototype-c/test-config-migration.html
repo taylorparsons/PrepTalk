@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Config Migration Test</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      padding: 20px;
+      background: #1e1e1e;
+      color: #d4d4d4;
+    }
+    .test-result {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .pass { background: #0e4429; border-left: 3px solid #2ea043; }
+    .fail { background: #5a1e1e; border-left: 3px solid #f85149; }
+    h2 { color: #58a6ff; }
+    .section { margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <h1>Config Migration Verification</h1>
+  <div id="results"></div>
+
+  <script src="../config-loader.js"></script>
+  <script>
+    // Wait for config to load
+    setTimeout(() => {
+      const results = document.getElementById('results');
+
+      function addTest(name, expected, actual, section = 'General') {
+        const pass = JSON.stringify(expected) === JSON.stringify(actual);
+        const div = document.createElement('div');
+        div.className = `test-result ${pass ? 'pass' : 'fail'}`;
+        div.innerHTML = `
+          <strong>${pass ? '✓' : '✗'} ${name}</strong><br>
+          Expected: ${JSON.stringify(expected)}<br>
+          Actual: ${JSON.stringify(actual)}
+        `;
+
+        let sectionDiv = document.getElementById(`section-${section}`);
+        if (!sectionDiv) {
+          sectionDiv = document.createElement('div');
+          sectionDiv.id = `section-${section}`;
+          sectionDiv.className = 'section';
+          sectionDiv.innerHTML = `<h2>${section}</h2>`;
+          results.appendChild(sectionDiv);
+        }
+        sectionDiv.appendChild(div);
+      }
+
+      // Test 1: PDF Colors
+      const colors = window.APP_CONFIG?.pdf?.colors || {};
+      addTest('PDF primary_rgb color', [45, 90, 71], colors.primary_rgb, 'PDF Config');
+      addTest('PDF secondary_rgb color', [74, 106, 138], colors.secondary_rgb, 'PDF Config');
+      addTest('PDF dark_rgb color', [30, 30, 30], colors.dark_rgb, 'PDF Config');
+
+      // Test 2: Readiness Calculation
+      const calc = window.APP_CONFIG?.business?.readiness?.calculation || {};
+      addTest('Filler penalty multiplier', 15, calc.filler_penalty_multiplier, 'Readiness Calc');
+      addTest('Min score', 20, calc.min_score, 'Readiness Calc');
+      addTest('Max score', 100, calc.max_score, 'Readiness Calc');
+      addTest('Base bonus', 20, calc.base_bonus, 'Readiness Calc');
+
+      // Test 3: Readiness Thresholds
+      const thresholds = window.APP_CONFIG?.business?.readiness?.thresholds || {};
+      addTest('Ready threshold', 80, thresholds.ready, 'Thresholds');
+      addTest('Practicing threshold', 40, thresholds.practicing, 'Thresholds');
+
+      // Test 4: Timings
+      const timings = window.APP_CONFIG?.business?.timings || {};
+      addTest('Story capture autohide', 8000, timings.story_capture_autohide_ms, 'Timings');
+      addTest('Processing delay', 800, timings.processing_delay_ms, 'Timings');
+
+      // Test 5: Practice Improvement
+      const practiceBonus = window.APP_CONFIG?.business?.practice_improvement?.practice_bonus || {};
+      addTest('Practice bonus base', 12, practiceBonus.base, 'Practice Improvement');
+      addTest('Practice bonus min', 2, practiceBonus.min, 'Practice Improvement');
+      addTest('Practice bonus diminishing factor', 1.5, practiceBonus.diminishing_factor, 'Practice Improvement');
+
+      const durationSweetSpot = window.APP_CONFIG?.business?.practice_improvement?.duration_sweet_spot || {};
+      addTest('Duration optimal min', 60, durationSweetSpot.optimal_min, 'Practice Improvement');
+      addTest('Duration optimal max', 240, durationSweetSpot.optimal_max, 'Practice Improvement');
+      addTest('Duration optimal bonus', 3, durationSweetSpot.optimal_bonus, 'Practice Improvement');
+
+      const readinessModifiers = window.APP_CONFIG?.business?.practice_improvement?.readiness_modifiers || {};
+      addTest('High threshold', 80, readinessModifiers.high_threshold, 'Practice Improvement');
+      addTest('High modifier', 0.3, readinessModifiers.high_modifier, 'Practice Improvement');
+      addTest('Medium threshold', 60, readinessModifiers.medium_threshold, 'Practice Improvement');
+      addTest('Medium modifier', 0.6, readinessModifiers.medium_modifier, 'Practice Improvement');
+
+      // Test 6: Calculate readiness function behavior
+      function testCalculateReadiness(fillersPerMinute) {
+        const { filler_penalty_multiplier, min_score, max_score, base_bonus } = calc;
+        return Math.min(max_score, Math.max(min_score, 100 - (fillersPerMinute * filler_penalty_multiplier) + base_bonus));
+      }
+
+      addTest('Readiness with 0 fillers/min', 100, testCalculateReadiness(0), 'Calculation Test');
+      addTest('Readiness with 2 fillers/min', 90, testCalculateReadiness(2), 'Calculation Test');
+      addTest('Readiness with 5 fillers/min', 45, testCalculateReadiness(5), 'Calculation Test');
+      addTest('Readiness with 10 fillers/min (clamped)', 20, testCalculateReadiness(10), 'Calculation Test');
+
+      // Test 7: PDF filename pattern
+      const filenamePattern = window.APP_CONFIG?.pdf?.filename_pattern || 'PrepTalk_Report_{date}.pdf';
+      addTest('PDF filename pattern', 'PrepTalk_Report_{date}.pdf', filenamePattern, 'PDF Config');
+
+      // Test 8: Limits
+      const limits = window.APP_CONFIG?.business?.limits || {};
+      addTest('Max stories for full ring', 10, limits.max_stories_for_full_ring, 'Limits');
+      addTest('Demo stories count', 7, limits.demo_stories_count, 'Limits');
+
+      // Test 9: Readiness Tiers
+      const tiers = window.APP_CONFIG?.business?.readiness?.tiers || {};
+      addTest('Excellent tier threshold', 90, tiers.excellent?.threshold, 'Readiness Tiers');
+      addTest('Good tier threshold', 75, tiers.good?.threshold, 'Readiness Tiers');
+      addTest('Fair tier threshold', 50, tiers.fair?.threshold, 'Readiness Tiers');
+
+    }, 1000); // Wait 1 second for config to load
+  </script>
+</body>
+</html>

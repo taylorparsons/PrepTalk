@@ -1,0 +1,19 @@
+{
+  "questions": [
+    {
+      "id": "q1_leadership",
+      "topic_id": "leadership",
+      "text": "Tell me about a time you led a team through a challenging project. What was your approach?",
+      "order": 1,
+      "tags": ["leadership", "team_management"],
+      "expected_duration_seconds": 180,
+      "star_example": {
+        "snippet": "Led cross-functional team of 8 engineers to deliver payment integration, reducing checkout abandonment by 23%",
+        "situation": "Payment checkout had high abandonment",
+        "task": "You led the team to fix it",
+        "action": "Integrated new payment provider",
+        "result": "23% reduction in abandonment"
+      }
+    }
+  ]
+}

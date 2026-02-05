@@ -67,6 +67,21 @@ async def websocket_live(websocket: WebSocket):
     await live_audio_websocket(websocket)
 
 
+@app.get("/prototype", response_class=HTMLResponse)
+def prototype(request: Request):
+    return templates.TemplateResponse(request, "prototype.html", {})
+
+
+@app.get("/prototype-c", response_class=HTMLResponse)
+def prototype_c(request: Request):
+    return templates.TemplateResponse(request, "prototype-c.html", {})
+
+
+@app.get("/story-shelf", response_class=HTMLResponse)
+def story_shelf(request: Request):
+    return templates.TemplateResponse(request, "story-shelf.html", {})
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}

@@ -1,0 +1,121 @@
+/**
+ * Responsive adjustments for PrepTalk Prototype C
+ * Handles mobile, tablet, and small screen layouts
+ */
+
+/* Mobile-first breakpoints */
+@media (max-width: 768px) {
+  /* Layout adjustments */
+  .main-layout {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .sidebar {
+    border-top: 1px solid var(--color-border);
+    border-right: none;
+  }
+
+  /* Progress rings on mobile */
+  .progress-rings {
+    max-width: 160px;
+  }
+
+  .progress-rings-wrapper {
+    max-width: 140px;
+  }
+
+  /* Ring legends stack better on mobile */
+  .ring-legend {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  /* Story cards single column on mobile */
+  .stories-shelf {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Tablet and medium screens */
+@media (max-width: 1024px) {
+  .main-layout {
+    grid-template-columns: 1fr 280px;
+  }
+
+  .progress-rings {
+    max-width: 180px;
+  }
+
+  .progress-rings-wrapper {
+    max-width: 160px;
+  }
+}
+
+/* Small mobile (< 480px) */
+@media (max-width: 480px) {
+  .progress-rings {
+    max-width: 140px;
+    padding: var(--space-md);
+  }
+
+  .progress-rings-wrapper {
+    max-width: 120px;
+  }
+
+  .rings-value-sidebar {
+    font-size: 24px;
+  }
+
+  .ring-legend {
+    font-size: var(--font-size-sm);
+  }
+
+  /* Reduce card padding on small screens */
+  .story-card,
+  .card {
+    padding: var(--space-md);
+  }
+}
+
+/* Container query support (future-proofing) */
+@supports (container-type: inline-size) {
+  .sidebar {
+    container-type: inline-size;
+    container-name: sidebar;
+  }
+
+  @container sidebar (max-width: 280px) {
+    .progress-rings {
+      max-width: 140px;
+    }
+
+    .progress-rings-wrapper {
+      max-width: 120px;
+    }
+  }
+}
+
+/* Ensure rings stay centered and constrained */
+.progress-rings,
+.progress-rings-wrapper {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Prevent rings from overflowing card */
+.progress-rings svg,
+.progress-rings-svg {
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;
+  width: auto;
+}
+
+/* Ensure tooltips and overlays stay within bounds */
+.ring-tooltip,
+.rings-center-sidebar {
+  max-width: 90%;
+  word-wrap: break-word;
+}

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrepTalk Debug Overlay Demo</title>
+  <style>
+    :root {
+      --color-success: #10B981;
+      --color-warning: #F59E0B;
+      --color-danger: #EF4444;
+      --font-size-xs: 11px;
+      --font-size-sm: 12px;
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 12px;
+      --radius-md: 8px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #f5f5f5;
+      padding: 40px;
+      margin: 0;
+    }
+
+    .demo-container {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .controls {
+      background: white;
+      padding: 20px;
+      border-radius: var(--radius-md);
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .controls button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 150ms;
+    }
+
+    .controls button:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-high { background: #D1FAE5; color: #065F46; }
+    .btn-medium { background: #FEF3C7; color: #92400E; }
+    .btn-low { background: #FEE2E2; color: #991B1B; }
+
+    /* Copy styles from prototype-c-components.css */
+    .debug-telemetry-card {
+      background: #2A2A2E;
+      border: 1px solid #3E3E42;
+      border-radius: var(--radius-md);
+      padding: var(--space-md);
+      margin-bottom: 20px;
+      color: #E8E8EA;
+      font-family: 'IBM Plex Mono', monospace;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .debug-telemetry-card .section-title {
+      color: #A0A0A5;
+      font-size: var(--font-size-xs);
+      margin: 0 0 var(--space-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .debug-quality-indicator {
+      margin-bottom: var(--space-md);
+    }
+
+    .debug-quality-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-xs);
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+    }
+
+    .debug-quality-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--color-warning);
+      box-shadow: 0 0 8px currentColor;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    .debug-quality-dot.quality-high { background: var(--color-success); }
+    .debug-quality-dot.quality-medium { background: var(--color-warning); }
+    .debug-quality-dot.quality-low { background: var(--color-danger); }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .debug-quality-bar {
+      height: 6px;
+      background: #3E3E42;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .debug-quality-fill {
+      height: 100%;
+      background: var(--color-warning);
+      transition: width 500ms ease, background 500ms ease;
+      border-radius: 3px;
+    }
+
+    .debug-quality-fill.quality-high { background: var(--color-success); }
+    .debug-quality-fill.quality-medium { background: var(--color-warning); }
+    .debug-quality-fill.quality-low { background: var(--color-danger); }
+
+    .debug-telemetry-stats {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+
+    .debug-stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: var(--font-size-xs);
+      padding: 4px 0;
+      border-bottom: 1px solid #3E3E42;
+    }
+
+    .debug-stat-row:last-child { border-bottom: none; }
+
+    .debug-stat-label {
+      color: #A0A0A5;
+      font-weight: 400;
+    }
+
+    .debug-stat-value {
+      color: #E8E8EA;
+      font-weight: 600;
+      text-align: right;
+    }
+
+    .debug-toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #2A2A2E;
+      color: #E8E8EA;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid #3E3E42;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      font-size: var(--font-size-sm);
+      font-family: system-ui, sans-serif;
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 300ms ease, transform 300ms ease;
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      max-width: 320px;
+    }
+
+    .debug-toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .debug-toast-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .debug-toast-content { flex: 1; }
+
+    .debug-toast-title {
+      font-weight: 600;
+      margin: 0 0 2px 0;
+      font-size: var(--font-size-sm);
+    }
+
+    .debug-toast-message {
+      margin: 0;
+      color: #A0A0A5;
+      font-size: var(--font-size-xs);
+      line-height: 1.4;
+    }
+
+    .debug-toast.toast-success { border-color: var(--color-success); }
+    .debug-toast.toast-warning { border-color: var(--color-warning); }
+    .debug-toast.toast-danger { border-color: var(--color-danger); }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <h1>🎙️ PrepTalk Debug Overlay</h1>
+
+    <div class="controls">
+      <button class="btn-high" onclick="setQuality('high')">Simulate HIGH Quality</button>
+      <button class="btn-medium" onclick="setQuality('medium')">Simulate MEDIUM Quality</button>
+      <button class="btn-low" onclick="setQuality('low')">Simulate LOW Quality</button>
+    </div>
+
+    <div class="debug-telemetry-card" id="debug-telemetry-card">
+      <p class="section-title">Audio Telemetry</p>
+
+      <div class="debug-quality-indicator">
+        <div class="debug-quality-label">
+          <span id="debug-quality-text">MEDIUM</span>
+          <span class="debug-quality-dot quality-medium" id="debug-quality-dot"></span>
+        </div>
+        <div class="debug-quality-bar">
+          <div class="debug-quality-fill quality-medium" id="debug-quality-fill" style="width: 60%"></div>
+        </div>
+      </div>
+
+      <div class="debug-telemetry-stats">
+        <div class="debug-stat-row">
+          <span class="debug-stat-label">Sample Rate</span>
+          <span class="debug-stat-value" id="debug-sample-rate">24 kHz</span>
+        </div>
+        <div class="debug-stat-row">
+          <span class="debug-stat-label">Frame Size</span>
+          <span class="debug-stat-value" id="debug-frame-size">40 ms</span>
+        </div>
+        <div class="debug-stat-row">
+          <span class="debug-stat-label">Network</span>
+          <span class="debug-stat-value" id="debug-network-type">4g</span>
+        </div>
+        <div class="debug-stat-row">
+          <span class="debug-stat-label">Latency</span>
+          <span class="debug-stat-value" id="debug-latency">85 ms</span>
+        </div>
+        <div class="debug-stat-row">
+          <span class="debug-stat-label">Bandwidth</span>
+          <span class="debug-stat-value" id="debug-bandwidth">8.2 Mbps</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="debug-toast" id="debug-toast"></div>
+
+  <script>
+    let currentProfile = 'medium';
+
+    const profiles = {
+      high: {
+        sampleRate: 48,
+        frameSize: 20,
+        network: '4g',
+        latency: 45,
+        bandwidth: 12.5,
+        width: '100%',
+        class: 'quality-high'
+      },
+      medium: {
+        sampleRate: 24,
+        frameSize: 40,
+        network: '4g',
+        latency: 85,
+        bandwidth: 8.2,
+        width: '60%',
+        class: 'quality-medium'
+      },
+      low: {
+        sampleRate: 16,
+        frameSize: 60,
+        network: '3g',
+        latency: 250,
+        bandwidth: 1.2,
+        width: '30%',
+        class: 'quality-low'
+      }
+    };
+
+    function setQuality(profile) {
+      const oldProfile = currentProfile;
+      currentProfile = profile;
+
+      const config = profiles[profile];
+      const qualityText = document.getElementById('debug-quality-text');
+      const qualityDot = document.getElementById('debug-quality-dot');
+      const qualityFill = document.getElementById('debug-quality-fill');
+
+      qualityText.textContent = profile.toUpperCase();
+      qualityFill.style.width = config.width;
+
+      ['quality-high', 'quality-medium', 'quality-low'].forEach(c => {
+        qualityDot.classList.remove(c);
+        qualityFill.classList.remove(c);
+      });
+
+      qualityDot.classList.add(config.class);
+      qualityFill.classList.add(config.class);
+
+      document.getElementById('debug-sample-rate').textContent = `${config.sampleRate} kHz`;
+      document.getElementById('debug-frame-size').textContent = `${config.frameSize} ms`;
+      document.getElementById('debug-network-type').textContent = config.network;
+      document.getElementById('debug-latency').textContent = `${config.latency} ms`;
+      document.getElementById('debug-bandwidth').textContent = `${config.bandwidth} Mbps`;
+
+      if (oldProfile !== profile) {
+        showToast(oldProfile, profile, config);
+      }
+    }
+
+    function showToast(oldProfile, newProfile, config) {
+      const toast = document.getElementById('debug-toast');
+
+      const isUpgrade = (oldProfile === 'low' && newProfile !== 'low') ||
+                        (oldProfile === 'medium' && newProfile === 'high');
+      const isDowngrade = (oldProfile === 'high' && newProfile !== 'high') ||
+                          (oldProfile === 'medium' && newProfile === 'low');
+
+      const toastConfig = {
+        upgrade: {
+          icon: '⬆️',
+          title: 'Audio Quality Improved',
+          class: 'toast-success',
+          message: `Upgraded to ${newProfile.toUpperCase()} quality (${config.sampleRate}kHz)`
+        },
+        downgrade: {
+          icon: '⬇️',
+          title: 'Audio Quality Adjusted',
+          class: 'toast-warning',
+          message: `Switched to ${newProfile.toUpperCase()} quality for stability`
+        }
+      };
+
+      const toastData = isUpgrade ? toastConfig.upgrade : toastConfig.downgrade;
+
+      toast.innerHTML = `
+        <span class="debug-toast-icon">${toastData.icon}</span>
+        <div class="debug-toast-content">
+          <p class="debug-toast-title">${toastData.title}</p>
+          <p class="debug-toast-message">${toastData.message}</p>
+        </div>
+      `;
+
+      toast.className = `debug-toast ${toastData.class}`;
+
+      setTimeout(() => toast.classList.add('visible'), 10);
+      setTimeout(() => toast.classList.remove('visible'), 4000);
+    }
+  </script>
+</body>
+</html>

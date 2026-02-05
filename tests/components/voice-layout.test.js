@@ -25,7 +25,7 @@ describe('voice layout', () => {
         'Interview Questions',
         'Question Insights',
         'Transcript',
-        'Score Summary'
+        'Session Insights'
       ])
     );
     expect(layout.querySelector('[data-testid="restart-interview-main"]')).toBeTruthy();
@@ -68,6 +68,37 @@ describe('voice layout', () => {
     const ui = window.__e2eUi;
     expect(ui.setupBody.classList.contains('overflow-auto')).toBe(true);
     expect(ui.setupBody.classList.contains('max-h-screen')).toBe(true);
+
+    delete window.__E2E__;
+    delete window.__e2eState;
+    delete window.__e2eUi;
+  });
+
+  it('interrupts coach speech in turn mode without errors', () => {
+    window.__E2E__ = true;
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const state = window.__e2eState;
+    const ui = window.__e2eUi;
+    state.sessionActive = true;
+    state.turnAwaitingAnswer = true;
+    state.turnSpeaking = true;
+    state.captionDraftText = 'Draft answer';
+    ui.updateTurnSubmitUI();
+
+    const interrupt = layout.querySelector('[data-testid="barge-in-toggle"]');
+    const submit = layout.querySelector('[data-testid="submit-turn"]');
+
+    expect(interrupt).toBeTruthy();
+    expect(interrupt.disabled).toBe(false);
+    expect(submit.disabled).toBe(true);
+
+    interrupt.click();
+
+    expect(state.turnSpeaking).toBe(false);
+    expect(interrupt.disabled).toBe(true);
+    expect(submit.disabled).toBe(false);
 
     delete window.__E2E__;
     delete window.__e2eState;

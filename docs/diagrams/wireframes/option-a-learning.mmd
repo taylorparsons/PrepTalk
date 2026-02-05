@@ -1,0 +1,20 @@
+flowchart TB
+    subgraph OPTION_A["OPTION A: Learning Mode"]
+        direction TB
+
+        subgraph STEP1["Step 1: See Example First"]
+            EX["FROM YOUR RESUME:<br/>'Led migration of 50+ microservices'<br/><br/>EXAMPLE ANSWER:<br/>'In my role, I led a migration<br/>that improved latency by 40%...'"]
+        end
+
+        subgraph STEP2["Step 2: Hear Question"]
+            Q["Coach: Tell me about a<br/>technical challenge you faced"]
+        end
+
+        subgraph STEP3["Step 3: Answer with Confidence"]
+            A["You know which story to tell"]
+        end
+
+        STEP1 --> STEP2 --> STEP3
+    end
+
+    style STEP1 fill:#1f6f5f,color:#fff
