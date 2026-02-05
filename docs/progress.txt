@@ -2242,3 +2242,4 @@ NOTES
 - Commands run: `PLAYWRIGHT_HTML_REPORT=playwright-report-mock npx playwright test --reporter=html --output test-results-mock` -> failed (webServer could not bind to 127.0.0.1:8129; operation not permitted).
 - Commands run: `set -a; source .env; set +a; E2E_LIVE=1 PLAYWRIGHT_HTML_REPORT=playwright-report-live npx playwright test --reporter=html --output test-results-live` -> failed (webServer could not bind to 127.0.0.1:8129; operation not permitted).
 - Risks / open questions: Playwright HTML reports still need a local run where the server can bind.
+- Commit: ae3b5af (UX polish, exports, and Playwright screenshots).
