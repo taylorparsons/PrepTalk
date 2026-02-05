@@ -3054,10 +3054,15 @@ function buildSessionToolsDrawer(state, ui, config) {
   ui.insightsResume = resumeList;
   ui.insightsJob = jobList;
 
+  const body = document.createElement('div');
+  body.className = 'ui-insights__body resize-y overflow-auto';
+  body.setAttribute('data-testid', 'insights-resize');
+  body.appendChild(container);
+
   const panel = createPanel({
     title: 'Question Insights',
     subtitle: 'Hover a question or click Pin to keep details visible.',
-    content: container,
+    content: body,
     attrs: { 'data-testid': 'question-insights-panel' }
   });
   panel.classList.add('ui-panel--sticky');

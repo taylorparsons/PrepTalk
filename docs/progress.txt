@@ -2354,3 +2354,28 @@ NEXT
 NOTES
 - Commands run: `./run.sh test` -> 66/66 passed (Vitest). Warnings about `--localstorage-file` path.
 - Commit: 411a33f (T-009: Keep Candidate Setup scrollable).
+
+---
+
+Session: 2026-02-05 21:12
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260204-state-clarity
+Input: CR-20260205-2112
+Decisions: (none)
+Spec: docs/specs/20260204-state-clarity/spec.md
+Tasks: docs/specs/20260204-state-clarity/tasks.md
+Goal: Make Question Insights panel vertically resizable.
+
+DONE
+- [2026-02-05 21:12] T-010: Make Question Insights panel vertically resizable. (Skills: ralph, daisy)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `./run.sh test` -> 67/67 passed (Vitest). Warnings about `--localstorage-file` path.

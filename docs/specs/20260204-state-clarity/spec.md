@@ -34,6 +34,7 @@ Acceptance scenarios:
 3. Given the session is stopped and results are showing, When I look for controls, Then Extras and Restart are still available. (Verifies: FR-005)
 4. Given results are visible, When the UI updates, Then the transcript panel is hidden to keep the score view focused. (Verifies: FR-007)
 5. Given the setup panel is tall, When the UI renders, Then the setup content remains scrollable without truncation. (Verifies: FR-008)
+6. Given the Question Insights panel is tall, When I drag its resize handle, Then the panel content expands vertically and remains scrollable. (Verifies: FR-009)
 
 ### US4: Persisted help examples (Priority: P1)
 Narrative:
@@ -53,6 +54,7 @@ Functional requirements:
 - FR-006: Persist Request Help answers in Question Insights for the active question and auto-pin the related question. (Sources: CR-20260205-1005; D-20260205-1010)
 - FR-007: Hide the transcript panel when results are visible to reduce clutter. (Sources: CR-20260205-0312)
 - FR-008: Ensure the Candidate Setup content remains scrollable to avoid truncation on smaller viewports. (Sources: CR-20260205-2106)
+- FR-009: Make the Question Insights panel vertically resizable with scrollable content. (Sources: CR-20260205-2112)
 
 ## Edge cases
 - If questions are cleared or a new session starts, the hero intro expands again. (Verifies: FR-002)

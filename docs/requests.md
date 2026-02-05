@@ -1011,3 +1011,14 @@ I see a bug the cadidate setup is being truncated [Image #1]
 
 Notes:
 - Ensure Candidate Setup panel content is fully visible (no truncation).
+
+
+## CR-20260205-2112
+Date: 2026-02-05 21:12
+Source: chat
+
+Request (verbatim):
+can the user resize the question insights
+
+Notes:
+- Make Question Insights panel vertically resizable.
