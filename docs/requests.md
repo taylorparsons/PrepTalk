@@ -1022,3 +1022,14 @@ can the user resize the question insights
 
 Notes:
 - Make Question Insights panel vertically resizable.
+
+
+## CR-20260205-2122
+Date: 2026-02-05 21:22
+Source: chat
+
+Request (verbatim):
+I just tried it in the ui and I am not able to resize I thought I could drag it how ?
+
+Notes:
+- Make the Question Insights resize handle discoverable/functional (panel-level drag).

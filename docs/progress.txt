@@ -2380,3 +2380,28 @@ NEXT
 NOTES
 - Commands run: `./run.sh test` -> 67/67 passed (Vitest). Warnings about `--localstorage-file` path.
 - Commit: 23c2992 (T-010: Make Question Insights resizable).
+
+---
+
+Session: 2026-02-05 21:22
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260204-state-clarity
+Input: CR-20260205-2122
+Decisions: (none)
+Spec: docs/specs/20260204-state-clarity/spec.md
+Tasks: docs/specs/20260204-state-clarity/tasks.md
+Goal: Make the Question Insights resize handle visible on the panel.
+
+DONE
+- [2026-02-05 21:22] T-011: Move Question Insights resize handle to the panel for discoverability. (Skills: ralph, daisy)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `./run.sh test` -> 67/67 passed (Vitest). Warnings about `--localstorage-file` path.
