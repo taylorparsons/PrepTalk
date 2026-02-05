@@ -3,7 +3,9 @@
 Spec: docs/specs/20260205-session-layout-target/spec.md
 
 ## NEXT
-- (none)
+- T-006: Commit current working tree changes on feature branch. (Implements: FR-001, FR-002, FR-003, FR-004, FR-006, FR-007)
+- T-007: Merge feature branch into main. (Implements: FR-001, FR-002, FR-003, FR-004, FR-006, FR-007)
+- T-008: Post-merge PRD/spec reconciliation with CR hashes and evidence. (Implements: FR-001, FR-002, FR-003, FR-004, FR-006, FR-007)
 
 ## IN PROGRESS
 - (none)

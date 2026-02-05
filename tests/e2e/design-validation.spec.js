@@ -59,8 +59,8 @@ test.describe('PrepTalk Design Validation', () => {
     const statusPill = page.locator('[data-testid="session-status"]');
     await expect(statusPill).toHaveAttribute('aria-live', 'polite');
 
-    const turnHelp = page.locator('[data-testid="turn-help"]');
-    await expect(turnHelp).toHaveAttribute('aria-live', 'polite');
+    const statusDetail = page.locator('[data-testid="status-detail"]');
+    await expect(statusDetail).toHaveAttribute('aria-live', 'polite');
 
     // Check focus visible works (tab to first interactive element)
     await page.keyboard.press('Tab');

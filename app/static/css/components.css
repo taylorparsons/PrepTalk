@@ -92,6 +92,11 @@ body.app-body {
 
 .ui-overflow-menu__button {
   min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+  line-height: 1;
 }
 
 .ui-overflow-menu__list {
@@ -130,6 +135,15 @@ body.app-body {
 
 .ui-hero--collapsed {
   padding-bottom: 16px;
+}
+
+.ui-hero--collapsed .ui-hero__eyebrow,
+.ui-hero--collapsed .ui-hero__subtitle {
+  display: none;
+}
+
+.ui-hero--collapsed .ui-hero__heading {
+  gap: 0;
 }
 
 .ui-hero__eyebrow {
@@ -998,15 +1012,47 @@ body.app-body {
 }
 
 
+.ui-controls-panel.ui-panel {
+  padding: 16px;
+}
+
+.ui-controls-panel .ui-panel__header {
+  margin-bottom: 4px;
+  gap: 4px;
+}
+
+.ui-controls-panel .ui-panel__body {
+  gap: 6px;
+}
+
+.ui-controls-panel .ui-controls__row {
+  gap: 8px;
+}
+
+.ui-controls-panel .ui-controls__status {
+  gap: 2px;
+}
+
 .ui-controls__row {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
 }
 
+.ui-controls__status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ui-controls__rubric {
+  position: relative;
+}
+
 .ui-controls__status {
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .ui-controls__subtext {
@@ -1038,7 +1084,7 @@ body.app-body {
 }
 
 .ui-controls--results .ui-controls__row--actions,
-.ui-controls--results .ui-turn-help,
+.ui-controls--results .ui-controls__hint,
 .ui-controls--results .ui-turn-rubric {
   display: none;
 }
@@ -1048,17 +1094,17 @@ body.app-body {
   gap: 6px;
 }
 
-.ui-turn-help {
+.ui-controls__hint {
+  margin: 0;
   font-size: 12px;
   color: var(--ui-color-muted);
   background: #fffdf8;
   border-radius: var(--ui-radius-sm);
   border: 1px dashed var(--ui-color-border);
-  padding: 8px 10px;
-}
-
-.ui-turn-help.ui-state-text {
-  font-size: 14px;
+  padding: 6px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ui-turn-rubric {
@@ -1068,6 +1114,15 @@ body.app-body {
   border-radius: var(--ui-radius-sm);
   border: 1px solid var(--ui-color-border);
   padding: 10px 12px;
+}
+
+.ui-turn-rubric--popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(360px, 80vw);
+  z-index: 35;
+  box-shadow: var(--ui-shadow-md);
 }
 
 .ui-turn-rubric__title {
@@ -1200,6 +1255,10 @@ body.app-body {
   gap: 16px;
   grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
   align-items: start;
+}
+
+.layout-duo--single {
+  grid-template-columns: 1fr;
 }
 
 .layout-stack {

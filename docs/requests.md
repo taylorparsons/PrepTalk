@@ -1151,3 +1151,23 @@ this panels should fill up the whole screen section not like this
 
 Notes:
 - When Candidate Setup is hidden, the active panels should expand to full width (single-column layout).
+
+## CR-20260205-1327
+Date: 2026-02-05 13:27
+Source: chat
+
+Request (verbatim):
+use $ralph to make sure that the artifacts re all setup
+
+Notes:
+- Ensure RALPH artifacts (requests/decisions/specs/tasks/progress) are updated before merge.
+
+## CR-20260205-1328
+Date: 2026-02-05 13:28
+Source: chat
+
+Request (verbatim):
+I want to merge it as is to main
+
+Notes:
+- Merge the current feature branch changes into main without additional scope changes.

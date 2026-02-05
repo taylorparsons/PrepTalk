@@ -2615,3 +2615,29 @@ NOTES
 - Commit: 2d97008 (T-001..T-005).
 - Commit: d90aec1 (Ready-state setup hidden fix).
 - Commit: d5add7e (Full-width active panels when setup hidden).
+
+---
+
+Session: 2026-02-05 13:27
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260205-session-layout-target
+Input: CR-20260205-1327, CR-20260205-1328
+Decisions: (none)
+Spec: docs/specs/20260205-session-layout-target/spec.md
+Tasks: docs/specs/20260205-session-layout-target/tasks.md
+Goal: Merge feature branch to main and reconcile PRD/spec backlog.
+
+DONE
+- (none)
+
+IN PROGRESS
+- T-006: Commit current working tree changes on feature branch. (Skills: ralph)
+
+NEXT
+- T-007: Merge feature branch into main. (Skills: ralph)
+- T-008: Post-merge PRD/spec reconciliation with CR hashes and evidence. (Skills: ralph)
+
+NOTES
+- Commands run: date '+%Y-%m-%d %H:%M'

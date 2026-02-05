@@ -471,10 +471,33 @@ function buildAppHeader(ui) {
   menuWrapper.className = 'ui-overflow-menu';
   menuWrapper.hidden = true;
 
+  const menuIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  menuIcon.setAttribute('viewBox', '0 0 24 24');
+  menuIcon.setAttribute('width', '24');
+  menuIcon.setAttribute('height', '24');
+  menuIcon.setAttribute('fill', 'none');
+  menuIcon.setAttribute('stroke', 'currentColor');
+  menuIcon.setAttribute('stroke-width', '2');
+  menuIcon.setAttribute('stroke-linecap', 'round');
+  menuIcon.setAttribute('stroke-linejoin', 'round');
+  [
+    { y: 6 },
+    { y: 12 },
+    { y: 18 }
+  ].forEach(({ y }) => {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', '3');
+    line.setAttribute('y1', String(y));
+    line.setAttribute('x2', '21');
+    line.setAttribute('y2', String(y));
+    menuIcon.appendChild(line);
+  });
+
   const menuButton = createButton({
-    label: '≡',
+    label: '',
     variant: 'ghost',
-    size: 'sm',
+    size: 'md',
+    icon: menuIcon,
     ariaLabel: 'Open menu',
     attrs: {
       'data-testid': 'overflow-menu-toggle',
@@ -844,14 +867,6 @@ function buildSetupPanel(state, ui) {
 
   let isGenerating = false;
 
-  const collapseButton = createButton({
-    label: 'Collapse setup',
-    variant: 'ghost',
-    size: 'sm',
-    disabled: true,
-    attrs: { 'data-testid': 'setup-collapse' }
-  });
-
   const generateButton = createButton({
     label: 'Generate Questions',
     variant: 'primary',
@@ -965,7 +980,11 @@ function buildSetupPanel(state, ui) {
     state.score = null;
     state.scorePending = false;
     state.askedQuestionIndex = null;
-    state.setupAutoCollapsed = false;
+    state.hideSetup = false;
+    state.hideQuestions = false;
+    state.hideInsights = false;
+    state.hideTranscript = false;
+    state.hideScore = false;
     state.heroAutoCollapsed = false;
     ui.startButton.disabled = true;
     renderQuestions(
@@ -1068,36 +1087,7 @@ function buildSetupPanel(state, ui) {
     content,
     attrs: { 'data-testid': 'setup-panel' }
   });
-  const panelBody = panel.querySelector('.ui-panel__body');
-
-  const header = panel.querySelector('.ui-panel__header');
-  if (header) {
-    header.classList.add('ui-panel__header--actions');
-    const actions = document.createElement('div');
-    actions.className = 'ui-panel__actions';
-    actions.appendChild(collapseButton);
-    header.appendChild(actions);
-  }
-
-  let setupCollapsed = false;
-  function setSetupCollapsed(value) {
-    setupCollapsed = value;
-    content.hidden = setupCollapsed;
-    if (panelBody) {
-      panelBody.hidden = setupCollapsed;
-    }
-    panel.classList.toggle('ui-panel--collapsed', setupCollapsed);
-    updateButtonLabel(collapseButton, setupCollapsed ? 'Expand setup' : 'Collapse setup');
-    ui.updateOverflowMenu?.();
-  }
-
-  collapseButton.addEventListener('click', () => {
-    setSetupCollapsed(!setupCollapsed);
-  });
-
-  ui.setupCollapse = collapseButton;
   ui.setupBody = content;
-  ui.setSetupCollapsed = setSetupCollapsed;
   ui.setupPanel = panel;
 
   return panel;
@@ -1111,17 +1101,53 @@ function buildControlsPanel(state, ui, config) {
   });
   const statusDetail = document.createElement('p');
   statusDetail.className = 'ui-controls__subtext ui-state-text';
+  statusDetail.setAttribute('data-testid', 'status-detail');
+  statusDetail.setAttribute('aria-live', 'polite');
+  statusDetail.setAttribute('role', 'status');
   statusDetail.textContent = 'Waiting to start.';
+
+  const turnRubric = document.createElement('div');
+  turnRubric.className = 'ui-turn-rubric ui-turn-rubric--popover';
+  turnRubric.setAttribute('data-testid', 'turn-rubric');
+  turnRubric.hidden = true;
+
+  const turnRubricTitle = document.createElement('div');
+  turnRubricTitle.className = 'ui-turn-rubric__title';
+  turnRubricTitle.textContent = 'Answer rubric';
+
+  const turnRubricList = document.createElement('ul');
+  turnRubricList.className = 'ui-turn-rubric__list';
+
+  turnRubric.appendChild(turnRubricTitle);
+  turnRubric.appendChild(turnRubricList);
+
+  const rubricToggle = createButton({
+    label: 'Rubric',
+    variant: 'ghost',
+    size: 'sm',
+    attrs: { 'data-testid': 'rubric-toggle', 'aria-expanded': 'false' }
+  });
+  rubricToggle.classList.add('ui-controls__rubric-toggle');
+
+  const rubricWrapper = document.createElement('div');
+  rubricWrapper.className = 'ui-controls__rubric';
+  rubricWrapper.appendChild(rubricToggle);
+  rubricWrapper.appendChild(turnRubric);
+
+  const statusHeader = document.createElement('div');
+  statusHeader.className = 'ui-controls__status-header';
+  statusHeader.appendChild(statusPill);
+  statusHeader.appendChild(rubricWrapper);
 
   const statusBlock = document.createElement('div');
   statusBlock.className = 'ui-controls__status';
-  statusBlock.appendChild(statusPill);
+  statusBlock.appendChild(statusHeader);
   statusBlock.appendChild(statusDetail);
 
   const startButton = createButton({
     label: 'Begin Practice',
     variant: 'primary',
-    size: 'lg',
+    size: 'md',
     disabled: true,
     attrs: { 'data-testid': 'start-interview' }
   });
@@ -1129,7 +1155,7 @@ function buildControlsPanel(state, ui, config) {
   const muteButton = createButton({
     label: 'Mute',
     variant: 'secondary',
-    size: 'md',
+    size: 'sm',
     attrs: {
       'data-testid': 'mute-interview',
       'aria-pressed': 'false'
@@ -1142,7 +1168,7 @@ function buildControlsPanel(state, ui, config) {
   const bargeInButton = createButton({
     label: 'Interrupt',
     variant: 'ghost',
-    size: 'md',
+    size: 'sm',
     attrs: {
       'data-testid': 'barge-in-toggle',
       'aria-pressed': 'false'
@@ -1159,7 +1185,7 @@ function buildControlsPanel(state, ui, config) {
   const submitTurnButton = createButton({
     label: 'Submit Answer',
     variant: 'primary',
-    size: 'md',
+    size: 'sm',
     disabled: true,
     attrs: {
       'data-testid': 'submit-turn'
@@ -1172,24 +1198,13 @@ function buildControlsPanel(state, ui, config) {
   const helpTurnButton = createButton({
     label: 'Request Help',
     variant: 'secondary',
-    size: 'md',
+    size: 'sm',
     disabled: true,
     attrs: {
       'data-testid': 'help-turn'
     },
     onClick: () => {
       void requestTurnHelp({ source: 'button' });
-    }
-  });
-
-  const sessionToolsButton = createButton({
-    label: 'Extras',
-    variant: 'ghost',
-    size: 'sm',
-    attrs: {
-      'data-testid': 'session-tools-toggle',
-      'aria-controls': 'session-tools-drawer',
-      'aria-expanded': 'false'
     }
   });
 
@@ -1221,14 +1236,6 @@ function buildControlsPanel(state, ui, config) {
     attrs: { 'data-testid': 'export-txt-top' }
   });
 
-  const candidateSetupButton = createButton({
-    label: 'Candidate Setup',
-    variant: 'ghost',
-    size: 'sm',
-    disabled: true,
-    attrs: { 'data-testid': 'open-candidate-setup' }
-  });
-
   const exportLabel = document.createElement('span');
   exportLabel.className = 'ui-controls__export-label';
   exportLabel.textContent = 'Export';
@@ -1245,18 +1252,6 @@ function buildControlsPanel(state, ui, config) {
   function setStatusDetail(text) {
     statusDetail.textContent = text || '';
   }
-
-  function openCandidateSetup() {
-    if (ui.setSetupCollapsed) {
-      ui.setSetupCollapsed(false);
-    }
-    ui.updateSessionToolsState?.();
-    ui.setupPanel?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
-  }
-
-  candidateSetupButton.addEventListener('click', () => {
-    openCandidateSetup();
-  });
 
   function setMuteState(isMuted) {
     state.isMuted = isMuted;
@@ -1448,6 +1443,10 @@ function buildControlsPanel(state, ui, config) {
     }
     const questionText = resolveCurrentQuestionText();
     if (!questionText) {
+      state.turnRubricVisible = false;
+      if (ui.rubricToggle) {
+        ui.rubricToggle.setAttribute('aria-expanded', 'false');
+      }
       ui.turnRubric.hidden = true;
       return;
     }
@@ -1463,7 +1462,10 @@ function buildControlsPanel(state, ui, config) {
   }
 
   function setTurnRubricVisible(value) {
-    state.turnRubricVisible = value;
+    state.turnRubricVisible = Boolean(value);
+    if (ui.rubricToggle) {
+      ui.rubricToggle.setAttribute('aria-expanded', String(state.turnRubricVisible));
+    }
     renderTurnRubric();
   }
 
@@ -1501,9 +1503,6 @@ function buildControlsPanel(state, ui, config) {
 
   function updateTurnSubmitUI() {
     const showTurnControls = isTurnMode() && state.sessionActive;
-    if (ui.turnHelp) {
-      ui.turnHelp.hidden = !showTurnControls;
-    }
     if (bargeInButton) {
       if (isTurnMode()) {
         const canInterrupt = state.sessionActive && state.turnSpeaking;
@@ -1565,28 +1564,13 @@ function buildControlsPanel(state, ui, config) {
             : 'Help becomes available after the coach asks a question.';
     }
 
-    if (ui.turnHelp) {
-      if (hasAnswer && state.turnHelpHintVisible) {
-        state.turnHelpHintVisible = false;
-      }
-      if (state.turnSpeaking) {
-        ui.turnHelp.textContent = 'Coach is speaking. Wait to request help or submit your answer.';
-      } else if (!state.turnAwaitingAnswer) {
-        ui.turnHelp.textContent = 'Waiting for the next coach question.';
-      } else if (state.turnHelpPending) {
-        ui.turnHelp.textContent = 'Fetching help...';
-      } else if (!hasAnswer && state.turnHelpHintVisible) {
-        ui.turnHelp.textContent = 'Need a nudge? Use Request Help for a rubric-based tip.';
-      } else if (!hasAnswer) {
-        ui.turnHelp.textContent = 'Start answering to enable Submit. Help is available as soon as the coach finishes speaking.';
-      } else {
-        ui.turnHelp.textContent = 'Ready when you are. Request help or submit your answer.';
-      }
-      if (state.turnAwaitingAnswer && !state.turnSpeaking && !hasAnswer) {
-        scheduleTurnHelpHint();
-      } else {
-        resetTurnHelpHint();
-      }
+    if (hasAnswer && state.turnHelpHintVisible) {
+      state.turnHelpHintVisible = false;
+    }
+    if (state.turnAwaitingAnswer && !state.turnSpeaking && !hasAnswer) {
+      scheduleTurnHelpHint();
+    } else {
+      resetTurnHelpHint();
     }
 
     if (state.turnAwaitingAnswer && !state.turnSpeaking && !state.turnHelpPending) {
@@ -2322,7 +2306,6 @@ function buildControlsPanel(state, ui, config) {
     state.liveAudioSeen = false;
     state.lastSpokenCoachText = '';
     state.lastCoachQuestion = '';
-    state.setupAutoCollapsed = false;
     state.heroAutoCollapsed = false;
     clearGeminiReconnect(state);
     stopAudioBuffer(state);
@@ -2753,10 +2736,6 @@ function buildControlsPanel(state, ui, config) {
     state.captionDraftText = '';
     state.turnReadyToSubmit = false;
     state.scoreError = false;
-    if (ui.setSetupCollapsed && !state.setupAutoCollapsed) {
-      ui.setSetupCollapsed(true);
-      state.setupAutoCollapsed = true;
-    }
     setPrimaryActionMode({ active: true, disabled: false });
     updateTurnSubmitUI();
 
@@ -2810,51 +2789,21 @@ function buildControlsPanel(state, ui, config) {
   actionsRow.appendChild(helpTurnButton);
   actionsRow.appendChild(submitTurnButton);
 
-  const turnHelp = document.createElement('div');
-  turnHelp.className = 'ui-turn-help ui-state-text alert alert-info';
-  turnHelp.setAttribute('data-testid', 'turn-help');
-  turnHelp.setAttribute('aria-live', 'polite');
-  turnHelp.setAttribute('role', 'status');
-  turnHelp.textContent = 'Waiting for the coach.';
-
-  const turnRubric = document.createElement('div');
-  turnRubric.className = 'ui-turn-rubric';
-  turnRubric.setAttribute('data-testid', 'turn-rubric');
-  turnRubric.hidden = true;
-
-  const turnRubricTitle = document.createElement('div');
-  turnRubricTitle.className = 'ui-turn-rubric__title';
-  turnRubricTitle.textContent = 'Answer rubric';
-
-  const turnRubricList = document.createElement('ul');
-  turnRubricList.className = 'ui-turn-rubric__list';
-
-  turnRubric.appendChild(turnRubricTitle);
-  turnRubric.appendChild(turnRubricList);
-
   const exportGroup = document.createElement('div');
   exportGroup.className = 'ui-controls__export';
   exportGroup.appendChild(exportLabel);
   exportGroup.appendChild(exportPdfTop);
   exportGroup.appendChild(exportTxtTop);
 
-  const toolsRow = document.createElement('div');
-  toolsRow.className = 'ui-controls__row ui-controls__row--tools';
-  toolsRow.appendChild(sessionToolsButton);
-
   const resultsRow = document.createElement('div');
   resultsRow.className = 'ui-controls__row ui-controls__row--results';
   resultsRow.appendChild(restartMainButton);
   resultsRow.appendChild(exportGroup);
-  resultsRow.appendChild(candidateSetupButton);
 
   const content = document.createElement('div');
   content.className = 'layout-stack';
   content.appendChild(statusBlock);
   content.appendChild(actionsRow);
-  content.appendChild(turnHelp);
-  content.appendChild(turnRubric);
-  content.appendChild(toolsRow);
   content.appendChild(resultsRow);
   content.appendChild(restartMainHelp);
 
@@ -2866,16 +2815,13 @@ function buildControlsPanel(state, ui, config) {
   ui.helpTurnButton = helpTurnButton;
   ui.submitTurnButton = submitTurnButton;
   ui.actionRow = actionsRow;
-  ui.turnHelp = turnHelp;
   ui.turnRubric = turnRubric;
   ui.turnRubricList = turnRubricList;
-  ui.sessionToolsToggle = sessionToolsButton;
+  ui.rubricToggle = rubricToggle;
   ui.restartButtonMain = restartMainButton;
   ui.restartMainHelp = restartMainHelp;
   ui.exportPdfTop = exportPdfTop;
   ui.exportTxtTop = exportTxtTop;
-  ui.candidateSetupButton = candidateSetupButton;
-  ui.toolsRow = toolsRow;
   ui.resultsRow = resultsRow;
   ui.setPrimaryActionMode = setPrimaryActionMode;
   ui.setStatusDetail = setStatusDetail;
@@ -2885,6 +2831,25 @@ function buildControlsPanel(state, ui, config) {
   ui.applyVoiceOutputMode = applyVoiceOutputMode;
   ui.resetSessionState = resetSessionState;
   ui.updateTurnSubmitUI = updateTurnSubmitUI;
+  rubricToggle.addEventListener('click', () => {
+    setTurnRubricVisible(!state.turnRubricVisible);
+  });
+  document.addEventListener('click', (event) => {
+    if (!state.turnRubricVisible) {
+      return;
+    }
+    if (!rubricWrapper.contains(event.target)) {
+      setTurnRubricVisible(false);
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    if (!state.turnRubricVisible) {
+      return;
+    }
+    if (event.key === 'Escape') {
+      setTurnRubricVisible(false);
+    }
+  });
   updateTurnSubmitUI();
   ui.updateSetupCtas?.();
 
@@ -3524,9 +3489,14 @@ export function buildVoiceLayout() {
     liveCoachSpeakTimer: null,
     lastSpokenCoachText: '',
     lastCoachQuestion: '',
-    setupAutoCollapsed: false,
     heroAutoCollapsed: false,
     resultsTranscriptVisible: false,
+    hideSetup: false,
+    hideQuestions: false,
+    hideInsights: false,
+    hideTranscript: false,
+    hideScore: false,
+    sessionToolsOpen: false,
     questionHelpExamples: [],
     // Learning Mode state (teach-first coaching)
     showExampleFirst: getLearningModePreference(),
@@ -3900,11 +3870,6 @@ export function buildVoiceLayout() {
   const controlsPanel = buildControlsPanel(state, ui, config);
   ui.controlsPanel = controlsPanel;
 
-  const leftColumn = document.createElement('div');
-  leftColumn.className = 'layout-stack';
-  leftColumn.appendChild(setupPanel);
-  ui.leftColumn = leftColumn;
-
   const rightColumn = document.createElement('div');
   rightColumn.className = 'layout-stack';
   const questionRow = document.createElement('div');
@@ -3915,6 +3880,7 @@ export function buildVoiceLayout() {
   rightColumn.appendChild(questionRow);
   rightColumn.appendChild(buildTranscriptPanel(ui));
   rightColumn.appendChild(buildScorePanel(ui));
+  rightColumn.appendChild(setupPanel);
   ui.rightColumn = rightColumn;
   ui.reorderTranscript = (showTranscript) => {
     if (!ui.rightColumn || !ui.transcriptPanel || !ui.questionRow || !ui.scorePanel) {
@@ -3938,8 +3904,7 @@ export function buildVoiceLayout() {
   };
 
   const layout = document.createElement('main');
-  layout.className = 'layout-split';
-  layout.appendChild(leftColumn);
+  layout.className = 'layout-stack';
   layout.appendChild(rightColumn);
   ui.layout = layout;
 
@@ -3969,62 +3934,111 @@ export function buildVoiceLayout() {
       return;
     }
     const items = [];
-    if (ui.heroBody?.hidden && ui.setHeroCollapsed) {
+    const heroCollapsed = typeof ui.isHeroCollapsed === 'function'
+      ? ui.isHeroCollapsed()
+      : Boolean(ui.heroBody?.hidden);
+    if (ui.setHeroCollapsed) {
       items.push({
-        label: 'Guide (expand)',
+        label: heroCollapsed ? 'Show Guide' : 'Hide Guide',
         onSelect: () => {
-          ui.setHeroCollapsed(false);
-          scrollToElement(ui.heroBody);
+          ui.setHeroCollapsed(!heroCollapsed);
+          if (heroCollapsed) {
+            scrollToElement(ui.heroBody);
+          }
         }
       });
     }
 
-    const setupHidden = Boolean(ui.setupBody?.hidden);
-    const setupBelow = isElementBelowFold(ui.setupPanel);
-    if ((setupHidden || setupBelow) && ui.setSetupCollapsed) {
+    if (ui.setupPanel) {
+      const setupHidden = Boolean(ui.setupPanel.hidden);
       items.push({
-        label: 'Candidate Setup',
+        label: setupHidden ? 'Show Candidate Setup' : 'Hide Candidate Setup',
         onSelect: () => {
-          ui.setSetupCollapsed(false);
-          scrollToElement(ui.setupPanel);
+          state.hideSetup = !setupHidden;
+          ui.updateSessionToolsState?.();
+          if (setupHidden) {
+            scrollToElement(ui.setupPanel);
+          }
         }
       });
     }
 
-    if (ui.questionRow && !ui.questionRow.hidden && isElementBelowFold(ui.questionRow)) {
+    const hasQuestions = state.questions.length > 0;
+    const hasScore = Boolean(state.score);
+    const inResults = (hasScore || state.scorePending) && !state.sessionActive;
+    if (hasQuestions && !inResults) {
+      const questionsHidden = Boolean(ui.questionsPanel?.hidden);
       items.push({
-        label: 'Questions',
-        onSelect: () => scrollToElement(ui.questionRow)
+        label: questionsHidden ? 'Show Questions' : 'Hide Questions',
+        onSelect: () => {
+          state.hideQuestions = !questionsHidden;
+          ui.updateSessionToolsState?.();
+          if (questionsHidden) {
+            scrollToElement(ui.questionRow);
+          }
+        }
       });
-    }
 
-    if (ui.insightsPanel && !ui.insightsPanel.hidden && isElementBelowFold(ui.insightsPanel)) {
+      const insightsHidden = Boolean(ui.insightsPanel?.hidden);
       items.push({
-        label: 'Insights',
-        onSelect: () => scrollToElement(ui.insightsPanel)
+        label: insightsHidden ? 'Show Insights' : 'Hide Insights',
+        onSelect: () => {
+          state.hideInsights = !insightsHidden;
+          ui.updateSessionToolsState?.();
+          if (insightsHidden) {
+            scrollToElement(ui.insightsPanel);
+          }
+        }
       });
     }
 
     const hasTranscript = Array.isArray(state.transcript) && state.transcript.length > 0;
-    const transcriptHidden = Boolean(ui.transcriptPanel?.hidden);
-    const transcriptBelow = isElementBelowFold(ui.transcriptPanel);
-    if ((hasTranscript && transcriptHidden) || transcriptBelow) {
+    const transcriptEligible = state.sessionActive || (!inResults && hasTranscript) || hasScore;
+    if (transcriptEligible) {
+      const transcriptHidden = Boolean(ui.transcriptPanel?.hidden);
       items.push({
-        label: 'Transcript',
+        label: transcriptHidden ? 'Show Transcript' : 'Hide Transcript',
         onSelect: () => {
           if (transcriptHidden) {
-            state.resultsTranscriptVisible = true;
-            ui.updateSessionToolsState?.();
+            state.hideTranscript = false;
+            if (inResults) {
+              state.resultsTranscriptVisible = true;
+            }
+          } else {
+            state.hideTranscript = true;
+            if (inResults) {
+              state.resultsTranscriptVisible = false;
+            }
           }
-          scrollToElement(ui.transcriptPanel);
+          ui.updateSessionToolsState?.();
+          if (transcriptHidden) {
+            scrollToElement(ui.transcriptPanel);
+          }
         }
       });
     }
 
-    if (ui.scorePanel && !ui.scorePanel.hidden && isElementBelowFold(ui.scorePanel)) {
+    if (hasScore || state.scorePending) {
+      const scoreHidden = Boolean(ui.scorePanel?.hidden);
       items.push({
-        label: 'Session Insights',
-        onSelect: () => scrollToElement(ui.scorePanel)
+        label: scoreHidden ? 'Show Session Insights' : 'Hide Session Insights',
+        onSelect: () => {
+          state.hideScore = !scoreHidden;
+          ui.updateSessionToolsState?.();
+          if (scoreHidden) {
+            scrollToElement(ui.scorePanel);
+          }
+        }
+      });
+    }
+
+    if (ui.setSessionToolsOpen) {
+      const extrasOpen = typeof ui.isSessionToolsOpen === 'function' && ui.isSessionToolsOpen();
+      items.push({
+        label: extrasOpen ? 'Hide Extras' : 'Show Extras',
+        onSelect: () => {
+          ui.setSessionToolsOpen(!extrasOpen);
+        }
       });
     }
 
@@ -4144,10 +4158,14 @@ export function buildVoiceLayout() {
       state.sessionName = summary.session_name || '';
       state.askedQuestionIndex = summary.asked_question_index ?? null;
       state.sessionStarted = state.transcript.length > 0 || hasScore;
-      state.setupAutoCollapsed = false;
       state.sessionActive = false;
       state.sessionId = null;
       state.liveMode = null;
+      state.hideSetup = false;
+      state.hideQuestions = false;
+      state.hideInsights = false;
+      state.hideTranscript = false;
+      state.hideScore = false;
       state.focusAreas = [];
       state.resumeExcerpt = '';
       state.jobExcerpt = '';
@@ -4192,21 +4210,24 @@ export function buildVoiceLayout() {
     }
   }
 
+  let sessionToolsOpen = false;
   function setDrawerOpen(isOpen) {
-    const hidden = !isOpen;
+    sessionToolsOpen = Boolean(isOpen);
+    state.sessionToolsOpen = sessionToolsOpen;
+    const hidden = !sessionToolsOpen;
     drawer.setAttribute('aria-hidden', String(hidden));
     backdrop.setAttribute('aria-hidden', String(hidden));
-    drawer.classList.toggle('ui-drawer--open', isOpen);
-    backdrop.classList.toggle('ui-drawer__backdrop--open', isOpen);
-    if (ui.sessionToolsToggle) {
-      ui.sessionToolsToggle.setAttribute('aria-expanded', String(isOpen));
-    }
-    if (isOpen) {
+    drawer.classList.toggle('ui-drawer--open', sessionToolsOpen);
+    backdrop.classList.toggle('ui-drawer__backdrop--open', sessionToolsOpen);
+    if (sessionToolsOpen) {
       void refreshSessionList();
     }
+    ui.updateOverflowMenu?.();
   }
 
-  ui.sessionToolsToggle?.addEventListener('click', () => setDrawerOpen(true));
+  ui.setSessionToolsOpen = setDrawerOpen;
+  ui.isSessionToolsOpen = () => sessionToolsOpen;
+
   ui.sessionToolsClose?.addEventListener('click', () => setDrawerOpen(false));
   ui.sessionToolsBackdrop?.addEventListener('click', () => setDrawerOpen(false));
 
@@ -4216,8 +4237,8 @@ export function buildVoiceLayout() {
     const hasTranscript = state.transcript.length > 0;
     const canRestart = hasInterview && state.sessionStarted && !state.sessionActive;
     const hasScore = Boolean(state.score);
-    const showScore = hasScore || state.scorePending;
-    const inResults = showScore && !state.sessionActive;
+    const showScore = (hasScore || state.scorePending) && !state.hideScore;
+    const inResults = (hasScore || state.scorePending) && !state.sessionActive;
     const showResultsActions = hasScore && !state.sessionActive;
     const showActions = (state.sessionActive || hasQuestions) && !inResults;
     const showActiveControls = state.sessionActive;
@@ -4254,9 +4275,6 @@ export function buildVoiceLayout() {
     if (ui.exportTxtTop) {
       ui.exportTxtTop.disabled = !(hasInterview && hasTranscript);
     }
-    if (ui.candidateSetupButton) {
-      ui.candidateSetupButton.disabled = !hasInterview;
-    }
     if (ui.restartButton) {
       ui.restartButton.disabled = !canRestart;
     }
@@ -4269,31 +4287,11 @@ export function buildVoiceLayout() {
     if (ui.exportTranscript) {
       updateButtonLabel(ui.exportTranscript, exportFormat === 'txt' ? 'Export TXT' : 'Export PDF');
     }
-    if (ui.setupCollapse) {
-      ui.setupCollapse.disabled = !hasInterview;
-      ui.setupCollapse.hidden = !hasInterview;
-      if (!hasInterview && ui.setSetupCollapsed) {
-        ui.setSetupCollapsed(false);
-      }
-    }
     ui.updateSetupCtas?.();
 
-    if (!hasInterview) {
-      state.setupAutoCollapsed = false;
-      if (ui.setSetupCollapsed) {
-        ui.setSetupCollapsed(false);
-      }
-    }
-    if (hasQuestions && ui.setSetupCollapsed && !state.setupAutoCollapsed) {
-      ui.setSetupCollapsed(true);
-      state.setupAutoCollapsed = true;
-    }
+    const showSetup = !state.hideSetup;
     if (ui.setupPanel) {
-      const setupHidden = Boolean(hasQuestions && ui.setupBody?.hidden);
-      ui.setupPanel.hidden = setupHidden;
-      if (ui.leftColumn) {
-        ui.leftColumn.hidden = setupHidden;
-      }
+      ui.setupPanel.hidden = !showSetup;
     }
 
     if (!hasQuestions) {
@@ -4334,20 +4332,25 @@ export function buildVoiceLayout() {
       }
     }
 
-    const showQuestions = hasQuestions && !inResults;
-    const showTranscript = state.sessionActive
+    const showQuestionsPanel = hasQuestions && !inResults && !state.hideQuestions;
+    const showInsightsPanel = hasQuestions && !inResults && !state.hideInsights;
+    const showQuestionRow = showQuestionsPanel || showInsightsPanel;
+    const transcriptEligible = state.sessionActive
       || (!inResults && hasTranscript)
       || (hasScore && state.resultsTranscriptVisible);
-    const showRightColumn = showQuestions || showTranscript || showScore;
+    const showTranscript = transcriptEligible && !state.hideTranscript;
+    const showRightColumn = showQuestionRow || showTranscript || showScore || showSetup;
 
     if (ui.questionRow) {
-      ui.questionRow.hidden = !showQuestions;
+      ui.questionRow.hidden = !showQuestionRow;
+      const singleColumn = showQuestionRow && !(showQuestionsPanel && showInsightsPanel);
+      ui.questionRow.classList.toggle('layout-duo--single', singleColumn);
     }
     if (ui.questionsPanel) {
-      ui.questionsPanel.hidden = !showQuestions;
+      ui.questionsPanel.hidden = !showQuestionsPanel;
     }
     if (ui.insightsPanel) {
-      ui.insightsPanel.hidden = !showQuestions;
+      ui.insightsPanel.hidden = !showInsightsPanel;
     }
     if (ui.transcriptPanel) {
       ui.transcriptPanel.hidden = !showTranscript;
@@ -4358,11 +4361,6 @@ export function buildVoiceLayout() {
     }
     if (ui.rightColumn) {
       ui.rightColumn.hidden = !showRightColumn;
-    }
-    if (ui.layout) {
-      const leftVisible = ui.leftColumn ? !ui.leftColumn.hidden : true;
-      const rightVisible = showRightColumn;
-      ui.layout.classList.toggle('layout-split--single', !(leftVisible && rightVisible));
     }
     if (ui.scoreProgress) {
       const scoreProgressActive = state.scorePending;
@@ -4398,13 +4396,6 @@ export function buildVoiceLayout() {
     if (ui.restartMainHelp) {
       ui.restartMainHelp.hidden = !showResultsActions;
     }
-    if (ui.sessionToolsToggle && ui.toolsRow && ui.resultsRow) {
-      const targetRow = showResultsActions ? ui.resultsRow : ui.toolsRow;
-      if (ui.sessionToolsToggle.parentElement !== targetRow) {
-        targetRow.insertBefore(ui.sessionToolsToggle, targetRow.firstChild);
-      }
-    }
-
     if (ui.exportHelp) {
       ui.exportHelp.textContent = hasTranscript
         ? `Downloads the study guide ${exportFormat === 'txt' ? 'text file' : 'PDF'}.`
