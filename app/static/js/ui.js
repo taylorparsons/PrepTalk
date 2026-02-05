@@ -3903,6 +3903,7 @@ export function buildVoiceLayout() {
   const leftColumn = document.createElement('div');
   leftColumn.className = 'layout-stack';
   leftColumn.appendChild(setupPanel);
+  ui.leftColumn = leftColumn;
 
   const rightColumn = document.createElement('div');
   rightColumn.className = 'layout-stack';
@@ -4290,6 +4291,9 @@ export function buildVoiceLayout() {
     if (ui.setupPanel) {
       const setupHidden = Boolean(hasQuestions && ui.setupBody?.hidden);
       ui.setupPanel.hidden = setupHidden;
+      if (ui.leftColumn) {
+        ui.leftColumn.hidden = setupHidden;
+      }
     }
 
     if (!hasQuestions) {
@@ -4356,7 +4360,9 @@ export function buildVoiceLayout() {
       ui.rightColumn.hidden = !showRightColumn;
     }
     if (ui.layout) {
-      ui.layout.classList.toggle('layout-split--single', !showRightColumn);
+      const leftVisible = ui.leftColumn ? !ui.leftColumn.hidden : true;
+      const rightVisible = showRightColumn;
+      ui.layout.classList.toggle('layout-split--single', !(leftVisible && rightVisible));
     }
     if (ui.scoreProgress) {
       const scoreProgressActive = state.scorePending;
