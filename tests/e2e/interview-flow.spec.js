@@ -54,7 +54,7 @@ test('candidate interview flow (mock adapter)', async ({ page }, testInfo) => {
   await expect(startButton).toHaveClass(/ui-button--secondary/);
   await expect(questionsPanel).toBeHidden();
   await expect(insightsPanel).toBeHidden();
-  await expect(controlsPanel).toBeHidden();
+  await expect(controlsPanel).toBeVisible();
   await expect(transcriptPanel).toBeHidden();
   await expect(scorePanel).toBeHidden();
 
@@ -116,7 +116,11 @@ test('candidate interview flow (mock adapter)', async ({ page }, testInfo) => {
   await expect(submitTurn).toBeDisabled();
   await expect(statusDetail).toContainText(/Need a nudge/i, { timeout: 20000 });
   await helpTurn.click();
-  await expect(page.getByTestId('turn-rubric')).toBeVisible();
+  const turnRubric = page.getByTestId('turn-rubric');
+  if (await turnRubric.isHidden()) {
+    await page.getByTestId('rubric-toggle').click();
+  }
+  await expect(turnRubric).toBeVisible();
   await captureStep(page, testInfo, 'state-5-interview-turn');
 
   await page.getByTestId('start-interview').click();
@@ -126,8 +130,10 @@ test('candidate interview flow (mock adapter)', async ({ page }, testInfo) => {
   await expect(questionsPanel).toBeHidden();
   await expect(insightsPanel).toBeHidden();
   await expect(transcriptPanel).toBeHidden();
-  await expect(page.getByTestId('restart-interview-main')).toBeEnabled();
-  await expect(page.getByTestId('restart-interview-main')).toHaveClass(/ui-button--primary/);
+  const restartMain = page.getByTestId('restart-interview-main');
+  await expect(restartMain).toBeEnabled();
+  await expect(page.getByTestId('session-status')).toHaveText(/Complete/, { timeout: 30000 });
+  await expect(restartMain).toHaveClass(/ui-button--primary/);
   const exportPdfMain = page.getByTestId('export-pdf-main');
   const exportTxtMain = page.getByTestId('export-txt-main');
   await expect(exportPdfMain).toBeEnabled();

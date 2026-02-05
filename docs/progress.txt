@@ -2646,3 +2646,30 @@ NOTES
 - Branch: main (fast-forwarded).
 - Merge: fast-forward to 793b32d (latest local main).
 - PRD/spec reconciled to shipped menu + interrupt behavior with CR hashes and evidence paths.
+
+---
+
+Session: 2026-02-05 13:53
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, verification-before-completion
+Feature: 20260205-session-layout-target
+Input: CR-20260205-1353
+Decisions: (none)
+Spec: docs/specs/20260205-session-layout-target/spec.md
+Tasks: docs/specs/20260205-session-layout-target/tasks.md
+Goal: Align E2E expectations with the always-visible controls panel and re-run the full test suite.
+
+DONE
+- [2026-02-05 14:02] T-009: Align E2E expectations with always-visible controls panel. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `./run.sh test` -> 22 files, 75 tests passed (warnings about `--localstorage-file`).
+- Commands run: `./.venv/bin/python -m pytest` -> 62 passed (11 warnings: fpdf `ln` deprecations, `datetime.utcnow()` deprecation).
+- Commands run: `npm run test:e2e` -> 19 passed, 5 skipped (live tests). Prototype C 404 warnings in console output.

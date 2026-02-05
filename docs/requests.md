@@ -1185,3 +1185,13 @@ I want to merge it as is to main
 Notes:
 - Provide a brief summary of recent work and confirm current branch.
 - Ensure RALPH artifacts (requests/decisions/specs/tasks/progress/PRD) are consistent with main.
+
+## CR-20260205-1353
+Date: 2026-02-05 13:53
+Source: chat
+
+Request (verbatim):
+1
+
+Notes:
+- Update the failing E2E expectation so the controls panel visibility matches the current UI.
