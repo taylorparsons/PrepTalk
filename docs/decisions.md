@@ -1052,3 +1052,22 @@ Alternatives considered:
 Acceptance / test:
 - Feature spec includes ASCII frames for each state/sub-state, Mermaid diagrams for logic and UI output, and a status/substatus/rubric mapping table.
 - Spec defines menu visibility rules and responsive breakpoints.
+
+## D-20260205-1330
+Date: 2026-02-05 13:30
+Inputs: CR-20260205-1327, CR-20260205-1328
+PRD: Next / backlog
+
+Decision:
+Post-merge, update the session layout spec and PRD to reflect the shipped behavior: the overflow menu provides explicit show/hide toggles for active panels (not only below-fold gating), and Candidate Setup visibility is user-toggled rather than auto-collapsed by default.
+
+Rationale:
+The user requested merging the current branch “as is” and asked that RALPH artifacts be kept accurate; the spec must reflect the actual merged behavior.
+
+Alternatives considered:
+- Revert behavior to below-fold-only menu visibility (rejected: conflicts with the merged state).
+- Leave spec as-is and mark it done (rejected: would misrepresent shipped behavior).
+
+Acceptance / test:
+- Spec and PRD describe always-available panel visibility toggles in the overflow menu.
+- PRD backlog is reconciled to match shipped behavior with evidence paths.
