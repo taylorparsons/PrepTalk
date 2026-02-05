@@ -55,9 +55,9 @@ describe('scoring UI', () => {
     state.sessionActive = true;
     state.transcript = [{ role: 'candidate', text: 'Hi', timestamp: '' }];
 
-    const stopButton = layout.querySelector('[data-testid="stop-interview"]');
-    stopButton.disabled = false;
-    stopButton.click();
+    const startButton = layout.querySelector('[data-testid="start-interview"]');
+    startButton.disabled = false;
+    startButton.click();
 
     const scoreValue = layout.querySelector('[data-testid="score-value"]');
     const scoreSummary = layout.querySelector('.ui-score__summary');

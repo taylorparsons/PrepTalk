@@ -2464,3 +2464,147 @@ NOTES
 - Commands run: `rg`, `date`, `./run.sh test` -> 65/65 passed (Vitest). Warnings about `--localstorage-file` path.
 - Decisions: D-20260205-2138 (turn-mode interrupt cancels speech without auto-skip).
 - Commit: 22666b4 (T-001/T-002: Add turn-mode interrupt for coach speech).
+
+---
+
+Session: 2026-02-05 10:20
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260205-session-layout-target
+Input: CR-20260205-1020
+Decisions: D-20260205-1020
+Spec: docs/specs/20260205-session-layout-target/spec.md
+Tasks: docs/specs/20260205-session-layout-target/tasks.md
+Goal: Capture the target session layout, state logic, and menu overflow rules in a traceable spec.
+
+DONE
+- [2026-02-05 10:20] Capture CR-20260205-1020 and decision D-20260205-1020. (Skills: ralph)
+- [2026-02-05 10:20] Create spec with ASCII frames, Mermaid diagrams, and status/substatus/rubric rules. (Skills: ralph, daisy)
+- [2026-02-05 10:20] Create tasks list and update PRD backlog with the new spec item. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- T-001: Review spec with stakeholder and confirm labels/menu rules. (Skills: ralph, daisy)
+- T-002: Update UI documentation to reference this layout/state spec. (Skills: ralph)
+- T-003: Translate spec into UI implementation tasks and test plan. (Skills: ralph, daisy)
+
+NOTES
+- Commands run: date '+%Y-%m-%d %H:%M', cat/rg/sed, file writes for spec/tasks/PRD updates.
+- Decisions: D-20260205-1020
+- Risks / open questions: Confirm whether the menu should appear in all active states regardless of overflow, or only when content is below the fold.
+
+---
+
+Session: 2026-02-05 10:29
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260205-session-layout-target
+Input: CR-20260205-1029
+Decisions: (none)
+Spec: docs/specs/20260205-session-layout-target/spec.md
+Tasks: docs/specs/20260205-session-layout-target/tasks.md
+Goal: Anchor the Top Status/CTA panel under the header across all states in the target layout spec.
+
+DONE
+- [2026-02-05 10:29] Capture CR-20260205-1029 and update spec + PRD backlog to include anchored top panel. (Skills: ralph, daisy)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- T-001: Review spec with stakeholder and confirm labels/menu rules. (Skills: ralph, daisy)
+- T-002: Update UI documentation to reference this layout/state spec. (Skills: ralph)
+- T-003: Translate spec into UI implementation tasks and test plan. (Skills: ralph, daisy)
+
+NOTES
+- Commands run: date '+%Y-%m-%d %H:%M', spec/PRD updates.
+- Risks / open questions: Confirm whether “anchored” implies sticky on scroll or just fixed placement below header.
+
+---
+
+Session: 2026-02-05 10:33
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260205-session-layout-target
+Input: CR-20260205-1033
+Decisions: (none)
+Spec: docs/specs/20260205-session-layout-target/spec.md
+Tasks: docs/specs/20260205-session-layout-target/tasks.md
+Goal: Remove the anchored-top directive from the session layout spec and PRD backlog.
+
+DONE
+- [2026-02-05 10:33] Remove anchored-top requirement from spec and PRD backlog per request. (Skills: ralph, daisy)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- T-001: Review spec with stakeholder and confirm labels/menu rules. (Skills: ralph, daisy)
+- T-002: Update UI documentation to reference this layout/state spec. (Skills: ralph)
+- T-003: Translate spec into UI implementation tasks and test plan. (Skills: ralph, daisy)
+
+NOTES
+- Commands run: date '+%Y-%m-%d %H:%M', spec/PRD edits.
+
+---
+
+Session: 2026-02-05 10:49
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260205-session-layout-target
+Input: CR-20260205-1049
+Decisions: (none)
+Spec: docs/specs/20260205-session-layout-target/spec.md
+Tasks: docs/specs/20260205-session-layout-target/tasks.md
+Goal: Clarify non-changes for the session layout update (Extras unchanged).
+
+DONE
+- [2026-02-05 10:49] Add Non-changes/Out-of-scope section noting Extras panel unchanged. (Skills: ralph, daisy)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- T-001: Review spec with stakeholder and confirm labels/menu rules. (Skills: ralph, daisy)
+- T-002: Update UI documentation to reference this layout/state spec. (Skills: ralph)
+- T-003: Translate spec into UI implementation tasks and test plan. (Skills: ralph, daisy)
+
+NOTES
+- Commands run: date '+%Y-%m-%d %H:%M', spec update.
+
+---
+
+Session: 2026-02-05 10:58
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, verification-before-completion, daisy
+Feature: 20260205-session-layout-target
+Input: CR-20260205-1058, CR-20260205-1144
+Decisions: D-20260205-2138
+Spec: docs/specs/20260205-session-layout-target/spec.md
+Tasks: docs/specs/20260205-session-layout-target/tasks.md
+Goal: Implement the session layout + overflow menu changes per the spec with verification.
+
+DONE
+- [2026-02-05 11:47] T-001: Implement top status/CTA panel layout and state messaging. (Skills: ralph, daisy)
+- [2026-02-05 11:47] T-002: Implement responsive overflow menu for off-screen active panels + guide/setup toggles. (Skills: ralph, daisy)
+- [2026-02-05 11:47] T-003: Add results-state CTAs (Export PDF/TXT + Candidate Setup) and transcript toggle for State F. (Skills: ralph, daisy)
+- [2026-02-05 11:47] T-004: Update UI tests for new controls/menu behavior. (Skills: ralph)
+- [2026-02-05 11:47] T-005: Run verification suites per verification-before-completion. (Skills: ralph, verification-before-completion)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: date '+%Y-%m-%d %H:%M'; npm run test -> 22 files, 75 tests passed (localstorage-file warnings).
+- Branch: work already on feature/session-layout-menu per CR-20260205-1144.
+- Tests not run: Playwright e2e (mock/live).

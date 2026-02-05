@@ -155,7 +155,7 @@ test('candidate interview flow (gemini turn voice)', async ({ page }, testInfo) 
     { timeout: 60000 }
   ).toBeGreaterThan(0);
 
-  await page.getByTestId('stop-interview').click();
+  await page.getByTestId('start-interview').click();
   await expect(scorePanel).toBeVisible();
   await expect(controlsPanel).toBeVisible();
   await expect(controlsPanel).toHaveClass(/ui-controls--results/);
