@@ -1195,3 +1195,13 @@ Request (verbatim):
 
 Notes:
 - Update the failing E2E expectation so the controls panel visibility matches the current UI.
+
+## CR-20260205-1405
+Date: 2026-02-05 14:05
+Source: chat
+
+Request (verbatim):
+remove the tests for /prototype-c
+
+Notes:
+- Delete the prototype-c E2E debug spec so it no longer runs in Playwright.
