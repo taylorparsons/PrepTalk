@@ -43,6 +43,18 @@ describe('voice layout', () => {
     expect(resizer.querySelector('[data-testid="question-list"]')).toBeTruthy();
   });
 
+  it('makes the question insights panel vertically resizable', () => {
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const resizer = layout.querySelector('[data-testid="insights-resize"]');
+    expect(resizer).toBeTruthy();
+    expect(resizer.classList.contains('ui-insights__body')).toBe(true);
+    expect(resizer.classList.contains('resize-y')).toBe(true);
+    expect(resizer.classList.contains('overflow-auto')).toBe(true);
+    expect(resizer.querySelector('[data-testid="insights-question"]')).toBeTruthy();
+  });
+
   it('keeps the candidate setup panel scrollable when tall', () => {
     window.__E2E__ = true;
     const layout = buildVoiceLayout();
