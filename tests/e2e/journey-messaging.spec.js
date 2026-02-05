@@ -11,14 +11,14 @@ test.describe('Journey Messaging Validation (Coach, Not Judge)', () => {
     // Get full page text for validation
     const pageText = await page.evaluate(() => document.body.textContent);
 
-    // Validate NEW coach-first terminology is present
+    // Validate current coach-first terminology is present
     const expectedTerms = [
       'Your Interview Practice Coach',  // Hero eyebrow
       'Build confidence',               // Hero subtitle
-      'personalized practice',          // Hero subtitle
-      'Prepare Practice',               // Generate button
+      'personalized practice topics',   // Hero subtitle
+      'Generate Questions',             // Generate button
       'Share your background',          // Setup panel subtitle
-      'Practice Topics',                // Questions panel title
+      'Interview Questions',            // Questions panel title
       'Begin Practice',                 // Start button
       'coaching tips',                  // Insights panel
       'coaching feedback'               // Score panel
@@ -46,18 +46,18 @@ test.describe('Journey Messaging Validation (Coach, Not Judge)', () => {
     expect(complianceRate).toBeGreaterThanOrEqual(0.7);
   });
 
-  test('validates old terminology has been removed', async ({ page }) => {
+  test('validates deprecated terminology has been removed', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
     const pageText = await page.evaluate(() => document.body.textContent);
 
-    // Old terminology that should NOT appear in visible text
+    // Deprecated terminology from prior copy experiments
     const oldTerms = [
-      'Generate Questions',  // Now "Prepare Practice"
-      'Start Interview',     // Now "Begin Practice"
-      'Interview Questions', // Now "Practice Topics"
-      'Restart interview'    // Now "Restart Practice"
+      'Prepare Practice',
+      'Practice Topics',
+      'Start Interview',
+      'Restart interview'
     ];
 
     const foundOldTerms = [];
@@ -98,13 +98,13 @@ test.describe('Journey Messaging Validation (Coach, Not Judge)', () => {
     const hasShareBackground = setupText.includes('Share') || setupText.includes('background');
     messagingChecks.push({ name: 'Setup sharing language', pass: hasShareBackground });
 
-    // Check 3: Questions panel uses "Practice Topics"
+    // Check 3: Questions panel uses "Interview Questions"
     const questionsText = await page.evaluate(() => {
       const panel = document.querySelector('[data-testid="questions-panel"]');
       return panel ? panel.textContent : '';
     });
-    const hasPracticeTopics = questionsText.includes('Practice') || questionsText.includes('Topics');
-    messagingChecks.push({ name: 'Practice Topics title', pass: hasPracticeTopics });
+    const hasInterviewQuestions = questionsText.includes('Interview') || questionsText.includes('Questions');
+    messagingChecks.push({ name: 'Interview Questions title', pass: hasInterviewQuestions });
 
     // Check 4: Score panel uses coaching language
     const scoreText = await page.evaluate(() => {
