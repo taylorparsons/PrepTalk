@@ -2299,3 +2299,31 @@ NOTES
 - Commands run: `./.venv/bin/python -m pytest tests/test_pdf_service.py` -> 3 passed (10 warnings).
 - Risks / open questions: Run Playwright export checks locally (bind error in this environment).
 - Commit: db7c077 (T-003: Fix PDF export unicode regression and verify exports).
+
+---
+
+Session: 2026-02-04 20:40
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, playwright
+Feature: 20260204-e2e-screenshots
+Input: CR-20260204-2034
+Decisions: (none)
+Spec: docs/specs/20260204-e2e-screenshots/spec.md
+Tasks: docs/specs/20260204-e2e-screenshots/tasks.md
+Goal: Run Playwright on localhost:8000 and capture HTML reports.
+
+DONE
+- [2026-02-04 20:40] Re-ran mock Playwright suite on localhost:8000 with HTML report. (Skills: ralph, playwright)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- Re-run live Playwright suite on localhost:8000 once GEMINI API access is available. (Skills: ralph, playwright)
+
+NOTES
+- Commands run: `E2E_HOST=127.0.0.1 E2E_PORT=8000 PLAYWRIGHT_HTML_REPORT=playwright-report-mock npx playwright test --reporter=html --output test-results-mock` -> 3 passed, 5 skipped; report generated.
+- Commands run: `set -a; source .env; set +a; E2E_LIVE=1 E2E_HOST=127.0.0.1 E2E_PORT=8000 PLAYWRIGHT_HTML_REPORT=playwright-report-live npx playwright test --reporter=html --output test-results-live` -> failed (start-interview never enabled in live turn flow).
+- Notes: Adjusted results-state UI to hide transcript and make restart primary; increased mock flow timeout for stability.
+- Risks / open questions: Live E2E blocked until Gemini credentials/network allow question generation.

@@ -32,6 +32,7 @@ Acceptance scenarios:
 1. Given questions are generated, When the UI updates, Then Candidate Setup collapses automatically while remaining expandable. (Verifies: FR-003)
 2. Given transcript content exists, When the interview starts, Then the transcript panel appears above the questions/insights section. (Verifies: FR-004)
 3. Given the session is stopped and results are showing, When I look for controls, Then Extras and Restart are still available. (Verifies: FR-005)
+4. Given results are visible, When the UI updates, Then the transcript panel is hidden to keep the score view focused. (Verifies: FR-007)
 
 ### US4: Persisted help examples (Priority: P1)
 Narrative:
@@ -49,6 +50,7 @@ Functional requirements:
 - FR-004: Reorder the transcript panel above questions/insights once transcript content exists. (Sources: CR-20260205-1005; D-20260205-1010)
 - FR-005: Keep Extras and Restart accessible when results are visible by showing the controls panel in a results-safe mode. (Sources: CR-20260205-1005; D-20260205-1010)
 - FR-006: Persist Request Help answers in Question Insights for the active question and auto-pin the related question. (Sources: CR-20260205-1005; D-20260205-1010)
+- FR-007: Hide the transcript panel when results are visible to reduce clutter. (Sources: CR-20260205-0312)
 
 ## Edge cases
 - If questions are cleared or a new session starts, the hero intro expands again. (Verifies: FR-002)
