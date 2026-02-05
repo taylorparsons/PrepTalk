@@ -2234,3 +2234,4 @@ NEXT
 NOTES
 - Commands run: `rg`, `date`, `./run.sh test` -> 65/65 passed (Vitest). Warnings about `--localstorage-file` path.
 - Decisions: D-20260205-2138 (turn-mode interrupt cancels speech without auto-skip).
+- Commit: 22666b4 (T-001/T-002: Add turn-mode interrupt for coach speech).
