@@ -10,7 +10,7 @@ describe('app entry', () => {
 
     const root = document.getElementById('app');
     expect(root).not.toBeNull();
-    expect(root.querySelector('.layout-split')).toBeTruthy();
+    expect(root.querySelector('main.layout-stack')).toBeTruthy();
   });
 
   it('uses the PrepTalk title in the template', () => {

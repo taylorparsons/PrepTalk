@@ -15,7 +15,7 @@ describe('voice layout', () => {
     document.body.appendChild(layout);
 
     expect(layout.classList.contains('layout-page')).toBe(true);
-    expect(layout.querySelector('.layout-split')).toBeTruthy();
+    expect(layout.querySelector('main.layout-stack')).toBeTruthy();
     const titles = Array.from(layout.querySelectorAll('.ui-panel__title')).map((node) => node.textContent);
 
     expect(titles).toEqual(
@@ -154,7 +154,7 @@ describe('voice layout', () => {
     delete window.__e2eUi;
   });
 
-  it('enables candidate setup collapse after interview creation', () => {
+  it('toggles candidate setup visibility via state', () => {
     window.__E2E__ = true;
     const layout = buildVoiceLayout();
     document.body.appendChild(layout);
@@ -162,18 +162,15 @@ describe('voice layout', () => {
     const state = window.__e2eState;
     const ui = window.__e2eUi;
 
-    expect(ui.setupCollapse.disabled).toBe(true);
+    expect(ui.setupPanel.hidden).toBe(false);
 
-    state.interviewId = 'abc-123';
+    state.hideSetup = true;
     ui.updateSessionToolsState();
+    expect(ui.setupPanel.hidden).toBe(true);
 
-    expect(ui.setupCollapse.disabled).toBe(false);
-
-    ui.setupCollapse.click();
-    expect(ui.setupBody.hidden).toBe(true);
-
-    ui.setupCollapse.click();
-    expect(ui.setupBody.hidden).toBe(false);
+    state.hideSetup = false;
+    ui.updateSessionToolsState();
+    expect(ui.setupPanel.hidden).toBe(false);
 
     delete window.__E2E__;
     delete window.__e2eState;
@@ -207,7 +204,7 @@ describe('voice layout', () => {
     delete window.__e2eUi;
   });
 
-  it('auto-collapses setup and hero guidance when questions exist', () => {
+  it('auto-collapses hero guidance when questions exist', () => {
     window.__E2E__ = true;
     const layout = buildVoiceLayout();
     document.body.appendChild(layout);
@@ -221,8 +218,7 @@ describe('voice layout', () => {
     state.questions = ['Tell me about a time you led a project.'];
     ui.updateSessionToolsState();
 
-    expect(ui.setupBody.hidden).toBe(true);
-    expect(ui.setupPanel.hidden).toBe(true);
+    expect(ui.setupPanel.hidden).toBe(false);
     expect(ui.heroBody.hidden).toBe(true);
 
     ui.setHeroCollapsed(false);
@@ -312,7 +308,9 @@ describe('voice layout', () => {
     expect(ui.controlsPanel.hidden).toBe(false);
     expect(ui.controlsPanel.classList.contains('ui-controls--results')).toBe(true);
     expect(ui.restartButtonMain.disabled).toBe(false);
-    expect(ui.sessionToolsToggle).toBeTruthy();
+    expect(typeof ui.setSessionToolsOpen).toBe('function');
+    ui.setSessionToolsOpen(true);
+    expect(ui.sessionToolsDrawer.classList.contains('ui-drawer--open')).toBe(true);
 
     delete window.__E2E__;
     delete window.__e2eState;
