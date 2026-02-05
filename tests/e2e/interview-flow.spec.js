@@ -120,7 +120,7 @@ test('candidate interview flow (mock adapter)', async ({ page }, testInfo) => {
   await expect(page.getByTestId('turn-rubric')).toBeVisible();
   await captureStep(page, testInfo, 'state-5-interview-turn');
 
-  await page.getByTestId('stop-interview').click();
+  await page.getByTestId('start-interview').click();
   await expect(scorePanel).toBeVisible();
   await expect(controlsPanel).toBeVisible();
   await expect(controlsPanel).toHaveClass(/ui-controls--results/);

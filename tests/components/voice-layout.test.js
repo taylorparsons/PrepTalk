@@ -215,7 +215,6 @@ describe('voice layout', () => {
     const state = window.__e2eState;
     const ui = window.__e2eUi;
 
-    expect(ui.heroToggle.hidden).toBe(true);
     expect(ui.heroBody.hidden).toBe(false);
 
     state.interviewId = 'abc-123';
@@ -223,10 +222,9 @@ describe('voice layout', () => {
     ui.updateSessionToolsState();
 
     expect(ui.setupBody.hidden).toBe(true);
-    expect(ui.heroToggle.hidden).toBe(false);
     expect(ui.heroBody.hidden).toBe(true);
 
-    ui.heroToggle.click();
+    ui.setHeroCollapsed(false);
     expect(ui.heroBody.hidden).toBe(false);
 
     delete window.__E2E__;

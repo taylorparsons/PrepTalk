@@ -1033,3 +1033,22 @@ Alternatives considered:
 
 Acceptance / test:
 - In turn mode while the coach is speaking, activating Interrupt stops speech immediately and updates Help/Submit state without errors.
+
+## D-20260205-1020
+Date: 2026-02-05 10:20
+Inputs: CR-20260205-1020
+PRD: Next / backlog
+
+Decision:
+Capture the target session layout and state logic in a new RALPH feature spec, including ASCII state layouts, Mermaid state diagrams (logic + UI output), and explicit status/substatus/rubric rules. Use standard responsive breakpoints (mobile <=640px, tablet 641–1024px, desktop >=1025px) and show the menu only when active components are pushed below the fold.
+
+Rationale:
+The request is to align on state logic and layout before implementation; a spec with diagrams + ASCII frames provides a concrete, traceable target without changing code.
+
+Alternatives considered:
+- Document only prose requirements without diagrams (rejected: user explicitly wants ASCII + state diagrams).
+- Treat menu visibility as always-on (rejected: user requested menu only when active items are below the fold).
+
+Acceptance / test:
+- Feature spec includes ASCII frames for each state/sub-state, Mermaid diagrams for logic and UI output, and a status/substatus/rubric mapping table.
+- Spec defines menu visibility rules and responsive breakpoints.

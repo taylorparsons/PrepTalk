@@ -75,6 +75,7 @@ These commits are used as implementation evidence for the “shipped” scope ab
 - UI refresh: apply DaisyUI component styling to buttons/inputs/panels and add contextual setup hints for primary actions. (Sources: CR-20260204-1531; D-20260204-1531)
 - UX: create SVGs for each state-change step in the existing UI flow. (Sources: CR-20260205-0940; D-20260205-0942)
 - UI flow: collapse Candidate Setup + hero instructions once questions are generated, surface transcript above the fold when it appears, keep Extras/Restart accessible after stop, and persist Request Help answers in Question Insights. (Sources: CR-20260205-1005; D-20260205-1010)
+- UI spec: document target session layout + state logic with ASCII frames, Mermaid diagrams, and explicit status/substatus/rubric rules; define responsive breakpoints and menu overflow behavior. (Sources: CR-20260205-1020; D-20260205-1020)
 - Intro flow: do not ask for readiness/role confirmation before the first interview question. (Sources: CR-20260204-1943; D-20260204-1945)
 - Test reporting: capture Playwright screenshots for each state-change step and generate HTML reports for mock + live runs. (Sources: CR-20260204-1947; D-20260204-1948)
 - UI: show PrepTalk name + short how-to, improve action button guidance/tooltips, rename “Advanced Setup” to “Extras,” add client-side question insights side panel, and allow job description URL input. (Sources: CR-20260202-1704, CR-20260202-1740, CR-20260202-1816, CR-20260203-1044; D-20260202-1704, D-20260202-1740, D-20260202-1816)

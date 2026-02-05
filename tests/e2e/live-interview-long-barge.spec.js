@@ -165,7 +165,7 @@ test('candidate interview flow (gemini live long barge)', async ({ page, request
 
   await page.getByTestId('start-interview').click();
   await expect(page.getByTestId('session-status')).toHaveText('Live', { timeout: 60000 });
-  await expect(page.getByTestId('stop-interview')).toBeEnabled();
+  await expect(page.getByTestId('start-interview')).toBeEnabled();
   await page.waitForFunction(() => Boolean(window.__e2eBargeIn));
   await page.waitForFunction(() => Boolean(window.__e2eSendAudio));
 
@@ -178,7 +178,7 @@ test('candidate interview flow (gemini live long barge)', async ({ page, request
     });
     await page.evaluate(() => window.__e2eBargeIn?.());
     const status = (await page.getByTestId('session-status').innerText()).trim();
-    const stopEnabled = await page.getByTestId('stop-interview').isEnabled();
+    const stopEnabled = await page.getByTestId('start-interview').isEnabled();
     if (!stopEnabled) {
       throw new Error(`Stop button disabled during barge run (status: ${status}).`);
     }
@@ -188,7 +188,7 @@ test('candidate interview flow (gemini live long barge)', async ({ page, request
     await page.waitForTimeout(bargeIntervalMs);
   }
 
-  await page.getByTestId('stop-interview').click();
+  await page.getByTestId('start-interview').click();
   await expect(page.getByTestId('score-value')).not.toHaveText('--');
 
   await expect.poll(
