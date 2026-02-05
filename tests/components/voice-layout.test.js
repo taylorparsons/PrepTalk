@@ -55,6 +55,9 @@ describe('voice layout', () => {
     const panel = layout.querySelector('[data-testid="question-insights-panel"]');
     expect(panel.classList.contains('resize-y')).toBe(true);
     expect(panel.classList.contains('overflow-auto')).toBe(true);
+    const handle = layout.querySelector('[data-testid="insights-resize-handle"]');
+    expect(handle).toBeTruthy();
+    expect(handle.classList.contains('ui-resize-handle')).toBe(true);
   });
 
   it('keeps the candidate setup panel scrollable when tall', () => {

@@ -1033,3 +1033,14 @@ I just tried it in the ui and I am not able to resize I thought I could drag it 
 
 Notes:
 - Make the Question Insights resize handle discoverable/functional (panel-level drag).
+
+
+## CR-20260205-2135
+Date: 2026-02-05 21:35
+Source: chat
+
+Request (verbatim):
+add the handle
+
+Notes:
+- Add a visible resize handle to Question Insights.

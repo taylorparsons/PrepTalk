@@ -20,3 +20,4 @@ Spec: docs/specs/20260204-state-clarity/spec.md
 - [2026-02-05 21:06] T-009: Make Candidate Setup content scrollable to avoid truncation. (Implements: FR-008)
 - [2026-02-05 21:12] T-010: Make Question Insights panel vertically resizable. (Implements: FR-009)
 - [2026-02-05 21:22] T-011: Move Question Insights resize handle to the panel for discoverability. (Implements: FR-009)
+- [2026-02-05 21:35] T-012: Add a visible resize handle to the Question Insights panel. (Implements: FR-009)
