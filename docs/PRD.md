@@ -34,6 +34,7 @@ Voice-first interview practice app for the Gemini hackathon. (Sources: CR-202601
 - FR-APP-006: Export failures surface the server error detail in the UI to aid troubleshooting, and PDF export remains compatible with legacy `fpdf` installs. (Sources: CR-20260203-1424, CR-20260203-1428; D-20260203-1428)
 - FR-APP-007: PDF exports sanitize unsupported Unicode characters to avoid 500 errors while preserving readable text. (Sources: CR-20260204-2024; D-20260204-2026)
 - FR-APP-008: The Candidate Setup panel remains scrollable on smaller viewports to avoid truncation. (Sources: CR-20260205-2106)
+- FR-APP-009: The Question Insights panel is vertically resizable with scrollable content. (Sources: CR-20260205-2112)
 
 ## Non-functional requirements (shipped)
 - NFR-APP-001: The repo supports local development via `./run.sh` scripts (install, run UI, unit tests, e2e). (Sources: CR-20260128-1409; D-20260128-1410)

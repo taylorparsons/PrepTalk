@@ -18,3 +18,4 @@ Spec: docs/specs/20260204-state-clarity/spec.md
 - [2026-02-05 10:25] T-007: Update component tests for state text, hero collapse, setup collapse, transcript placement, results controls, and help insights. (Implements: FR-001, FR-002, FR-003, FR-004, FR-005, FR-006)
 - [2026-02-05 20:40] T-008: Hide transcript panel while results are visible. (Implements: FR-007)
 - [2026-02-05 21:06] T-009: Make Candidate Setup content scrollable to avoid truncation. (Implements: FR-008)
+- [2026-02-05 21:12] T-010: Make Question Insights panel vertically resizable. (Implements: FR-009)
