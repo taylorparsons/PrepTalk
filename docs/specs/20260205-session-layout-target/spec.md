@@ -1,12 +1,12 @@
 # Feature Spec: 20260205-session-layout-target
 
-Status: Draft
+Status: Done
 Created: 2026-02-05 10:20
-Inputs: CR-20260205-1020, CR-20260205-1033, CR-20260205-1049, CR-20260205-2138
-Decisions: D-20260205-1020, D-20260205-2138
+Inputs: CR-20260205-1020, CR-20260205-1033, CR-20260205-1049, CR-20260205-2138, CR-20260205-1328
+Decisions: D-20260205-1020, D-20260205-2138, D-20260205-1330
 
 ## Summary
-Define the target session layout and state logic for the PrepTalk UI, including ASCII state frames, Mermaid state diagrams, and explicit status/substatus/rubric rules. This spec aligns on a panel-only layout update with overflow menu behavior, keeps Extras unchanged, and avoids any special anchored positioning for the status/CTA panel. (Sources: CR-20260205-1020, CR-20260205-1033, CR-20260205-1049; D-20260205-1020)
+Define the target session layout and state logic for the PrepTalk UI, including ASCII state frames, Mermaid state diagrams, and explicit status/substatus/rubric rules. This spec aligns on a panel-only layout update with an overflow menu that provides explicit show/hide toggles for active panels, keeps Extras content unchanged, and avoids any special anchored positioning for the status/CTA panel. (Sources: CR-20260205-1020, CR-20260205-1033, CR-20260205-1049, CR-20260205-1328; D-20260205-1020, D-20260205-1330)
 
 
 ## Non-changes / Out of scope
@@ -33,7 +33,7 @@ Acceptance scenarios:
 
 Functional requirements:
 - FR-001: Document the target layout for each state/sub-state with ASCII frames, including header, top status/CTA panel, transcript, questions, insights, and score panels as applicable. (Sources: CR-20260205-1020; D-20260205-1020)
-- FR-002: Specify menu placement and visibility as a responsive overflow: the menu appears only when active components are pushed below the fold, and lists only active off-screen items. (Sources: CR-20260205-1020, CR-20260205-1049; D-20260205-1020)
+- FR-002: Specify menu placement and visibility as a panel visibility control: the overflow menu is available in the header and provides Show/Hide toggles for active panels (Guide, Candidate Setup, Questions, Insights, Transcript, Session Insights, Extras) based on current visibility. (Sources: CR-20260205-1020, CR-20260205-1049, CR-20260205-1328; D-20260205-1330)
 - FR-003: Define status, substatus, and rubric display rules for each active interview sub-state, including help callout behavior. (Sources: CR-20260205-1020; D-20260205-1020)
 - FR-004: Define completion states (E/F) with export CTAs (PDF/TXT), Candidate Setup re-entry, and transcript visibility rules. (Sources: CR-20260205-1020)
 - FR-005: Provide Mermaid state diagrams for logic flow and UI output states. (Sources: CR-20260205-1020)
@@ -390,5 +390,5 @@ Menu (≡):
 ```
 
 ## Edge cases
-- If the active session panels exceed the viewport height on mobile, the menu should list only off-screen active items (not inactive or hidden panels). (Verifies: FR-002)
+- If the active session panels exceed the viewport height on mobile, the menu still lists active panels with Show/Hide toggles regardless of scroll position. (Verifies: FR-002)
 - If the interrupt action is unavailable (coach not speaking), the Interrupt button is shown but disabled per state definition. (Verifies: FR-006)

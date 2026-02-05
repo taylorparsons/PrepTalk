@@ -1,7 +1,7 @@
 # PRD: PrepTalk
 
 Status: Active
-Updated: 2026-01-28 14:10
+Updated: 2026-02-05 13:33
 Inputs: CR-20260128-1409
 Decisions: D-20260128-1410
 
@@ -35,6 +35,8 @@ Voice-first interview practice app for the Gemini hackathon. (Sources: CR-202601
 - FR-APP-007: PDF exports sanitize unsupported Unicode characters to avoid 500 errors while preserving readable text. (Sources: CR-20260204-2024; D-20260204-2026)
 - FR-APP-008: The Candidate Setup panel remains scrollable on smaller viewports to avoid truncation. (Sources: CR-20260205-2106)
 - FR-APP-009: The Question Insights panel is vertically resizable with scrollable content. (Sources: CR-20260205-2112, CR-20260205-2122)
+- FR-UI-001: Session layout spec is documented with ASCII frames, Mermaid state diagrams, and explicit status/substatus/rubric rules plus overflow menu toggles. (Sources: CR-20260205-1020, CR-20260205-1328; D-20260205-1020, D-20260205-1330) Implemented in: docs/specs/20260205-session-layout-target/spec.md
+- FR-APP-010: Turn mode supports Interrupt to cancel coach speech and re-enable interaction without errors. (Sources: CR-20260205-2138; D-20260205-2138) Implemented in: app/static/js/ui.js, app/static/js/transport.js, app/services/gemini_live.py
 
 ## Non-functional requirements (shipped)
 - NFR-APP-001: The repo supports local development via `./run.sh` scripts (install, run UI, unit tests, e2e). (Sources: CR-20260128-1409; D-20260128-1410)
@@ -75,14 +77,12 @@ These commits are used as implementation evidence for the “shipped” scope ab
 - UI refresh: apply DaisyUI component styling to buttons/inputs/panels and add contextual setup hints for primary actions. (Sources: CR-20260204-1531; D-20260204-1531)
 - UX: create SVGs for each state-change step in the existing UI flow. (Sources: CR-20260205-0940; D-20260205-0942)
 - UI flow: collapse Candidate Setup + hero instructions once questions are generated, surface transcript above the fold when it appears, keep Extras/Restart accessible after stop, and persist Request Help answers in Question Insights. (Sources: CR-20260205-1005; D-20260205-1010)
-- UI spec: document target session layout + state logic with ASCII frames, Mermaid diagrams, and explicit status/substatus/rubric rules; define responsive breakpoints and menu overflow behavior. (Sources: CR-20260205-1020; D-20260205-1020)
 - Intro flow: do not ask for readiness/role confirmation before the first interview question. (Sources: CR-20260204-1943; D-20260204-1945)
 - Test reporting: capture Playwright screenshots for each state-change step and generate HTML reports for mock + live runs. (Sources: CR-20260204-1947; D-20260204-1948)
 - UI: show PrepTalk name + short how-to, improve action button guidance/tooltips, rename “Advanced Setup” to “Extras,” add client-side question insights side panel, and allow job description URL input. (Sources: CR-20260202-1704, CR-20260202-1740, CR-20260202-1816, CR-20260203-1044; D-20260202-1704, D-20260202-1740, D-20260202-1816)
 - CTA hierarchy: enforce a single primary action per stage with explicit gating (Stage 1 Generate → Start; Stage 2 Submit Answer primary + Request Help secondary + inactivity hint; Stage 3 Restart primary + Export secondary + scoring completion notice). (Sources: CR-20260203-0949; D-20260203-1001)
 - Stage gating: hide or collapse containers without relevant content per stage (e.g., collapse Candidate Setup after interview starts; hide questions/insights/transcript/score/controls panels until content exists; when results are pending/ready, hide questions/insights/transcript/controls to keep score + exports focused). (Sources: CR-20260203-1138, CR-20260203-1146, CR-20260203-1335; D-20260203-1138, D-20260203-1335)
 - Turn mode: enable immediate submit after coach finishes speaking (no minimum delay) and add a resume-grounded help action (button + voice) that never fabricates and returns TTS + transcript output. (Sources: CR-20260202-1516; D-20260202-1520)
-- Turn mode: allow interrupting coach speech to proceed without errors; interrupt cancels TTS and re-enables interaction. (Sources: CR-20260205-2138; D-20260205-2138)
 - Record manual voice smoke-test results (`docs/testing/voice-smoke-test.md`). (Sources: CR-20260128-1409; D-20260128-1410)
 - Fill hackathon deliverables in `README.md` (demo link, write-up, 3-minute video). (Sources: CR-20260128-1409; D-20260128-1410)
 - Submission polish: use Gemini 3 for interview generation/scoring and Gemini 2.5 Flash for turn-based coaching; prefer server TTS in turn mode to reduce robotic output. (Sources: CR-20260129-0938; D-20260129-0938, D-20260129-0942)

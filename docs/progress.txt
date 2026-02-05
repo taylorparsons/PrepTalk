@@ -2623,22 +2623,26 @@ Agent: Codex CLI
 Model: GPT-5
 Skills: ralph
 Feature: 20260205-session-layout-target
-Input: CR-20260205-1327, CR-20260205-1328
-Decisions: (none)
+Input: CR-20260205-1327, CR-20260205-1328, CR-20260205-1333
+Decisions: D-20260205-1330
 Spec: docs/specs/20260205-session-layout-target/spec.md
 Tasks: docs/specs/20260205-session-layout-target/tasks.md
 Goal: Merge feature branch to main and reconcile PRD/spec backlog.
 
 DONE
 - [2026-02-05 13:29] T-006: Commit current working tree changes on feature branch. (Skills: ralph)
+- [2026-02-05 13:34] T-007: Merge feature branch into main. (Skills: ralph)
+- [2026-02-05 13:34] T-008: Post-merge PRD/spec reconciliation with CR hashes and evidence. (Skills: ralph)
 
 IN PROGRESS
-- T-007: Merge feature branch into main. (Skills: ralph)
+- (none)
 
 NEXT
-- T-007: Merge feature branch into main. (Skills: ralph)
-- T-008: Post-merge PRD/spec reconciliation with CR hashes and evidence. (Skills: ralph)
+- (none)
 
 NOTES
 - Commands run: date '+%Y-%m-%d %H:%M'; npm run test -> 22 files, 75 tests passed (localstorage-file warnings).
 - Commit: 683c8fa (T-006).
+- Branch: main (fast-forwarded).
+- Merge: fast-forward to 793b32d (latest local main).
+- PRD/spec reconciled to shipped menu + interrupt behavior with CR hashes and evidence paths.

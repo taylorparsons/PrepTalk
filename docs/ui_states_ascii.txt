@@ -1,0 +1,267 @@
+State A — Setup (full screen)
+  Menu: hidden
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Header: PrepTalk                                                             │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Top Status/CTA Panel                                                         │
+  │ [ Status: Setup ]                                                            │
+  │ Add resume + job details to generate questions.                              │
+  │ (no action buttons shown)                                                    │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Candidate Setup (full screen)                                                │
+  │ Resume upload                                                                │
+  │ Job description upload / URL                                                 │
+  │ [ Generate Questions ]                                                       │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+
+
+  State B — Ready (idle, setup hidden)
+   Menu (≡):
+  - Guide (expand)
+  - Candidate Setup
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Header: PrepTalk                                                      [ ≡ ] │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Top Status/CTA Panel                                                         │
+  │ [ Status: Ready ]                                                            │
+  │ Questions ready. Press Begin Practice to start.                              │
+  │ [ Begin Practice ]                                                           │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+ 
+
+  State C1 — Active (coach speaking)
+    Menu (≡):
+  - Guide (expand)
+  - Candidate Setup
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Header: PrepTalk                                                      [ ≡ ] │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Top Status/CTA Panel                                                         │
+  │ [ Status: Welcoming | Speaking ]                                             │
+  │ Coach is speaking. Wait to request help or submit your answer.               │
+  │[ End Practice ] [ Mute Mic ] [ Interupt ][ Request Help ]  [ Submit Answer ]  │
+  │ (Request Help + Submit are disabled) 
+  | (Interupt enabled)                                                           │
+  │ Help callout: Coach is speaking. Interupt if you are ready answer │       
+  │ Answer rubric: hidden                                                        │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Transcript                                                                   │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────┐  ┌────────────────────────────┐
+  │ Questions                                   │  │ Insights                   │
+  └─────────────────────────────────────────────┘  └────────────────────────────┘
+
+
+
+  State C2 — Active (your turn, no draft yet)
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Header: PrepTalk                                                      [ ≡ ] │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Top Status/CTA Panel                                                         │
+  │ [ Status: Listening ]                                                        │
+  │ Start answering to enable Submit. Help is available as soon as the coach     │
+  │ finishes speaking.                                                           │
+  │ [ End Practice ] [ Mute Mic ] [ Interupt ] [ Request Help ] [ Submit Answer ]│
+  │ (Submit + Interupt disabled; Request Help enabled, Speak and Submit enabled) |
+  │ Help callout: Start answering to enable Submit...                            │
+  │ Answer rubric: hidden (until hint timer triggers)                            │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Transcript                                                                   │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────┐  ┌────────────────────────────┐
+  │ Questions                                   │  │ Insights                   │
+  └─────────────────────────────────────────────┘  └────────────────────────────┘
+
+  Menu (≡):
+  - Guide (expand)
+  - Candidate Setup
+
+  State C3 — Active (your turn, no draft yet, hint triggered)
+    Menu (≡):
+  - Guide (expand)
+  - Candidate Setup
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Header: PrepTalk                                                      [ ≡ ] │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Top Status/CTA Panel                                                         │
+  │ [ Status: Listening ]                                                        │
+  │ Need a nudge? Use Request Help for a rubric-based tip.                       │
+  │ [ End Practice ] [ Mute Mic ] [ Interupt ] [ Request Help ] [ Submit Answer ]│
+  │ (Submit + Interupt disabled; Request Help enabled, Speak and Submit enabled) |
+  │ Help callout: Need a nudge? Use Request Help for a rubric-based tip.         │
+  │ Answer rubric:                                                               │
+  │   - Frame the problem and constraints clearly.                               │
+  │   - Explain the trade-offs you considered.                                   │
+  │   - Close with measurable impact or learnings.                               │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Transcript                                                                   │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────┐  ┌────────────────────────────┐
+  │ Questions                                   │  │ Insights                   │
+  └─────────────────────────────────────────────┘  └────────────────────────────┘
+
+
+
+  State C4 — Active (your turn, draft present)
+    Menu (≡):
+  - Guide (expand)
+  - Candidate Setup
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Header: PrepTalk                                                      [ ≡ ] │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Top Status/CTA Panel                                                         │
+  │ [ Status: Your Turn ]                                                        │
+  │ Ready when you are. Request help or submit your answer.                      │
+  │[ End Practice ] [ Mute Mic ] ] [ Interupt ] [ Request Help ] [ Submit Answer ] |
+  │ (Submit + Interupt disabled; )equest Help enabled, Speak and Submit enabled)                                                               │
+  │ Help callout: Ready when you are. Request help or submit your answer.        │
+  │ Answer rubric: hidden                                                        │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Transcript                                                                   │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────┐  ┌────────────────────────────┐
+  │ Questions                                   │  │ Insights                   │
+  └─────────────────────────────────────────────┘  └────────────────────────────┘
+
+
+
+  State C5 — Active (help pending)
+    Menu (≡):
+  - Guide (expand)
+  - Candidate Setup
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Header: PrepTalk                                                      [ ≡ ] │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Top Status/CTA Panel                                                         │
+  │ [ Status: Helping ]                                                          │
+  │ Fetching help...                                                             │
+  │ [ End Practice ] [ Mute Mic ] [ Interupt ] [ Request Help ] [ Submit Answer ]             │
+  │ (all disabled while pending)                                        │
+  │ Help callout: Fetching help...                                               │
+  │ Answer rubric: hidden                                                        │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Transcript                                                                  │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────┐  ┌────────────────────────────┐
+  │ Questions                                   │  │ Insights                   │
+  └─────────────────────────────────────────────┘  └────────────────────────────┘
+
+
+
+  State D — Scoring (active, no CTAs)
+    Menu (≡):
+  - Guide (expand)
+  - Candidate Setup
+
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Header: PrepTalk                                                      [ ≡ ] │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Top Status/CTA Panel                                                         │
+  │ [ Status: Scoring ]                                                          │
+  │ Generating coaching feedback…                                                │
+  │ (no action buttons shown)                                                    │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+
+  State E — Complete (score ready)
+  Menu (≡):
+  - Guide (expand)
+  - Candidate Setup
+  - Transcript
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Header: PrepTalk                                                      [ ≡ ] │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Top Status/CTA Panel                                                         │
+  │ [ Status: Complete ]                                                         │
+  │ Coaching feedback ready.                
+  | [ Extras ] [ Restart Practice ] Export [ PDF ] [Txt]                         │
+  │ [ Candidate Setup ]                                                           │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │Session Insights
+  | N / 100
+  | Score ready. Export PDF/TXT or restart when you are ready.
+  |
+  | Export PDF or TXT.                                                          │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+
+  State  F — Complete (score ready) - transript shown
+  Menu (≡):
+  - Guide (expand)
+  - Candidate Setup
+ 
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Header: PrepTalk                                                      [ ≡ ] │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Top Status/CTA Panel                                                         │
+  │ [ Status: Complete ]                                                         │
+  │ Coaching feedback ready.                
+  | [ Extras ] [ Restart Practice ] Export [ PDF ] [Txt]                         │
+  │ [ Candidate Setup ]                                                           │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │Session Insights
+  | N / 100
+  | Score ready. Export PDF/TXT or restart when you are ready.
+  |
+  | Export PDF or TXT.                                                          │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ Transcript                                                                  │
+  └─────────────────────────────────────────────────────────────────────────────┘
+  
+
+
