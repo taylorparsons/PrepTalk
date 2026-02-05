@@ -1,7 +1,7 @@
 # PRD: PrepTalk
 
 Status: Active
-Updated: 2026-02-05 13:33
+Updated: 2026-02-05 14:08
 Inputs: CR-20260128-1409
 Decisions: D-20260128-1410
 
@@ -47,6 +47,7 @@ Voice-first interview practice app for the Gemini hackathon. (Sources: CR-202601
 - NFR-APP-006: Documentation covers AI Studio project/API key setup and shared endpoint configuration for hackathon use. (Sources: CR-20260202-1235; D-20260202-1235)
 - NFR-APP-007: Documentation covers Cloud Run deployment steps and how to deploy updates from a remote repo. (Sources: CR-20260202-1408; D-20260202-1408)
 - NFR-APP-008: Shared endpoints isolate session history per browser using an anonymous client user ID (no full auth). (Sources: CR-20260202-1424; D-20260202-1424)
+- NFR-APP-010: The Playwright suite no longer runs the legacy Prototype C debug spec. (Sources: CR-20260205-1405, CR-20260205-1408) Implemented in: tests/e2e/prototype-c-debug.spec.js (removed)
 
 ## Out of scope (explicitly not required by this PRD)
 - A LiveKit-based “voice coach” implementation (there is a plan doc, but no requirement to ship it). (Sources: CR-20260128-1409; D-20260128-1410)

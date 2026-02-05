@@ -1205,3 +1205,13 @@ remove the tests for /prototype-c
 
 Notes:
 - Delete the prototype-c E2E debug spec so it no longer runs in Playwright.
+
+## CR-20260205-1408
+Date: 2026-02-05 14:08
+Source: chat
+
+Request (verbatim):
+make sure the docs/PRD.md is updated so the item completed at no longer on the backlog
+
+Notes:
+- Record the completed prototype-c E2E removal in PRD shipped items and ensure it is not listed in backlog.
