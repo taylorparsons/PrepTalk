@@ -93,7 +93,7 @@ Managed team of 5 engineers across 3 time zones`;
     expect(content.exampleAnswer.toLowerCase()).toMatch(/star|situation/);
   });
 
-  test('validates Learning Mode toggle exists in UI', async ({ page }) => {
+  test('does not render Learning Mode toggle in UI', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
@@ -104,8 +104,8 @@ Managed team of 5 engineers across 3 time zones`;
     // Log result for audit
     console.log(`Learning Mode toggle: ${toggleExists > 0 ? 'FOUND' : 'NOT FOUND'}`);
 
-    // Toggle should exist
-    expect(toggleExists).toBeGreaterThan(0);
+    // Toggle should be absent
+    expect(toggleExists).toBe(0);
   });
 
   test('validates Learning Card accessibility', async ({ page }) => {
