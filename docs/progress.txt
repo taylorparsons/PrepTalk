@@ -2379,3 +2379,4 @@ NEXT
 
 NOTES
 - Commands run: `./run.sh test` -> 67/67 passed (Vitest). Warnings about `--localstorage-file` path.
+- Commit: 23c2992 (T-010: Make Question Insights resizable).
