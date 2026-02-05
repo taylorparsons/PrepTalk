@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <rect width="1200" height="720" fill="#f6f3ea" />
+
+  <rect x="60" y="40" width="1080" height="220" rx="18" fill="#ffffff" stroke="#e2dbcf" />
+  <text x="90" y="85" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700" fill="#2b2b2b">PrepTalk</text>
+  <text x="90" y="110" font-family="Inter, Arial, sans-serif" font-size="13" fill="#6a6259">Contextual interview coach</text>
+
+  <text x="90" y="155" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#1f2937">State: Generating questions</text>
+  <text x="90" y="182" font-family="Inter, Arial, sans-serif" font-size="13" fill="#6b7280">Please wait. This can take about 20 seconds.</text>
+
+  <rect x="860" y="140" width="240" height="50" rx="12" fill="#e5e7eb" />
+  <text x="915" y="172" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#6b7280">Generating...</text>
+
+  <rect x="60" y="280" width="520" height="370" rx="18" fill="#ffffff" stroke="#e2dbcf" />
+  <text x="90" y="320" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#2b2b2b">Candidate Setup</text>
+  <text x="90" y="348" font-family="Inter, Arial, sans-serif" font-size="12" fill="#8b8b8b">Inputs locked while questions are generated.</text>
+
+  <rect x="90" y="375" width="460" height="50" rx="10" fill="#f3f4f6" stroke="#e5e7eb" />
+  <text x="110" y="407" font-family="Inter, Arial, sans-serif" font-size="12" fill="#9aa0a6">Resume: Taylor_Parsons_PM.pdf</text>
+
+  <rect x="90" y="445" width="460" height="50" rx="10" fill="#f3f4f6" stroke="#e5e7eb" />
+  <text x="110" y="477" font-family="Inter, Arial, sans-serif" font-size="12" fill="#9aa0a6">Job: Principal PM - OCI.pdf</text>
+</svg>

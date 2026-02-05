@@ -24,7 +24,16 @@
   box-sizing: border-box;
 }
 
-body {
+[hidden] {
+  display: none !important;
+}
+
+.radial-progress[hidden],
+.ui-radial-progress[hidden] {
+  display: none !important;
+}
+
+body.app-body {
   margin: 0;
   color: var(--ui-color-ink);
   font-family: var(--ui-font-sans);
@@ -48,6 +57,31 @@ body {
   padding: 24px;
   display: grid;
   gap: 12px;
+}
+
+.ui-hero__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.ui-hero__heading {
+  display: grid;
+  gap: 6px;
+}
+
+.ui-hero__body {
+  display: grid;
+  gap: 12px;
+}
+
+.ui-hero__toggle {
+  margin-top: 2px;
+}
+
+.ui-hero--collapsed {
+  padding-bottom: 16px;
 }
 
 .ui-hero__eyebrow {
@@ -352,6 +386,72 @@ body {
   font-size: 12px;
 }
 
+.ui-cta-hint {
+  font-size: 13px;
+}
+
+.ui-cta-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+@property --ui-progress-value {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+.ui-radial-progress {
+  --size: 2rem;
+  --thickness: 3px;
+  --ui-progress-value: 30;
+  --value: var(--ui-progress-value);
+  color: var(--ui-color-primary);
+}
+
+.ui-radial-progress--sm {
+  --size: 1.8rem;
+  --thickness: 3px;
+}
+
+.ui-radial-progress--active {
+  animation: ui-spin 1s linear infinite, ui-progress 1.4s ease-in-out infinite;
+}
+
+.ui-score__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ui-score__progress {
+  margin-top: 2px;
+}
+
+@keyframes ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ui-progress {
+  0% {
+    --ui-progress-value: 12;
+  }
+  50% {
+    --ui-progress-value: 82;
+  }
+  100% {
+    --ui-progress-value: 12;
+  }
+}
+
+.ui-state-text {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
 .ui-list {
   list-style: none;
   margin: 0;
@@ -464,6 +564,15 @@ body {
 .ui-insights__text {
   margin: 0;
   font-size: 13px;
+}
+
+.ui-insights__help {
+  background: #f1f6ff;
+  border: 1px solid #cfe0ff;
+  border-radius: var(--ui-radius-sm);
+  font-size: 13px;
+  padding: 10px 12px;
+  white-space: pre-wrap;
 }
 
 .ui-insights__list {
@@ -809,6 +918,12 @@ body {
   gap: 12px;
 }
 
+.ui-controls--results .ui-controls__row:not(.ui-controls__row--tools),
+.ui-controls--results .ui-turn-help,
+.ui-controls--results .ui-turn-rubric {
+  display: none;
+}
+
 .ui-controls__restart {
   display: grid;
   gap: 6px;
@@ -821,6 +936,10 @@ body {
   border-radius: var(--ui-radius-sm);
   border: 1px dashed var(--ui-color-border);
   padding: 8px 10px;
+}
+
+.ui-turn-help.ui-state-text {
+  font-size: 14px;
 }
 
 .ui-turn-rubric {

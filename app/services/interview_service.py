@@ -83,14 +83,15 @@ def _now_iso() -> str:
 def _build_intro_prompt(record) -> str:
     role_title = (record.role_title or "").strip()
     role_instruction = (
-        "Ask the candidate to confirm the role before proceeding to the first interview question."
-        if not role_title
-        else f"The target role is {role_title}."
+        f"The target role is {role_title}."
+        if role_title
+        else "The target role is not specified."
     )
     return (
         "The interview is about to begin. Introduce yourself as the interview coach and welcome the candidate. "
         "Use the candidate's name if you can infer it from the resume; otherwise use a generic greeting. "
         f"{role_instruction} "
+        "Do not ask the candidate to confirm readiness or the role. "
         "If the company is unclear from the job description, ask for it. "
         "After the welcome, ask exactly one interview question from the provided list."
     )

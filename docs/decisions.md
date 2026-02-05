@@ -715,3 +715,264 @@ Alternatives considered:
 
 Acceptance / test:
 - README links to the hackathon submission doc and lists placeholders for required links.
+
+## D-20260204-1531
+Date: 2026-02-04 15:31
+Inputs: CR-20260204-1531
+PRD: Next / backlog
+
+Decision:
+Interpret the request as a targeted UI/UX refresh that adds DaisyUI component styling (buttons, inputs, panels, badges) and improves interaction guidance with contextual setup hints, without changing the core interview flow or backend APIs.
+
+Rationale:
+The request is broad; scoping to visual polish + clearer guidance yields immediate UX gains while keeping the change set small and safe for the current codebase.
+
+Alternatives considered:
+- Full Tailwind build pipeline and complete markup rewrite (rejected: larger scope and unnecessary for incremental UX improvements).
+
+Acceptance / test:
+- UI elements include DaisyUI component classes alongside existing class hooks.
+- Candidate setup displays a dynamic hint explaining what is needed before “Generate Questions” is enabled.
+- A component test asserts the setup hint content changes based on missing inputs.
+
+## D-20260204-1554
+Date: 2026-02-04 15:54
+Inputs: CR-20260204-1553
+PRD: Next / backlog
+
+Decision:
+Treat “state change text should be larger” as applying a new `ui-state-text` class to dynamic status messaging (setup status, setup hint, turn-help, score notice, and export/restart/session status lines), and auto-collapse the hero intro content after questions are generated while keeping a manual toggle available.
+
+Rationale:
+This targets user-visible state transitions without inflating static field help, and aligns the header collapse behavior with the existing Candidate Setup pattern.
+
+Alternatives considered:
+- Increase all helper text sizes globally (rejected: would bloat static form guidance).
+- Fully hide the hero section after generation (rejected: user asked for collapse with re-open).
+
+Acceptance / test:
+- State-change messaging uses a larger font via `ui-state-text` class.
+- After questions are generated, the hero intro collapses automatically and can be expanded again.
+- Component test asserts the hero auto-collapse behavior.
+
+## D-20260205-0915
+Date: 2026-02-05 09:15
+Inputs: CR-20260205-0912
+PRD: Next / backlog
+
+Decision:
+Provide three visual options that emphasize CTA clarity while preserving collapsible guidance: (1) Stepper Hero, (2) CTA Ribbon, (3) Compact Guide Card. Each option will include a single mock image and a short rationale.
+
+Rationale:
+Three distinct but feasible patterns give clear choice without overwhelming the decision, and each can be implemented with DaisyUI components and existing layout constraints.
+
+Alternatives considered:
+- Provide more than three options (rejected: slows decision-making).
+- Provide only small variations of the current layout (rejected: fails to offer clear visual direction).
+
+Acceptance / test:
+- Spec lists three options with rationale and references a mock image for each.
+
+## D-20260205-0927
+Date: 2026-02-05 09:27
+Inputs: CR-20260205-0925
+PRD: Next / backlog
+
+Decision:
+Add a fourth, low-risk option that minimally refines the existing layout by enlarging state text, tightening spacing, and adding a collapsed guide row without moving core containers.
+
+Rationale:
+This meets the “smaller changes” request while still improving CTA clarity and state awareness.
+
+Alternatives considered:
+- Re-skin the entire layout (rejected: higher risk and more layout churn).
+
+Acceptance / test:
+- Spec includes Option 4 with a mock image and notes that it preserves the current layout.
+
+## D-20260205-0942
+Date: 2026-02-05 09:42
+Inputs: CR-20260205-0940
+PRD: Next / backlog
+
+Decision:
+Define the UI state-change steps as six core stages in the existing flow: (1) Setup empty, (2) Setup ready to generate, (3) Generating questions, (4) Questions ready to start interview, (5) Interview turn in progress (coach speaking/awaiting answer), (6) Scoring/results. Create one SVG per stage using the current two-container layout.
+
+Rationale:
+These are the user-visible state changes that drive CTA gating today, and they align with the existing CTA stage model without adding new states.
+
+Alternatives considered:
+- Add more granular states for each minor status line (rejected: too noisy for a top-level UI step set).
+
+Acceptance / test:
+- Spec lists six state-change SVGs matching the defined stages.
+
+## D-20260205-1010
+Date: 2026-02-05 10:10
+Inputs: CR-20260205-1005
+PRD: Next / backlog
+
+Decision:
+Keep the current layout but adjust state transitions: auto-collapse Candidate Setup + hero instructions when questions are generated, move the transcript panel above the questions once transcript content exists, keep the Session Controls panel visible in results so Extras/Restart remain reachable (hide only action rows), and persist Request Help responses in Question Insights (auto-pin the active question).
+
+Rationale:
+These changes address the CTA clarity and workflow friction without introducing a new layout or additional panels.
+
+Alternatives considered:
+- Keep results-stage panels hidden and add a separate Restart button near Score Summary (rejected: user explicitly wants Extras/Restart available, and a new location adds risk).
+- Add a new Help panel for answers (rejected: higher complexity; Question Insights already exists).
+
+Acceptance / test:
+- Candidate Setup and hero instructions collapse immediately after questions are generated.
+- Transcript appears above the fold once transcript content exists.
+- Extras + Restart remain accessible after session stop (results view).
+- Request Help responses persist at the top of Question Insights for the active question.
+
+## D-20260205-1115
+Date: 2026-02-05 11:15
+Inputs: CR-20260205-1110
+PRD: docs/specs/20260205-state-change-svgs/spec.md
+
+Decision:
+Depict the voice chat panel above the fold in the left column for the interview-state SVGs, collapse the transcript into an expandable row in the results-state SVG, and show Extras/Restart as visible controls after questions are generated and after the session stops.
+
+Rationale:
+The request allows left or center placement; left-column placement preserves the existing three-column grid while keeping voice chat above the fold. Collapsing the transcript in results matches the request to keep it available without dominating the score view.
+
+Alternatives considered:
+- Center the voice chat panel across all columns (rejected: would obscure questions/insights in the SVGs and diverge from the current layout).
+- Hide Extras during results (rejected: user asked to keep Extras/Restart available after stop).
+
+Acceptance / test:
+- Interview-state SVG shows voice chat at the top of the left column.
+- Results-state SVG shows a collapsed transcript row with a "Show" affordance.
+- Extras and Restart buttons appear in questions-ready and results states.
+
+## D-20260204-1848
+Date: 2026-02-04 18:48
+Inputs: CR-20260204-1846
+PRD: Next / backlog
+
+Decision:
+Use DaisyUI `radial-progress` indicators as inline, indeterminate spinners: one adjacent to the Generate Questions CTA during question generation, and one in the Score Summary header while scoring is pending.
+
+Rationale:
+Radial progress signals “wait” without adding new panels or layout shifts, keeping the CTA hierarchy intact while making long-running steps obvious.
+
+Alternatives considered:
+- Linear progress bars (rejected: more vertical space and draws attention away from primary CTA placement).
+- Full-panel loading states (rejected: higher risk and more layout churn).
+
+Acceptance / test:
+- Generate Questions shows a radial progress indicator while questions are generating.
+- Score Summary shows a radial progress indicator while scoring is pending.
+- Indicators are hidden once the step completes or fails.
+
+## D-20260205-0313
+Date: 2026-02-05 03:13
+Inputs: CR-20260205-0312
+PRD: Next / backlog
+
+Decision:
+Honor the HTML `hidden` attribute via CSS and only reveal transcript/score panels and radial progress indicators when the related session state is active (session running or transcript present for voice chat; scoring pending or score available for score summary).
+
+Rationale:
+The UI already toggles `hidden` flags, but DaisyUI/author styles can override UA defaults. Adding a single `hidden` rule ensures visibility matches state without restructuring panels.
+
+Alternatives considered:
+- Remove panels from the DOM until needed (rejected: more complexity for layout reflow and state reuse).
+- Add separate loading modals (rejected: higher visual disruption).
+
+Acceptance / test:
+- Transcript and Score Summary panels are not visible on initial load.
+- Generate/Score radial indicators remain hidden until generation/scoring is active.
+
+## D-20260204-1930
+Date: 2026-02-04 19:30
+Inputs: CR-20260204-1928
+PRD: Next / backlog
+
+Decision:
+Animate the radial progress indicators with an indeterminate spin + pulse and only toggle the animation while the related process is active.
+
+Rationale:
+The backend does not expose percentage progress, so an indeterminate animation provides clear “work in progress” feedback without implying a precise completion rate.
+
+Alternatives considered:
+- True percentage progress bars (rejected: no reliable progress signal from the API today).
+- Static progress icon (rejected: users interpreted it as idle/unfinished).
+
+Acceptance / test:
+- Radial progress indicators are hidden until generation/scoring is active.
+- When active, the indicators visibly animate and stop animating when hidden.
+
+## D-20260204-1940
+Date: 2026-02-04 19:40
+Inputs: CR-20260204-1937
+PRD: Next / backlog
+
+Decision:
+Format exported focus areas/rubric entries as human-readable bullets: title on the first line and the description indented on the next line when present.
+
+Rationale:
+Exports are intended for human review; flattening structured rubric objects avoids raw JSON/dict strings in the output.
+
+Alternatives considered:
+- Keep raw JSON strings (rejected: hard to read in PDF/TXT output).
+- Drop descriptions and only show titles (rejected: loses critical context for practice).
+
+Acceptance / test:
+- Exported study guide (PDF/TXT) renders focus areas as readable bullets without JSON/dict strings.
+
+## D-20260204-1942
+Date: 2026-02-04 19:42
+Inputs: CR-20260204-1940
+PRD: Next / backlog
+
+Decision:
+Format the Score Summary value as "<score> / 100" whenever a numeric score is available.
+
+Rationale:
+Explicitly stating the scale reduces ambiguity and makes low scores (like 0) understandable at a glance.
+
+Alternatives considered:
+- Add a label next to the score only (rejected: still leaves the numeric value ambiguous in isolation).
+- Use a percentage (rejected: users asked for “out of 100”).
+
+Acceptance / test:
+- Score Summary shows values like "70 / 100" and "0 / 100" when scores exist.
+
+## D-20260204-1945
+Date: 2026-02-04 19:45
+Inputs: CR-20260204-1943
+PRD: Next / backlog
+
+Decision:
+Remove the intro-script instruction to confirm readiness/role, and explicitly instruct the coach to proceed directly to the first interview question.
+
+Rationale:
+The user already completed setup; an extra confirmation question feels redundant and interrupts the flow.
+
+Alternatives considered:
+- Keep confirmation for missing role_title only (rejected: still adds a distracting extra question).
+
+Acceptance / test:
+- Intro prompt does not ask the candidate to confirm readiness or the role before the first interview question.
+
+## D-20260204-1948
+Date: 2026-02-04 19:48
+Inputs: CR-20260204-1947
+PRD: Next / backlog
+
+Decision:
+Attach full-page screenshots at each state-change step inside the Playwright mock + live flow tests, and generate separate HTML reports for mock and live runs.
+
+Rationale:
+Screenshots embedded in the Playwright report give a single review artifact for each state change without manual capture.
+
+Alternatives considered:
+- Capture screenshots only on failure (rejected: does not provide the full step-by-step documentation the user requested).
+- Use a separate CLI automation flow (rejected: tests already encode the steps and state gating).
+
+Acceptance / test:
+- Playwright mock and live reports include screenshots for each labeled state-change step.

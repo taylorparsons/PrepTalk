@@ -2,8 +2,8 @@
 
 Status: Draft
 Created: 2026-02-03 10:01
-Inputs: CR-20260203-0949
-Decisions: D-20260203-1001
+Inputs: CR-20260203-0949, CR-20260205-1005
+Decisions: D-20260203-1001, D-20260205-1010
 
 ## Summary
 Define a stage-gated CTA hierarchy across Setup, Live, and Results so each screen has a single primary action, and hide/collapse panels until they contain relevant content.
@@ -37,7 +37,7 @@ Narrative:
 Acceptance scenarios:
 1. Given scoring is complete, When Stage 3 is shown, Then “Restart Interview” is the primary CTA and export actions are secondary. (Verifies: FR-003, FR-004)
 2. Given the score is ready, When Stage 3 is shown, Then the UI explicitly indicates that export options are available. (Verifies: FR-003)
-3. Given the session is stopped and scoring is pending or complete, When Stage 3 is shown, Then question, insights, transcript, and controls panels are hidden while the score panel remains visible. (Verifies: FR-018)
+3. Given the session is stopped and scoring is pending or complete, When Stage 3 is shown, Then question, insights, and transcript panels are hidden while the score panel remains visible, and the controls panel remains available in a results-safe mode for Extras/Restart. (Verifies: FR-018)
 
 ### US4: Stage-gated panel visibility (Priority: P1)
 Narrative:
@@ -69,7 +69,7 @@ Functional requirements:
 - FR-015: Candidate Setup collapses by default after a session starts and can be re-opened via the toggle. (Sources: CR-20260203-1138; D-20260203-1138)
 - FR-016: Panels remain hidden until they have content (questions, insights, transcript, score/report, session controls). (Sources: CR-20260203-1146; D-20260203-1138)
 - FR-017: Stage 2 shows a non-blocking help hint after brief inactivity and surfaces a compact rubric card when help is requested. (Sources: CR-20260203-1328; D-20260203-1328)
-- FR-018: Stage 3 hides question, insights, transcript, and controls panels once scoring starts, keeping results focused on score + exports. (Sources: CR-20260203-1335; D-20260203-1335)
+- FR-018: Stage 3 hides question, insights, and transcript panels once scoring starts, keeping results focused on score + exports while keeping the controls panel in a results-safe mode for Extras/Restart. (Sources: CR-20260203-1335, CR-20260205-1005; D-20260203-1335, D-20260205-1010)
 
 ## Edge cases
 - Missing inputs: “Start Interview” remains disabled and the reason is shown. (Verifies: FR-001, FR-004)

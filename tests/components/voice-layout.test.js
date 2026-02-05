@@ -105,4 +105,167 @@ describe('voice layout', () => {
     delete window.__e2eState;
     delete window.__e2eUi;
   });
+
+  it('updates the setup hint based on input readiness', () => {
+    window.__E2E__ = true;
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const ui = window.__e2eUi;
+    const hint = layout.querySelector('[data-testid="setup-hint"]');
+    expect(hint).toBeTruthy();
+    expect(hint.classList.contains('ui-state-text')).toBe(true);
+    expect(hint.textContent).toContain('Add your resume');
+
+    Object.defineProperty(ui.resumeInput, 'files', {
+      value: [{ name: 'resume.pdf' }],
+      configurable: true
+    });
+    ui.resumeInput.dispatchEvent(new Event('change'));
+    expect(hint.textContent).toContain('job description');
+
+    ui.jobUrlInput.value = 'https://example.com/job';
+    ui.jobUrlInput.dispatchEvent(new Event('input'));
+    expect(hint.textContent).toContain('Ready to generate');
+
+    delete window.__E2E__;
+    delete window.__e2eState;
+    delete window.__e2eUi;
+  });
+
+  it('auto-collapses setup and hero guidance when questions exist', () => {
+    window.__E2E__ = true;
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const state = window.__e2eState;
+    const ui = window.__e2eUi;
+
+    expect(ui.heroToggle.hidden).toBe(true);
+    expect(ui.heroBody.hidden).toBe(false);
+
+    state.interviewId = 'abc-123';
+    state.questions = ['Tell me about a time you led a project.'];
+    ui.updateSessionToolsState();
+
+    expect(ui.setupBody.hidden).toBe(true);
+    expect(ui.heroToggle.hidden).toBe(false);
+    expect(ui.heroBody.hidden).toBe(true);
+
+    ui.heroToggle.click();
+    expect(ui.heroBody.hidden).toBe(false);
+
+    delete window.__E2E__;
+    delete window.__e2eState;
+    delete window.__e2eUi;
+  });
+
+  it('hides transcript, score, and progress indicators until needed', () => {
+    window.__E2E__ = true;
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const state = window.__e2eState;
+    const ui = window.__e2eUi;
+
+    expect(ui.transcriptPanel.hidden).toBe(true);
+    expect(ui.scorePanel.hidden).toBe(true);
+    expect(ui.generateProgress.hidden).toBe(true);
+    expect(ui.scoreProgress.hidden).toBe(true);
+    expect(ui.generateProgress.classList.contains('ui-radial-progress--active')).toBe(false);
+    expect(ui.scoreProgress.classList.contains('ui-radial-progress--active')).toBe(false);
+
+    ui.setGenerateProgressVisible(true);
+    expect(ui.generateProgress.hidden).toBe(false);
+    expect(ui.generateProgress.classList.contains('ui-radial-progress--active')).toBe(true);
+    ui.setGenerateProgressVisible(false);
+    expect(ui.generateProgress.hidden).toBe(true);
+    expect(ui.generateProgress.classList.contains('ui-radial-progress--active')).toBe(false);
+
+    state.sessionActive = true;
+    ui.updateSessionToolsState();
+    expect(ui.transcriptPanel.hidden).toBe(false);
+
+    state.scorePending = true;
+    ui.updateSessionToolsState();
+    expect(ui.scorePanel.hidden).toBe(false);
+    expect(ui.scoreProgress.hidden).toBe(false);
+    expect(ui.scoreProgress.classList.contains('ui-radial-progress--active')).toBe(true);
+
+    delete window.__E2E__;
+    delete window.__e2eState;
+    delete window.__e2eUi;
+  });
+
+  it('moves transcript above questions when transcript exists', () => {
+    window.__E2E__ = true;
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const state = window.__e2eState;
+    const ui = window.__e2eUi;
+
+    state.interviewId = 'abc-123';
+    state.questions = ['Question 1'];
+    state.transcript = [{ role: 'coach', text: 'Hello there.' }];
+    ui.updateSessionToolsState();
+
+    expect(ui.rightColumn.firstChild).toBe(ui.transcriptPanel);
+
+    state.transcript = [];
+    ui.updateSessionToolsState();
+    expect(ui.rightColumn.firstChild).toBe(ui.questionRow);
+
+    delete window.__E2E__;
+    delete window.__e2eState;
+    delete window.__e2eUi;
+  });
+
+  it('keeps Extras and Restart available after stop/results', () => {
+    window.__E2E__ = true;
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const state = window.__e2eState;
+    const ui = window.__e2eUi;
+
+    state.interviewId = 'abc-123';
+    state.questions = ['Question 1'];
+    state.sessionStarted = true;
+    state.sessionActive = false;
+    state.scorePending = true;
+    ui.updateSessionToolsState();
+
+    expect(ui.controlsPanel.hidden).toBe(false);
+    expect(ui.controlsPanel.classList.contains('ui-controls--results')).toBe(true);
+    expect(ui.restartButtonMain.disabled).toBe(false);
+    expect(ui.sessionToolsToggle).toBeTruthy();
+
+    delete window.__E2E__;
+    delete window.__e2eState;
+    delete window.__e2eUi;
+  });
+
+  it('persists help answers in question insights', () => {
+    window.__E2E__ = true;
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const state = window.__e2eState;
+    const ui = window.__e2eUi;
+    state.questions = ['Tell me about a project you led.'];
+    ui.updateQuestionInsights(0, { clear: true });
+
+    expect(ui.insightsHelp.hidden).toBe(true);
+
+    ui.applyHelpExample('Tell me about a project you led.', 'Use a STAR example with measurable impact.');
+
+    expect(ui.insightsHelp.hidden).toBe(false);
+    expect(ui.insightsHelp.textContent).toContain('STAR example');
+    expect(ui.insightsPin.hidden).toBe(false);
+
+    delete window.__E2E__;
+    delete window.__e2eState;
+    delete window.__e2eUi;
+  });
 });

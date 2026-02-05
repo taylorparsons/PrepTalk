@@ -252,6 +252,18 @@ export function formatCount(value) {
   return typeof value === 'number' ? String(value) : '0';
 }
 
+export function formatScoreValue(value) {
+  if (value === null || value === undefined) {
+    return '--';
+  }
+  const numeric = typeof value === 'number' ? value : Number.parseFloat(String(value));
+  if (!Number.isFinite(numeric)) {
+    return '--';
+  }
+  const display = Number.isInteger(numeric) ? String(numeric) : numeric.toFixed(1);
+  return `${display} / 100`;
+}
+
 function coachHasQuestion(text) {
   const cleaned = String(text || '').trim();
   if (!cleaned) {
@@ -352,7 +364,7 @@ function createFileField({ id, label, helpText, testId }) {
   labelEl.textContent = label;
 
   const input = document.createElement('input');
-  input.className = 'ui-field__input';
+  input.className = 'ui-field__input file-input file-input-bordered';
   input.type = 'file';
   input.accept = 'application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,.pdf,.docx,.txt';
   input.id = id;
@@ -379,7 +391,7 @@ function createTextField({ id, label, helpText, placeholder, testId, type = 'tex
   labelEl.textContent = label;
 
   const input = document.createElement('input');
-  input.className = 'ui-field__input';
+  input.className = 'ui-field__input input input-bordered';
   input.type = type;
   input.id = id;
   if (placeholder) {
@@ -416,9 +428,15 @@ function mergeTranscriptText(previous, incoming) {
   return `${prev} ${next}`;
 }
 
-function buildAppHeader() {
+function buildAppHeader(ui) {
   const wrapper = document.createElement('section');
   wrapper.className = 'ui-hero';
+
+  const header = document.createElement('div');
+  header.className = 'ui-hero__header';
+
+  const heading = document.createElement('div');
+  heading.className = 'ui-hero__heading';
 
   const eyebrow = document.createElement('div');
   eyebrow.className = 'ui-hero__eyebrow';
@@ -431,6 +449,22 @@ function buildAppHeader() {
   const subtitle = document.createElement('p');
   subtitle.className = 'ui-hero__subtitle';
   subtitle.textContent = 'PrepTalk helps you practice with contextual interview questions built from your resume and job description, then coaches you through a focused, turn-based session.';
+
+  heading.appendChild(eyebrow);
+  heading.appendChild(title);
+  heading.appendChild(subtitle);
+
+  const toggle = createButton({
+    label: 'Collapse guide',
+    variant: 'ghost',
+    size: 'sm',
+    attrs: { 'data-testid': 'hero-collapse' }
+  });
+  toggle.classList.add('ui-hero__toggle');
+  toggle.hidden = true;
+
+  header.appendChild(heading);
+  header.appendChild(toggle);
 
   const steps = document.createElement('ol');
   steps.className = 'ui-hero__steps';
@@ -452,12 +486,32 @@ function buildAppHeader() {
   callout.className = 'ui-hero__callout';
   callout.textContent = 'Extras lets you revisit past sessions, add custom questions, and export study guides.';
 
-  wrapper.appendChild(eyebrow);
-  wrapper.appendChild(title);
-  wrapper.appendChild(subtitle);
-  wrapper.appendChild(steps);
-  wrapper.appendChild(note);
-  wrapper.appendChild(callout);
+  const body = document.createElement('div');
+  body.className = 'ui-hero__body';
+  body.appendChild(steps);
+  body.appendChild(note);
+  body.appendChild(callout);
+
+  let isCollapsed = false;
+  const setHeroCollapsed = (value) => {
+    isCollapsed = Boolean(value);
+    body.hidden = isCollapsed;
+    wrapper.classList.toggle('ui-hero--collapsed', isCollapsed);
+    updateButtonLabel(toggle, isCollapsed ? 'Expand guide' : 'Collapse guide');
+  };
+
+  toggle.addEventListener('click', () => {
+    setHeroCollapsed(!isCollapsed);
+  });
+
+  wrapper.appendChild(header);
+  wrapper.appendChild(body);
+
+  if (ui) {
+    ui.heroBody = body;
+    ui.heroToggle = toggle;
+    ui.setHeroCollapsed = setHeroCollapsed;
+  }
 
   return wrapper;
 }
@@ -578,7 +632,7 @@ export function renderQuestions(list, questions, statuses, placeholder, onStatus
     pinButton.classList.add('ui-question__pin');
 
     const select = document.createElement('select');
-    select.className = 'ui-question__select';
+    select.className = 'ui-question__select select select-bordered select-sm';
     select.setAttribute('data-testid', `question-status-${index}`);
     QUESTION_STATUS_OPTIONS.forEach((option) => {
       const opt = document.createElement('option');
@@ -639,7 +693,7 @@ function renderScore(ui, score) {
     return;
   }
 
-  ui.scoreValue.textContent = String(score.overall_score ?? '--');
+  ui.scoreValue.textContent = formatScoreValue(score.overall_score);
   renderMarkdownInto(ui.scoreSummary, score.summary || 'Summary pending.');
 
   ui.scoreStrengths.innerHTML = '';
@@ -699,8 +753,15 @@ function buildSetupPanel(state, ui) {
   });
 
   const status = document.createElement('p');
-  status.className = 'ui-field__help';
+  status.className = 'ui-field__help ui-state-text';
   status.textContent = 'Waiting for documents.';
+
+  const setupHint = document.createElement('div');
+  setupHint.className = 'ui-cta-hint ui-state-text alert alert-warning';
+  setupHint.setAttribute('data-testid', 'setup-hint');
+  setupHint.setAttribute('role', 'status');
+
+  let isGenerating = false;
 
   const collapseButton = createButton({
     label: 'Collapse setup',
@@ -718,20 +779,87 @@ function buildSetupPanel(state, ui) {
     attrs: { 'data-testid': 'generate-questions' }
   });
 
+  const generateProgress = document.createElement('div');
+  generateProgress.className = 'radial-progress ui-radial-progress ui-radial-progress--sm';
+  generateProgress.style.setProperty('--ui-progress-value', '28');
+  generateProgress.setAttribute('data-testid', 'generate-progress');
+  generateProgress.setAttribute('role', 'status');
+  generateProgress.setAttribute('aria-live', 'polite');
+  generateProgress.setAttribute('aria-label', 'Generating questions');
+  generateProgress.setAttribute('aria-hidden', 'true');
+  generateProgress.hidden = true;
+
+  function setGenerateProgressVisible(value) {
+    const visible = Boolean(value);
+    generateProgress.hidden = !visible;
+    generateProgress.setAttribute('aria-hidden', String(!visible));
+    generateProgress.classList.toggle('ui-radial-progress--active', visible);
+  }
+
+  function setSetupHintTone(tone) {
+    setupHint.classList.remove('alert-info', 'alert-warning', 'alert-success');
+    if (tone) {
+      setupHint.classList.add(`alert-${tone}`);
+    }
+  }
+
+  function updateSetupHint() {
+    const resumeReady = resumeField.input.files.length > 0;
+    const jobReady = jobField.input.files.length > 0
+      || String(jobUrlField.input.value || '').trim().length > 0;
+    const hasQuestions = Boolean(state.interviewId) && state.questions.length > 0;
+    if (isGenerating) {
+      setupHint.textContent = 'Generating questions...';
+      setSetupHintTone('info');
+      return;
+    }
+    if (hasQuestions) {
+      setupHint.textContent = 'Questions ready. Start the session when you are ready.';
+      setSetupHintTone('success');
+      return;
+    }
+    if (!resumeReady && !jobReady) {
+      setupHint.textContent = 'Add your resume and job details to enable Generate Questions.';
+      setSetupHintTone('warning');
+      return;
+    }
+    if (!resumeReady) {
+      setupHint.textContent = 'Upload a resume to continue.';
+      setSetupHintTone('warning');
+      return;
+    }
+    if (!jobReady) {
+      setupHint.textContent = 'Add a job description file or URL to continue.';
+      setSetupHintTone('warning');
+      return;
+    }
+    setupHint.textContent = 'Ready to generate questions.';
+    setSetupHintTone('success');
+  }
+
   function updateSetupCtas() {
     const hasQuestions = Boolean(state.interviewId) && state.questions.length > 0;
     setButtonVariant(generateButton, hasQuestions ? 'secondary' : 'primary');
     if (ui.startButton) {
       setButtonVariant(ui.startButton, hasQuestions ? 'primary' : 'secondary');
     }
+    updateSetupHint();
   }
 
   function updateGenerateState() {
     const resumeReady = resumeField.input.files.length > 0;
     const jobReady = jobField.input.files.length > 0
       || String(jobUrlField.input.value || '').trim().length > 0;
+    if (isGenerating) {
+      generateButton.disabled = true;
+      setGenerateProgressVisible(true);
+      updateSetupHint();
+      return;
+    }
+    setGenerateProgressVisible(false);
     generateButton.disabled = !(resumeReady && jobReady);
     ui.updateSetupCtas?.();
+    updateSetupHint();
   }
 
   resumeField.input.addEventListener('change', updateGenerateState);
@@ -741,18 +869,23 @@ function buildSetupPanel(state, ui) {
   generateButton.addEventListener('click', async () => {
     if (generateButton.disabled) return;
 
-    status.className = 'ui-field__help';
+    status.className = 'ui-field__help ui-state-text';
     status.textContent = 'Analyzing documents and generating questions...';
     generateButton.disabled = true;
     updateButtonLabel(generateButton, 'Generating...');
+    isGenerating = true;
+    setGenerateProgressVisible(true);
+    updateSetupHint();
     state.interviewId = null;
     state.questions = [];
     state.questionStatuses = [];
+    state.questionHelpExamples = [];
     state.transcript = [];
     state.score = null;
     state.scorePending = false;
     state.askedQuestionIndex = null;
     state.setupAutoCollapsed = false;
+    state.heroAutoCollapsed = false;
     ui.startButton.disabled = true;
     renderQuestions(
       ui.questionList,
@@ -796,10 +929,10 @@ function buildSetupPanel(state, ui) {
       ui.startButton.disabled = false;
       ui.updateSetupCtas?.();
       if (result.job_url_warning) {
-        status.className = 'ui-field__warning';
+        status.className = 'ui-field__warning ui-state-text';
         status.textContent = 'Questions ready. The job URL could not be reached, so we used the uploaded file.';
       } else {
-        status.className = 'ui-field__help';
+        status.className = 'ui-field__help ui-state-text';
         status.textContent = 'Questions ready. Start the session when ready.';
       }
       ui.updateMeta?.();
@@ -814,10 +947,12 @@ function buildSetupPanel(state, ui) {
       const defaultInsightIndex = state.questions.length > 0 ? 0 : null;
       ui.updateQuestionInsights?.(defaultInsightIndex, { clear: true });
     } catch (error) {
-      status.className = 'ui-field__error';
+      status.className = 'ui-field__error ui-state-text';
       status.textContent = error.message || 'Unable to generate questions.';
     } finally {
       updateButtonLabel(generateButton, 'Generate Questions');
+      isGenerating = false;
+      setGenerateProgressVisible(false);
       updateGenerateState();
     }
   });
@@ -827,15 +962,24 @@ function buildSetupPanel(state, ui) {
   content.appendChild(resumeField.wrapper);
   content.appendChild(jobField.wrapper);
   content.appendChild(jobUrlField.wrapper);
-  content.appendChild(generateButton);
+  const generateRow = document.createElement('div');
+  generateRow.className = 'ui-cta-row';
+  generateRow.appendChild(generateButton);
+  generateRow.appendChild(generateProgress);
+  content.appendChild(generateRow);
+  content.appendChild(setupHint);
   content.appendChild(status);
 
   ui.resumeInput = resumeField.input;
   ui.jobInput = jobField.input;
   ui.jobUrlInput = jobUrlField.input;
   ui.setupStatus = status;
+  ui.setupHint = setupHint;
   ui.generateButton = generateButton;
+  ui.generateProgress = generateProgress;
+  ui.setGenerateProgressVisible = setGenerateProgressVisible;
   ui.updateSetupCtas = updateSetupCtas;
+  updateSetupHint();
 
   const panel = createPanel({
     title: 'Candidate Setup',
@@ -976,7 +1120,7 @@ function buildControlsPanel(state, ui, config) {
   });
 
   const restartMainHelp = document.createElement('p');
-  restartMainHelp.className = 'ui-field__help';
+  restartMainHelp.className = 'ui-field__help ui-state-text';
   restartMainHelp.textContent = 'Enabled after a session starts.';
 
   function setMuteState(isMuted) {
@@ -1650,7 +1794,8 @@ function buildControlsPanel(state, ui, config) {
     const reply = (text || '').trim();
     const outputMode = normalizeVoiceOutputMode(state.voiceOutputMode);
     let played = false;
-    if (typeof window !== 'undefined' && window.__E2E__ && outputMode === 'browser') {
+    const skipE2eTts = typeof window !== 'undefined' && window.__E2E__ && !window.__E2E_ALLOW_TTS;
+    if (skipE2eTts && outputMode === 'browser') {
       return;
     }
     if (audio && outputMode !== 'browser') {
@@ -1843,6 +1988,7 @@ function buildControlsPanel(state, ui, config) {
       if (response?.help) {
         appendTranscriptEntry(state, response.help);
         renderTranscript(ui.transcriptList, state.transcript);
+        ui.applyHelpExample?.(cleanedQuestion, response.help.text);
         ui.updateSessionToolsState?.();
         await playCoachReply({
           text: response.help.text,
@@ -1986,6 +2132,7 @@ function buildControlsPanel(state, ui, config) {
     state.lastSpokenCoachText = '';
     state.lastCoachQuestion = '';
     state.setupAutoCollapsed = false;
+    state.heroAutoCollapsed = false;
     clearGeminiReconnect(state);
     stopAudioBuffer(state);
     stopE2eCandidatePlayback();
@@ -2466,7 +2613,7 @@ function buildControlsPanel(state, ui, config) {
   turnActionsRow.appendChild(submitTurnButton);
 
   const turnHelp = document.createElement('div');
-  turnHelp.className = 'ui-turn-help';
+  turnHelp.className = 'ui-turn-help ui-state-text alert alert-info';
   turnHelp.setAttribute('data-testid', 'turn-help');
   turnHelp.textContent = 'Waiting for the coach.';
 
@@ -2584,7 +2731,7 @@ function buildSessionToolsDrawer(state, ui, config) {
   sessionLabel.textContent = 'Load session';
 
   const sessionSelect = document.createElement('select');
-  sessionSelect.className = 'ui-field__input';
+  sessionSelect.className = 'ui-field__input select select-bordered';
   sessionSelect.setAttribute('data-testid', 'session-select');
 
   const sessionLoad = createButton({
@@ -2596,7 +2743,7 @@ function buildSessionToolsDrawer(state, ui, config) {
   });
 
   const sessionHelp = document.createElement('p');
-  sessionHelp.className = 'ui-field__help';
+  sessionHelp.className = 'ui-field__help ui-state-text';
   sessionHelp.textContent = 'Select a saved session to resume.';
 
   sessionSection.appendChild(sessionLabel);
@@ -2612,7 +2759,7 @@ function buildSessionToolsDrawer(state, ui, config) {
   nameLabel.textContent = 'Session name';
 
   const nameInput = document.createElement('input');
-  nameInput.className = 'ui-field__input';
+  nameInput.className = 'ui-field__input input input-bordered';
   nameInput.type = 'text';
   nameInput.placeholder = 'e.g. PM system design';
   nameInput.setAttribute('data-testid', 'session-name-input');
@@ -2626,7 +2773,7 @@ function buildSessionToolsDrawer(state, ui, config) {
   });
 
   const nameHelp = document.createElement('p');
-  nameHelp.className = 'ui-field__help';
+  nameHelp.className = 'ui-field__help ui-state-text';
   nameHelp.textContent = 'Names are versioned per interview.';
 
   nameSection.appendChild(nameLabel);
@@ -2642,7 +2789,7 @@ function buildSessionToolsDrawer(state, ui, config) {
   exportLabel.textContent = 'Export transcript';
 
   const exportFormat = document.createElement('select');
-  exportFormat.className = 'ui-field__input';
+  exportFormat.className = 'ui-field__input select select-bordered';
   exportFormat.setAttribute('data-testid', 'export-format');
 
   [
@@ -2665,7 +2812,7 @@ function buildSessionToolsDrawer(state, ui, config) {
   });
 
   const exportHelp = document.createElement('p');
-  exportHelp.className = 'ui-field__help';
+  exportHelp.className = 'ui-field__help ui-state-text';
   exportHelp.setAttribute('data-testid', 'export-help');
   exportHelp.textContent = 'Enabled after transcript exists.';
 
@@ -2686,7 +2833,7 @@ function buildSessionToolsDrawer(state, ui, config) {
   questionLabel.textContent = 'Add known question';
 
   const questionInput = document.createElement('textarea');
-  questionInput.className = 'ui-field__input ui-field__input--textarea';
+  questionInput.className = 'ui-field__input ui-field__input--textarea textarea textarea-bordered';
   questionInput.placeholder = 'Paste the question the interviewer will ask.';
   questionInput.setAttribute('data-testid', 'custom-question-input');
 
@@ -2695,7 +2842,7 @@ function buildSessionToolsDrawer(state, ui, config) {
   positionLabel.textContent = 'Insert position';
 
   const positionInput = document.createElement('input');
-  positionInput.className = 'ui-field__input ui-field__input--number';
+  positionInput.className = 'ui-field__input ui-field__input--number input input-bordered';
   positionInput.type = 'number';
   positionInput.min = '1';
   positionInput.value = '1';
@@ -2724,7 +2871,7 @@ function buildSessionToolsDrawer(state, ui, config) {
   questionRow.appendChild(addOnly);
 
   const questionHelp = document.createElement('p');
-  questionHelp.className = 'ui-field__help';
+  questionHelp.className = 'ui-field__help ui-state-text';
   questionHelp.textContent = 'Positions are 1-based in the question list.';
 
   questionSection.appendChild(questionLabel);
@@ -2750,7 +2897,7 @@ function buildSessionToolsDrawer(state, ui, config) {
   });
 
   const restartHelp = document.createElement('p');
-  restartHelp.className = 'ui-field__help';
+  restartHelp.className = 'ui-field__help ui-state-text';
   restartHelp.textContent = 'Enabled after a session starts.';
 
   restartSection.appendChild(restartLabel);
@@ -2831,6 +2978,16 @@ function buildSessionToolsDrawer(state, ui, config) {
   empty.className = 'ui-insights__empty';
   empty.textContent = 'Hover a question to see why it is asked and which resume cues to use.';
 
+  const helpLabel = document.createElement('div');
+  helpLabel.className = 'ui-insights__label';
+  helpLabel.textContent = 'Practice answer';
+  helpLabel.hidden = true;
+
+  const helpText = document.createElement('div');
+  helpText.className = 'ui-insights__help';
+  helpText.setAttribute('data-testid', 'insights-help');
+  helpText.hidden = true;
+
   const whyLabel = document.createElement('div');
   whyLabel.className = 'ui-insights__label';
   whyLabel.textContent = 'Why this is asked';
@@ -2867,6 +3024,8 @@ function buildSessionToolsDrawer(state, ui, config) {
   jobList.className = 'ui-insights__list';
 
   container.appendChild(header);
+  container.appendChild(helpLabel);
+  container.appendChild(helpText);
   container.appendChild(empty);
   container.appendChild(whyLabel);
   container.appendChild(whyText);
@@ -2882,6 +3041,8 @@ function buildSessionToolsDrawer(state, ui, config) {
   ui.insightsQuestion = question;
   ui.insightsPin = pinBadge;
   ui.insightsEmpty = empty;
+  ui.insightsHelpLabel = helpLabel;
+  ui.insightsHelp = helpText;
   ui.insightsWhy = whyText;
   ui.insightsRubric = rubricList;
   ui.insightsFocus = focusList;
@@ -2945,8 +3106,25 @@ function buildSessionToolsDrawer(state, ui, config) {
   scoreValue.className = 'ui-score__value';
   scoreValue.setAttribute('data-testid', 'score-value');
 
+  const scoreProgress = document.createElement('div');
+  scoreProgress.className = 'radial-progress ui-radial-progress ui-score__progress';
+  scoreProgress.style.setProperty('--ui-progress-value', '28');
+  scoreProgress.style.setProperty('--size', '2.4rem');
+  scoreProgress.style.setProperty('--thickness', '3px');
+  scoreProgress.setAttribute('data-testid', 'score-progress');
+  scoreProgress.setAttribute('role', 'status');
+  scoreProgress.setAttribute('aria-live', 'polite');
+  scoreProgress.setAttribute('aria-label', 'Scoring interview');
+  scoreProgress.setAttribute('aria-hidden', 'true');
+  scoreProgress.hidden = true;
+
+  const scoreHeader = document.createElement('div');
+  scoreHeader.className = 'ui-score__header';
+  scoreHeader.appendChild(scoreValue);
+  scoreHeader.appendChild(scoreProgress);
+
   const scoreNotice = document.createElement('div');
-  scoreNotice.className = 'ui-field__help';
+  scoreNotice.className = 'ui-field__help ui-state-text';
   scoreNotice.textContent = 'Score will appear after you end the session.';
 
   const scoreSummary = document.createElement('div');
@@ -2986,7 +3164,7 @@ function buildSessionToolsDrawer(state, ui, config) {
   });
 
   const exportMainHelp = document.createElement('p');
-  exportMainHelp.className = 'ui-field__help';
+  exportMainHelp.className = 'ui-field__help ui-state-text';
   exportMainHelp.textContent = 'Exports are enabled once a transcript exists.';
 
   exportActions.appendChild(exportPdfMain);
@@ -2995,7 +3173,7 @@ function buildSessionToolsDrawer(state, ui, config) {
   const container = document.createElement('div');
   container.className = 'ui-score';
   container.setAttribute('data-testid', 'score-summary');
-  container.appendChild(scoreValue);
+  container.appendChild(scoreHeader);
   container.appendChild(scoreNotice);
   container.appendChild(scoreSummary);
   container.appendChild(strengthsLabel);
@@ -3006,6 +3184,7 @@ function buildSessionToolsDrawer(state, ui, config) {
   container.appendChild(exportMainHelp);
 
   ui.scoreValue = scoreValue;
+  ui.scoreProgress = scoreProgress;
   ui.scoreNotice = scoreNotice;
   ui.scoreSummary = scoreSummary;
   ui.scoreStrengths = strengthsList;
@@ -3099,7 +3278,9 @@ export function buildVoiceLayout() {
     liveCoachSpeakTimer: null,
     lastSpokenCoachText: '',
     lastCoachQuestion: '',
-    setupAutoCollapsed: false
+    setupAutoCollapsed: false,
+    heroAutoCollapsed: false,
+    questionHelpExamples: []
   };
 
   const ui = {};
@@ -3302,6 +3483,13 @@ export function buildVoiceLayout() {
     if (activeIndex === null || !state.questions[activeIndex]) {
       ui.insightsQuestion.textContent = 'Hover a question to see insights.';
       ui.insightsEmpty.hidden = false;
+      if (ui.insightsHelpLabel) {
+        ui.insightsHelpLabel.hidden = true;
+      }
+      if (ui.insightsHelp) {
+        ui.insightsHelp.hidden = true;
+        ui.insightsHelp.textContent = '';
+      }
       ui.insightsWhy.textContent = '';
       renderInsightList(ui.insightsRubric, [], 'Rubric details appear after question selection.');
       renderInsightList(ui.insightsFocus, [], 'Focus areas will appear after question generation.');
@@ -3315,6 +3503,21 @@ export function buildVoiceLayout() {
     ui.insightsQuestion.textContent = questionText;
     ui.insightsEmpty.hidden = true;
     ui.insightsWhy.textContent = rubric.why;
+
+    const helpExample = Array.isArray(state.questionHelpExamples)
+      ? state.questionHelpExamples[activeIndex]
+      : null;
+    if (ui.insightsHelpLabel && ui.insightsHelp) {
+      if (helpExample) {
+        ui.insightsHelpLabel.hidden = false;
+        ui.insightsHelp.hidden = false;
+        ui.insightsHelp.textContent = helpExample;
+      } else {
+        ui.insightsHelpLabel.hidden = true;
+        ui.insightsHelp.hidden = true;
+        ui.insightsHelp.textContent = '';
+      }
+    }
 
     renderInsightList(ui.insightsRubric, rubric.rubric, 'No rubric details available.');
     renderFocusAreas(ui.insightsFocus, state.focusAreas.slice(0, 4), 'No focus areas available yet.');
@@ -3352,6 +3555,47 @@ export function buildVoiceLayout() {
   ui.onQuestionHover = onQuestionHover;
   ui.onQuestionPin = onQuestionPin;
   ui.updateQuestionInsights = updateQuestionInsights;
+
+  function resolveHelpQuestionIndex(questionText) {
+    if (Number.isInteger(state.askedQuestionIndex)) {
+      return state.askedQuestionIndex;
+    }
+    const cleaned = String(questionText || '').trim();
+    if (cleaned) {
+      const matchIndex = state.questions.findIndex(
+        (question) => String(question || '').trim() === cleaned
+      );
+      if (matchIndex >= 0) {
+        return matchIndex;
+      }
+    }
+    if (Number.isInteger(state.questionInsightsPinnedIndex)) {
+      return state.questionInsightsPinnedIndex;
+    }
+    if (Number.isInteger(state.questionInsightsActiveIndex)) {
+      return state.questionInsightsActiveIndex;
+    }
+    return null;
+  }
+
+  function applyHelpExample(questionText, helpText) {
+    const cleanedHelp = String(helpText || '').trim();
+    if (!cleanedHelp) {
+      return;
+    }
+    const index = resolveHelpQuestionIndex(questionText);
+    if (!Number.isInteger(index) || !state.questions[index]) {
+      return;
+    }
+    if (!Array.isArray(state.questionHelpExamples)) {
+      state.questionHelpExamples = [];
+    }
+    state.questionHelpExamples[index] = cleanedHelp;
+    const alreadyPinned = state.questionInsightsPinnedIndex === index;
+    updateQuestionInsights(index, { source: alreadyPinned ? 'hover' : 'pin' });
+  }
+
+  ui.applyHelpExample = applyHelpExample;
 
   function isCoachRole(role) {
     const normalized = String(role || '').toLowerCase();
@@ -3398,6 +3642,20 @@ export function buildVoiceLayout() {
   rightColumn.appendChild(questionRow);
   rightColumn.appendChild(buildTranscriptPanel(ui));
   rightColumn.appendChild(buildScorePanel(ui));
+  ui.rightColumn = rightColumn;
+  ui.reorderTranscript = (showTranscript) => {
+    if (!ui.rightColumn || !ui.transcriptPanel || !ui.questionRow) {
+      return;
+    }
+    const shouldLead = Boolean(showTranscript);
+    const firstChild = ui.rightColumn.firstChild;
+    if (shouldLead && firstChild !== ui.transcriptPanel) {
+      ui.rightColumn.insertBefore(ui.transcriptPanel, ui.questionRow);
+    }
+    if (!shouldLead && firstChild === ui.transcriptPanel) {
+      ui.rightColumn.insertBefore(ui.questionRow, ui.transcriptPanel);
+    }
+  };
 
   const layout = document.createElement('main');
   layout.className = 'layout-split';
@@ -3406,7 +3664,7 @@ export function buildVoiceLayout() {
 
   const page = document.createElement('div');
   page.className = 'layout-page';
-  page.appendChild(buildAppHeader());
+  page.appendChild(buildAppHeader(ui));
   page.appendChild(layout);
 
   const { drawer, backdrop } = buildSessionToolsDrawer(state, ui, config);
@@ -3509,6 +3767,7 @@ export function buildVoiceLayout() {
       state.focusAreas = [];
       state.resumeExcerpt = '';
       state.jobExcerpt = '';
+      state.questionHelpExamples = [];
       state.questionInsightsPinnedIndex = null;
       state.questionInsightsActiveIndex = null;
       clearGeminiReconnect(state);
@@ -3535,7 +3794,7 @@ export function buildVoiceLayout() {
           : 'Add a name to keep sessions organized.';
       }
       if (ui.setupStatus) {
-        ui.setupStatus.className = 'ui-field__help';
+        ui.setupStatus.className = 'ui-field__help ui-state-text';
         ui.setupStatus.textContent = 'Session loaded. Start the session when ready.';
       }
       ui.sessionHelp.textContent = 'Session loaded.';
@@ -3576,7 +3835,7 @@ export function buildVoiceLayout() {
     const hasScore = Boolean(state.score);
     const showScore = hasScore || state.scorePending;
     const inResults = showScore && !state.sessionActive;
-    const showControls = (hasQuestions || state.sessionActive) && !inResults;
+    const showControls = hasQuestions || state.sessionActive || inResults;
     const restartPrimary = hasScore && !state.sessionActive;
     const nameValue = ui.sessionNameInput?.value.trim() || '';
     const questionValue = ui.customQuestionInput?.value.trim() || '';
@@ -3627,14 +3886,31 @@ export function buildVoiceLayout() {
 
     if (!hasInterview) {
       state.setupAutoCollapsed = false;
+      if (ui.setSetupCollapsed) {
+        ui.setSetupCollapsed(false);
+      }
     }
-    if (hasInterview && state.sessionStarted && ui.setSetupCollapsed && !state.setupAutoCollapsed) {
+    if (hasQuestions && ui.setSetupCollapsed && !state.setupAutoCollapsed) {
       ui.setSetupCollapsed(true);
       state.setupAutoCollapsed = true;
     }
 
+    if (ui.heroToggle) {
+      ui.heroToggle.hidden = !hasQuestions;
+    }
+    if (!hasQuestions) {
+      state.heroAutoCollapsed = false;
+      if (ui.setHeroCollapsed) {
+        ui.setHeroCollapsed(false);
+      }
+    }
+    if (hasQuestions && ui.setHeroCollapsed && !state.heroAutoCollapsed) {
+      ui.setHeroCollapsed(true);
+      state.heroAutoCollapsed = true;
+    }
+
     const showQuestions = hasQuestions && !inResults;
-    const showTranscript = hasTranscript && !inResults;
+    const showTranscript = state.sessionActive || hasTranscript;
 
     if (ui.questionRow) {
       ui.questionRow.hidden = !showQuestions;
@@ -3648,11 +3924,19 @@ export function buildVoiceLayout() {
     if (ui.transcriptPanel) {
       ui.transcriptPanel.hidden = !showTranscript;
     }
+    ui.reorderTranscript?.(showTranscript);
     if (ui.scorePanel) {
       ui.scorePanel.hidden = !showScore;
     }
+    if (ui.scoreProgress) {
+      const scoreProgressActive = state.scorePending;
+      ui.scoreProgress.hidden = !scoreProgressActive;
+      ui.scoreProgress.setAttribute('aria-hidden', String(!scoreProgressActive));
+      ui.scoreProgress.classList.toggle('ui-radial-progress--active', scoreProgressActive);
+    }
     if (ui.controlsPanel) {
       ui.controlsPanel.hidden = !showControls;
+      ui.controlsPanel.classList.toggle('ui-controls--results', inResults && !state.sessionActive);
     }
 
     if (ui.exportHelp) {

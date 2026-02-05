@@ -18,4 +18,10 @@ describe('app entry', () => {
     const template = fs.readFileSync(templatePath, 'utf-8');
     expect(template).toContain('<title>PrepTalk Interview Coach</title>');
   });
+
+  it('sets the DaisyUI theme to lemonade', () => {
+    const templatePath = path.resolve(process.cwd(), 'app/templates/index.html');
+    const template = fs.readFileSync(templatePath, 'utf-8');
+    expect(template).toContain('data-theme="lemonade"');
+  });
 });

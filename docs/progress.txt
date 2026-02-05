@@ -100,6 +100,232 @@ NOTES
 
 ---
 
+Session: 2026-02-04 20:04
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy, playwright
+Feature: 20260204-e2e-screenshots
+Input: CR-20260204-1947
+Decisions: D-20260204-1948
+Spec: docs/specs/20260204-e2e-screenshots/spec.md
+Tasks: docs/specs/20260204-e2e-screenshots/tasks.md
+Goal: Capture step screenshots in Playwright and run full suites.
+
+DONE
+- [2026-02-04 19:49] T-001: Add step-labeled screenshot attachments to the mock interview flow Playwright test. (Skills: ralph, playwright)
+- [2026-02-04 19:49] T-002: Add step-labeled screenshot attachments to the live turn interview flow Playwright test. (Skills: ralph, playwright)
+- [2026-02-04 19:55] T-004: Allow Playwright webServer runs to bind to a configurable host. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- T-003: Re-run Playwright mock + live with HTML reports once the web server can bind to the port. (Skills: ralph, playwright)
+
+NOTES
+- Commands run: `./.venv/bin/python -m pytest` -> 61 passed (11 warnings).
+- Commands run: `./run.sh test` -> 64/64 passed (Vitest). Warnings about `--localstorage-file` path.
+- Commands run: `PLAYWRIGHT_HTML_REPORT=playwright-report-mock npx playwright test --reporter=html --output test-results-mock` -> failed (webServer could not bind to 127.0.0.1:8129; operation not permitted).
+- Commands run: `set -a; source .env; set +a; E2E_LIVE=1 PLAYWRIGHT_HTML_REPORT=playwright-report-live npx playwright test --reporter=html --output test-results-live` -> failed (webServer could not bind to 127.0.0.1:8129; operation not permitted).
+- Risks / open questions: Playwright reports need a local run where the server can bind; rerun for screenshots before merge.
+
+---
+
+Session: 2026-02-04 19:41
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260204-export-focus-areas
+Input: CR-20260204-1937
+Decisions: D-20260204-1940
+Spec: docs/specs/20260204-export-focus-areas/spec.md
+Tasks: docs/specs/20260204-export-focus-areas/tasks.md
+Goal: Format exported focus areas as human-readable bullets.
+
+DONE
+- [2026-02-04 19:39] T-001: Format focus areas for PDF/TXT exports in `app/services/pdf_service.py`. (Skills: ralph)
+- [2026-02-04 19:39] T-002: Add unit coverage for focus area formatting in study guide exports. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: none.
+- Tests: Not run (not requested).
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-04 19:43
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260204-score-format
+Input: CR-20260204-1940
+Decisions: D-20260204-1942
+Spec: docs/specs/20260204-score-format/spec.md
+Tasks: docs/specs/20260204-score-format/tasks.md
+Goal: Format score display as out-of-100.
+
+DONE
+- [2026-02-04 19:43] T-001: Format Score Summary display value as "<score> / 100" in the UI. (Skills: ralph, daisy)
+- [2026-02-04 19:43] T-002: Update component tests to assert the out-of-100 format. (Skills: ralph, daisy)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: none.
+- Tests: Not run (not requested).
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-04 19:46
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260204-intro-no-confirm
+Input: CR-20260204-1943
+Decisions: D-20260204-1945
+Spec: docs/specs/20260204-intro-no-confirm/spec.md
+Tasks: docs/specs/20260204-intro-no-confirm/tasks.md
+Goal: Remove intro confirmation question before the first interview prompt.
+
+DONE
+- [2026-02-04 19:46] T-001: Update intro prompt to avoid confirmation questions. (Skills: ralph)
+- [2026-02-04 19:46] T-002: Add unit coverage to ensure the intro prompt excludes confirmation language. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: none.
+- Tests: Not run (not requested).
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-04 19:30
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260204-radial-progress
+Input: CR-20260204-1928
+Decisions: D-20260204-1930
+Spec: docs/specs/20260204-radial-progress/spec.md
+Tasks: docs/specs/20260204-radial-progress/tasks.md
+Goal: Hide radial progress until active and animate while pending.
+
+DONE
+- [2026-02-04 19:30] T-003: Animate radial indicators only while active and ensure hidden state overrides DaisyUI. (Skills: ralph, daisy)
+- [2026-02-04 19:30] T-004: Update component tests to assert active animation class toggling. (Skills: ralph, daisy)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `date '+%Y-%m-%d %H:%M'` -> 2026-02-04 19:28
+- Commands run: `./run.sh test` -> 64/64 tests passed (Vitest). Command timed out in this session after output; warnings about `--localstorage-file` path.
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-05 03:13
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260205-panel-visibility
+Input: CR-20260205-0312
+Decisions: D-20260205-0313
+Spec: docs/specs/20260205-panel-visibility/spec.md
+Tasks: docs/specs/20260205-panel-visibility/tasks.md
+Goal: Hide transcript/score panels and progress spinners until needed.
+
+DONE
+- [2026-02-05 03:13] T-001: Enforce `hidden` visibility and update session-state gating for transcript/score panels. (Skills: ralph, daisy)
+- [2026-02-05 03:13] T-002: Add component tests covering initial hidden state and progress visibility. (Skills: ralph, daisy)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `./run.sh test` -> passed (64 tests); `npm run test:e2e` -> failed (export-error: start-interview enable timeout; interview-flow: help-turn enable timeout).
+- Tests: Vitest passed; Playwright mock flow failed; pytest not rerun.
+- Risks / open questions: Investigate why start-interview/help-turn remain disabled in mock E2E.
+
+---
+
+Session: 2026-02-04 15:58
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260204-state-clarity
+Input: CR-20260204-1558
+Decisions: (none)
+Spec: docs/specs/20260204-state-clarity/spec.md
+Tasks: docs/specs/20260204-state-clarity/tasks.md
+Goal: Provide UI/visual improvement options aligned to CTA clarity.
+
+DONE
+- [2026-02-04 15:58] Drafted visual improvement options without code changes. (Skills: ralph, daisy)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: date '+%Y-%m-%d %H:%M' -> 2026-02-04 15:58
+- Decisions: None.
+- Tests: Not run (not requested).
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-04 15:54
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260203-cta-clarity
+Input: CR-20260204-1553
+Decisions: (none)
+Spec: docs/specs/20260203-cta-clarity/spec.md
+Tasks: docs/specs/20260203-cta-clarity/tasks.md
+Goal: Review CTA clarity docs in `cta-extras-e2e` for alignment with Stage 1/2 setup guidance.
+
+DONE
+- [2026-02-04 15:54] Reviewed CTA spec/wireframes for Stage 1 CTA gating and setup auto-collapse behavior. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `git show cta-extras-e2e:docs/specs/20260203-cta-clarity/spec.md`; `git show cta-extras-e2e:docs/specs/20260203-cta-clarity/tasks.md`
+- Decisions: None.
+- Risks / open questions: None.
+
+---
+
 Session: 2026-01-29 12:21
 Feature: 20260129-voice-tts-default
 Input: CR-20260129-1221
@@ -1753,3 +1979,266 @@ NOTES
 - Commands run: `E2E_LIVE=0 npm run test:e2e` -> failed (mock `tests/e2e/interview-flow.spec.js` help-turn disabled / transcript not populated; ignored per CR-20260204-1515).
 - Decisions: None.
 - Risks / open questions: Confirm which branch should merge to `main` and whether hosting target is Cloud Run or another GCP service.
+
+---
+
+Session: 2026-02-04 15:31
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260204-ui-daisy-refresh
+Input: CR-20260204-1531
+Decisions: D-20260204-1531
+Spec: docs/specs/20260204-ui-daisy-refresh/spec.md
+Tasks: docs/specs/20260204-ui-daisy-refresh/tasks.md
+Goal: Improve UI polish and interaction guidance with DaisyUI styling and setup hints.
+
+DONE
+- [2026-02-04 15:41] T-001: Add DaisyUI styles and root theme configuration in the UI template. (Skills: ralph, daisy)
+- [2026-02-04 15:41] T-002: Apply DaisyUI classes to core components (buttons, inputs, panels, status pills). (Skills: ralph, daisy)
+- [2026-02-04 15:41] T-003: Add a dynamic setup hint and wire it to input readiness + generating state. (Skills: ralph, daisy)
+- [2026-02-04 15:41] T-004: Update component tests to cover the setup hint + DaisyUI class additions. (Skills: ralph, daisy)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: date '+%Y-%m-%d %H:%M' -> 2026-02-04 15:31; date '+%Y-%m-%d %H:%M' -> 2026-02-04 15:41
+- Decisions: D-20260204-1531
+- Tests: Not run (not requested).
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-04 15:54
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260204-state-clarity
+Input: CR-20260204-1553
+Decisions: D-20260204-1554
+Spec: docs/specs/20260204-state-clarity/spec.md
+Tasks: docs/specs/20260204-state-clarity/tasks.md
+Goal: Enlarge state-change messaging and auto-collapse the hero intro after questions are generated.
+
+DONE
+- (none)
+
+IN PROGRESS
+- T-001: Apply `ui-state-text` class to dynamic status messaging and add CSS for larger font size. (Skills: ralph, daisy)
+
+NEXT
+- T-002: Add hero intro collapse toggle and auto-collapse when questions are generated.
+- T-003: Update component tests for hero auto-collapse and state text classes.
+
+NOTES
+- Commands run: date '+%Y-%m-%d %H:%M' -> 2026-02-04 15:54
+- Decisions: D-20260204-1554
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-05 09:20
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260205-visual-options
+Input: CR-20260205-0912
+Decisions: D-20260205-0915
+Spec: docs/specs/20260205-visual-options/spec.md
+Tasks: docs/specs/20260205-visual-options/tasks.md
+Goal: Provide three CTA-focused visual options with images.
+
+DONE
+- [2026-02-05 09:20] T-001: Draft three UI options with rationale and behavior notes. (Skills: ralph, daisy)
+- [2026-02-05 09:20] T-002: Create three mock images and embed in the spec. (Skills: ralph, daisy)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: (none)
+- Decisions: D-20260205-0915
+- Tests: Not run (doc-only deliverable).
+- Risks / open questions: Which option should be implemented in code?
+
+---
+
+Session: 2026-02-05 09:30
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260205-visual-options
+Input: CR-20260205-0925
+Decisions: D-20260205-0927
+Spec: docs/specs/20260205-visual-options/spec.md
+Tasks: docs/specs/20260205-visual-options/tasks.md
+Goal: Add a low-risk fourth option and mock image.
+
+DONE
+- [2026-02-05 09:30] T-003: Add a low-risk fourth option and mock image. (Skills: ralph, daisy)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: (none)
+- Decisions: D-20260205-0927
+- Tests: Not run (doc-only deliverable).
+- Risks / open questions: Confirm which option should move to implementation.
+
+---
+
+Session: 2026-02-05 09:50
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260205-state-change-svgs
+Input: CR-20260205-0940
+Decisions: D-20260205-0942
+Spec: docs/specs/20260205-state-change-svgs/spec.md
+Tasks: docs/specs/20260205-state-change-svgs/tasks.md
+Goal: Create SVGs for each state-change step in the existing UI.
+
+DONE
+- [2026-02-05 09:50] T-001: Create six SVG state snapshots and list them in the spec. (Skills: ralph, daisy)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: (none)
+- Decisions: D-20260205-0942
+- Tests: Not run (doc-only deliverable).
+- Risks / open questions: If you want more granular states, list them and I will add more SVGs.
+
+---
+
+Session: 2026-02-05 10:25
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260204-state-clarity
+Input: CR-20260205-1005
+Decisions: D-20260205-1010
+Spec: docs/specs/20260204-state-clarity/spec.md
+Tasks: docs/specs/20260204-state-clarity/tasks.md
+Goal: Tighten CTA state flow, surface transcript above fold, and keep Extras/Restart accessible after stop.
+
+DONE
+- [2026-02-05 10:25] T-001: Apply `ui-state-text` class to dynamic status messaging and ensure larger font size. (Skills: ralph, daisy)
+- [2026-02-05 10:25] T-002: Add hero intro collapse toggle and auto-collapse when questions are generated. (Skills: ralph, daisy)
+- [2026-02-05 10:25] T-003: Auto-collapse Candidate Setup when questions are generated. (Skills: ralph, daisy)
+- [2026-02-05 10:25] T-004: Move transcript panel above questions when transcript exists. (Skills: ralph, daisy)
+- [2026-02-05 10:25] T-005: Keep Extras/Restart visible after stop via results-safe controls panel. (Skills: ralph, daisy)
+- [2026-02-05 10:25] T-006: Persist Request Help answers in Question Insights and auto-pin active question. (Skills: ralph, daisy)
+- [2026-02-05 10:25] T-007: Update component + E2E tests for state text, hero collapse, setup collapse, transcript placement, results controls, and help insights. (Skills: ralph, daisy)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: (none)
+- Decisions: D-20260205-1010
+- Tests: Not run (per request not specified).
+- Risks / open questions: Clarify where you want the voice-capture indicator surfaced (caption vs transcript header).
+
+---
+
+Session: 2026-02-05 11:15
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260205-state-change-svgs
+Input: CR-20260205-1110
+Decisions: D-20260205-1115
+Spec: docs/specs/20260205-state-change-svgs/spec.md
+Tasks: docs/specs/20260205-state-change-svgs/tasks.md
+Goal: Update the state-change SVGs and plan to match clarified voice chat placement and Extras visibility.
+
+DONE
+- [2026-02-05 11:15] T-002: Refresh SVGs to reflect collapsed hero/setup, above-fold voice chat, and results-stage Extras/Restart visibility. (Skills: ralph, daisy)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: (none)
+- Decisions: D-20260205-1115
+- Tests: Not run (doc-only deliverable).
+- Risks / open questions: Confirm whether you prefer the voice chat panel centered instead of left.
+
+---
+
+Session: 2026-02-05 02:50
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260205-lemonade-theme
+Input: CR-20260205-0249
+Decisions: (none)
+Spec: docs/specs/20260205-lemonade-theme/spec.md
+Tasks: docs/specs/20260205-lemonade-theme/tasks.md
+Goal: Switch the DaisyUI theme to lemonade.
+
+DONE
+- [2026-02-05 02:50] T-001: Update the app template to use the lemonade theme. (Skills: ralph, daisy)
+- [2026-02-05 02:50] T-002: Add a component test asserting `data-theme="lemonade"`. (Skills: ralph, daisy)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: (none)
+- Tests: Not run (not requested).
+- Risks / open questions: None.
+
+---
+
+Session: 2026-02-05 20:12
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy, playwright
+Feature: 20260204-e2e-screenshots
+Input: CR-20260204-1947
+Decisions: D-20260204-1948
+Spec: docs/specs/20260204-e2e-screenshots/spec.md
+Tasks: docs/specs/20260204-e2e-screenshots/tasks.md
+Goal: Re-run full test suites and attempt Playwright HTML reports for screenshots.
+
+DONE
+- [2026-02-05 20:12] Re-ran pytest and Vitest for regression coverage. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- T-003: Re-run Playwright mock + live with HTML reports once the web server can bind to the port. (Skills: ralph, playwright)
+
+NOTES
+- Commands run: `./.venv/bin/python -m pytest` -> 61 passed (11 warnings).
+- Commands run: `./run.sh test` -> 64/64 passed (Vitest). Warnings about `--localstorage-file` path.
+- Commands run: `PLAYWRIGHT_HTML_REPORT=playwright-report-mock npx playwright test --reporter=html --output test-results-mock` -> failed (webServer could not bind to 127.0.0.1:8129; operation not permitted).
+- Commands run: `set -a; source .env; set +a; E2E_LIVE=1 PLAYWRIGHT_HTML_REPORT=playwright-report-live npx playwright test --reporter=html --output test-results-live` -> failed (webServer could not bind to 127.0.0.1:8129; operation not permitted).
+- Risks / open questions: Playwright HTML reports still need a local run where the server can bind.
