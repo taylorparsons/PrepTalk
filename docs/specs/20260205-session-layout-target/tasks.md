@@ -3,7 +3,6 @@
 Spec: docs/specs/20260205-session-layout-target/spec.md
 
 ## NEXT
-- T-006: Commit current working tree changes on feature branch. (Implements: FR-001, FR-002, FR-003, FR-004, FR-006, FR-007)
 - T-007: Merge feature branch into main. (Implements: FR-001, FR-002, FR-003, FR-004, FR-006, FR-007)
 - T-008: Post-merge PRD/spec reconciliation with CR hashes and evidence. (Implements: FR-001, FR-002, FR-003, FR-004, FR-006, FR-007)
 
@@ -16,3 +15,4 @@ Spec: docs/specs/20260205-session-layout-target/spec.md
 - [2026-02-05 11:47] T-003: Add results-state CTAs (Export PDF/TXT + Candidate Setup) and transcript toggle for State F. (Implements: FR-004)
 - [2026-02-05 11:47] T-004: Update UI tests for new controls/menu behavior. (Implements: FR-001, FR-002, FR-003, FR-004, FR-006)
 - [2026-02-05 11:47] T-005: Run verification suites per verification-before-completion. (Implements: FR-001, FR-002, FR-003, FR-004, FR-006, FR-007)
+- [2026-02-05 13:29] T-006: Commit current working tree changes on feature branch. (Implements: FR-001, FR-002, FR-003, FR-004, FR-006, FR-007)
