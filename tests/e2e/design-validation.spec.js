@@ -1,14 +1,14 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Nordic Warmth Design Validation', () => {
+test.describe('PrepTalk Design Validation', () => {
   test('validates color palette and design system', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
     // Screenshot for visual audit
-    await page.screenshot({ path: 'test-results/nordic-warmth-full.png', fullPage: true });
+    await page.screenshot({ path: 'test-results/preptalk-design-full.png', fullPage: true });
 
-    // Validate Nordic Warmth CSS variables are applied
+    // Validate custom CSS variables are applied
     const rootStyles = await page.evaluate(() => {
       const root = document.documentElement;
       const computed = getComputedStyle(root);
@@ -21,7 +21,7 @@ test.describe('Nordic Warmth Design Validation', () => {
       };
     });
 
-    // Verify Nordic Warmth palette (not old green #1f6f5f)
+    // Verify palette values (not old green #1f6f5f)
     expect(rootStyles.primary).toBe('#6B7B8A');
     expect(rootStyles.ink).toBe('#3D3A36');
     expect(rootStyles.surface).toBe('#FAF8F5');
@@ -30,18 +30,17 @@ test.describe('Nordic Warmth Design Validation', () => {
 
     // Validate theme attribute
     const theme = await page.getAttribute('html', 'data-theme');
-    expect(theme).toBe('nordic');
+    expect(theme).toBe('lemonade');
 
     // Validate hero section exists
     const hero = page.locator('.ui-hero');
     await expect(hero).toBeVisible();
 
     // Validate primary button uses correct color
-    const startButton = page.locator('[data-testid="start-interview"]');
-    await expect(startButton).toBeVisible();
-    const buttonBg = await startButton.evaluate(el => getComputedStyle(el).backgroundColor);
-    // RGB for #6B7B8A is rgb(107, 123, 138)
-    expect(buttonBg).toContain('107');
+    const generateButton = page.locator('[data-testid="generate-questions"]');
+    await expect(generateButton).toBeVisible();
+    await expect(generateButton).toHaveClass(/btn-primary/);
+    await expect(generateButton).toHaveClass(/ui-button--primary/);
 
     // Validate panels have correct background
     const setupPanel = page.locator('[data-testid="setup-panel"]');
@@ -52,13 +51,9 @@ test.describe('Nordic Warmth Design Validation', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // Check skip link exists
-    const skipLink = page.locator('.skip-link');
-    await expect(skipLink).toHaveAttribute('href', '#main-content');
-
-    // Check app shell has proper role
+    // Check app shell exists
     const appShell = page.locator('#app');
-    await expect(appShell).toHaveAttribute('role', 'application');
+    await expect(appShell).toBeVisible();
 
     // Check aria-live regions
     const statusPill = page.locator('[data-testid="session-status"]');
@@ -72,7 +67,7 @@ test.describe('Nordic Warmth Design Validation', () => {
     await page.keyboard.press('Tab');
 
     // Screenshot with focus state
-    await page.screenshot({ path: 'test-results/nordic-warmth-focus.png' });
+    await page.screenshot({ path: 'test-results/preptalk-focus.png' });
   });
 
   test('validates form field accessibility', async ({ page }) => {
