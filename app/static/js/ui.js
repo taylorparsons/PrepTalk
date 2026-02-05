@@ -1250,6 +1250,7 @@ function buildControlsPanel(state, ui, config) {
     if (ui.setSetupCollapsed) {
       ui.setSetupCollapsed(false);
     }
+    ui.updateSessionToolsState?.();
     ui.setupPanel?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
   }
 
@@ -4285,6 +4286,10 @@ export function buildVoiceLayout() {
     if (hasQuestions && ui.setSetupCollapsed && !state.setupAutoCollapsed) {
       ui.setSetupCollapsed(true);
       state.setupAutoCollapsed = true;
+    }
+    if (ui.setupPanel) {
+      const setupHidden = Boolean(hasQuestions && ui.setupBody?.hidden);
+      ui.setupPanel.hidden = setupHidden;
     }
 
     if (!hasQuestions) {
