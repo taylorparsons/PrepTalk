@@ -50,9 +50,12 @@ describe('voice layout', () => {
     const resizer = layout.querySelector('[data-testid="insights-resize"]');
     expect(resizer).toBeTruthy();
     expect(resizer.classList.contains('ui-insights__body')).toBe(true);
-    expect(resizer.classList.contains('resize-y')).toBe(true);
     expect(resizer.classList.contains('overflow-auto')).toBe(true);
     expect(resizer.querySelector('[data-testid="insights-question"]')).toBeTruthy();
+
+    const panel = layout.querySelector('[data-testid="question-insights-panel"]');
+    expect(panel.classList.contains('resize-y')).toBe(true);
+    expect(panel.classList.contains('overflow-hidden')).toBe(true);
   });
 
   it('keeps the candidate setup panel scrollable when tall', () => {
