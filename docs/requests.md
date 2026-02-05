@@ -1141,3 +1141,13 @@ at stage B ready the cadidate setp should be hidden I see it
 
 Notes:
 - Hide Candidate Setup in State B (Ready) and expose it via the overflow menu.
+
+## CR-20260205-1203
+Date: 2026-02-05 12:03
+Source: chat
+
+Request (verbatim):
+this panels should fill up the whole screen section not like this
+
+Notes:
+- When Candidate Setup is hidden, the active panels should expand to full width (single-column layout).
