@@ -2673,3 +2673,28 @@ NOTES
 - Commands run: `./run.sh test` -> 22 files, 75 tests passed (warnings about `--localstorage-file`).
 - Commands run: `./.venv/bin/python -m pytest` -> 62 passed (11 warnings: fpdf `ln` deprecations, `datetime.utcnow()` deprecation).
 - Commands run: `npm run test:e2e` -> 19 passed, 5 skipped (live tests). Prototype C 404 warnings in console output.
+
+---
+
+Session: 2026-02-05 14:05
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260205-session-layout-target
+Input: CR-20260205-1405
+Decisions: (none)
+Spec: docs/specs/20260205-session-layout-target/spec.md
+Tasks: docs/specs/20260205-session-layout-target/tasks.md
+Goal: Remove the prototype-c E2E tests and commit/push the change.
+
+DONE
+- [2026-02-05 14:05] T-010: Remove prototype-c E2E debug coverage. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: none (tests not requested).
