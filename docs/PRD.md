@@ -63,6 +63,7 @@ These commits are used as implementation evidence for the “shipped” scope ab
 ## Next / backlog (not shipped requirements)
 - UI: show PrepTalk name + short how-to, improve action button guidance/tooltips, rename “Advanced Setup,” add client-side question insights side panel, and allow job description URL input. (Sources: CR-20260202-1704, CR-20260202-1740, CR-20260202-1816; D-20260202-1704, D-20260202-1740, D-20260202-1816)
 - Turn mode: enable immediate submit after coach finishes speaking (no minimum delay) and add a resume-grounded help action (button + voice) that never fabricates and returns TTS + transcript output. (Sources: CR-20260202-1516; D-20260202-1520)
+- Turn mode: allow interrupting coach speech to proceed without errors; interrupt cancels TTS and re-enables interaction. (Sources: CR-20260205-2138; D-20260205-2138)
 - Record manual voice smoke-test results (`docs/testing/voice-smoke-test.md`). (Sources: CR-20260128-1409; D-20260128-1410)
 - Fill hackathon deliverables in `README.md` (demo link, write-up, 3-minute video). (Sources: CR-20260128-1409; D-20260128-1410)
 - Submission polish: use Gemini 3 for interview generation/scoring and Gemini 2.5 Flash for turn-based coaching; prefer server TTS in turn mode to reduce robotic output. (Sources: CR-20260129-0938; D-20260129-0938, D-20260129-0942)

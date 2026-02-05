@@ -854,7 +854,6 @@ function buildSetupPanel(state, ui) {
 }
 
 function buildControlsPanel(state, ui, config) {
-  const showAdvancedControls = false;
   const statusPill = createStatusPill({
     label: 'Idle',
     tone: 'neutral',
@@ -890,14 +889,18 @@ function buildControlsPanel(state, ui, config) {
   });
 
   const bargeInButton = createButton({
-    label: 'Interrupt On',
+    label: 'Interrupt',
     variant: 'ghost',
     size: 'md',
     attrs: {
       'data-testid': 'barge-in-toggle',
-      'aria-pressed': 'true'
+      'aria-pressed': 'false'
     },
     onClick: () => {
+      if (isTurnMode()) {
+        interruptCoachSpeech();
+        return;
+      }
       setBargeInState(!state.bargeInEnabled);
     }
   });
@@ -1016,8 +1019,6 @@ function buildControlsPanel(state, ui, config) {
 
   function applyVoiceMode() {
     state.voiceMode = 'turn';
-    bargeInButton.disabled = true;
-    bargeInButton.setAttribute('aria-disabled', 'true');
     updateMeta();
     updateTurnSubmitUI();
   }
@@ -1152,6 +1153,26 @@ function buildControlsPanel(state, ui, config) {
     }
     if (ui.turnHelp) {
       ui.turnHelp.hidden = !showRow;
+    }
+    if (bargeInButton) {
+      if (isTurnMode()) {
+        const canInterrupt = state.sessionActive && state.turnSpeaking;
+        updateButtonLabel(bargeInButton, 'Interrupt');
+        bargeInButton.disabled = !canInterrupt;
+        bargeInButton.setAttribute('aria-disabled', String(!canInterrupt));
+        bargeInButton.setAttribute('aria-pressed', 'false');
+        bargeInButton.classList.toggle('ui-button--ready', canInterrupt);
+        bargeInButton.title = canInterrupt
+          ? 'Stop the coach and continue your answer.'
+          : state.sessionActive
+            ? 'Interrupt the coach when she is speaking.'
+            : 'Start a session to enable interrupt.';
+      } else {
+        bargeInButton.disabled = false;
+        bargeInButton.setAttribute('aria-disabled', 'false');
+        bargeInButton.classList.remove('ui-button--ready');
+        setBargeInState(state.bargeInEnabled);
+      }
     }
     if (!ui.submitTurnButton) {
       return;
@@ -1446,6 +1467,9 @@ function buildControlsPanel(state, ui, config) {
   }
 
   function cancelSpeechSynthesis() {
+    if (typeof state.turnAudioStop === 'function') {
+      state.turnAudioStop();
+    }
     if (typeof window === 'undefined' || !window.speechSynthesis) {
       state.turnSpeaking = false;
       updateTurnSubmitUI();
@@ -1454,6 +1478,16 @@ function buildControlsPanel(state, ui, config) {
     window.speechSynthesis.cancel();
     state.turnSpeaking = false;
     updateTurnSubmitUI();
+  }
+
+  function interruptCoachSpeech() {
+    if (!isTurnMode() || !state.sessionActive || !state.turnSpeaking) {
+      return;
+    }
+    cancelSpeechSynthesis();
+    if (state.sessionActive && !state.isMuted && !state.speechRecognitionActive) {
+      startSpeechRecognition();
+    }
   }
 
   function decodeBase64Audio(base64) {
@@ -1495,6 +1529,7 @@ function buildControlsPanel(state, ui, config) {
         audio.pause();
         audio.src = '';
         URL.revokeObjectURL(url);
+        state.turnAudioStop = null;
         state.turnSpeaking = false;
         updateTurnSubmitUI();
         if (state.sessionActive && !state.isMuted) {
@@ -1506,6 +1541,7 @@ function buildControlsPanel(state, ui, config) {
       audio.onended = finish;
       audio.onerror = finish;
       audio.onabort = finish;
+      state.turnAudioStop = finish;
       audio.play()
         .then(() => {
           started = true;
@@ -2329,9 +2365,7 @@ function buildControlsPanel(state, ui, config) {
   actionsRow.appendChild(startButton);
   actionsRow.appendChild(stopButton);
   actionsRow.appendChild(muteButton);
-  if (showAdvancedControls) {
-    actionsRow.appendChild(bargeInButton);
-  }
+  actionsRow.appendChild(bargeInButton);
 
   const turnActionsRow = document.createElement('div');
   turnActionsRow.className = 'ui-controls__row';
@@ -2382,6 +2416,7 @@ function buildControlsPanel(state, ui, config) {
   ui.resetModelOverrides = resetModelOverrides;
   ui.applyVoiceOutputMode = applyVoiceOutputMode;
   ui.resetSessionState = resetSessionState;
+  ui.updateTurnSubmitUI = updateTurnSubmitUI;
   updateTurnSubmitUI();
 
   return createPanel({
@@ -2910,6 +2945,7 @@ export function buildVoiceLayout() {
     turnRequestActive: false,
     turnHelpPending: false,
     turnSpeaking: false,
+    turnAudioStop: null,
     turnAnswerStartedAt: null,
     turnCompletionLastCheckAt: 0,
     turnCompletionPending: false,
@@ -2926,7 +2962,9 @@ export function buildVoiceLayout() {
 
   // Learning Mode preference persistence
   function getLearningModePreference() {
-    if (typeof localStorage === 'undefined') return true;
+    if (typeof localStorage === 'undefined' || typeof localStorage.getItem !== 'function') {
+      return true;
+    }
     const stored = localStorage.getItem('preptalk_show_example_first');
     if (stored === null) return true; // Default ON for new users
     return stored === 'true';
@@ -2934,7 +2972,7 @@ export function buildVoiceLayout() {
 
   function setLearningModePreference(value) {
     state.showExampleFirst = value;
-    if (typeof localStorage !== 'undefined') {
+    if (typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function') {
       localStorage.setItem('preptalk_show_example_first', String(value));
     }
     if (ui.learningModeToggle) {

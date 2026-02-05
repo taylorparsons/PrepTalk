@@ -522,3 +522,545 @@ Notes:
 - Messaging across all 5 journey phases reflects teach-first positioning.
 - Garnet color palette to replace current design tokens.
 - Accessibility fixes: focus-visible, aria-live, skip-link, reduced-motion support.
+- Stage 1 CTA emphasis: upload resume/job, generate questions, start interview (start gated by inputs).
+- Stage 2 CTA emphasis: turn-based controls, request help button, rubric-based help info when not responding.
+- Stage 3 CTA emphasis: score creation/notification, export PDF/TXT, restart session as the most prominent action.
+- Provide a Mermaid flow diagram for the CTA flow across all stages.
+ 
+## CR-20260203-1011
+Date: 2026-02-03 10:11
+Source: chat
+
+Request (verbatim):
+fix the mermai error so it renders Parse error on line 4:
+...[Generate Questions (Primary)]    C[Que
+-----------------------^
+Expecting 'SQE', 'DOUBLECIRCLEEND', 'PE', '-)', 'STADIUMEND', 'SUBROUTINEEND', 'PIPE', 'CYLINDEREND', 'DIAMOND_STOP', 'TAGEND', 'TRAPEND', 'INVTRAPEND', 'UNICODE_TEXT', 'TEXT', 'TAGSTART', got 'PS'
+
+Notes:
+
+## CR-20260203-1017
+Date: 2026-02-03 10:17
+Source: chat
+
+Request (verbatim):
+ok the mermaid renders, now can you add using ascii text when each stage the  primary cta and sub cta in the spec so I can be sure we are going in the shared direction
+
+Notes:
+
+## CR-20260203-1022
+Date: 2026-02-03 10:22
+Source: chat
+
+Request (verbatim):
+$minimalist-voice-ux-enforcer add ascii text in code blocks to I can see the wire frames for each stage
+
+Notes:
+
+## CR-20260203-1024
+Date: 2026-02-03 10:24
+Source: chat
+
+Request (verbatim):
+try again show the mobile and web view of the stages CTA and add to the spec.md for this
+
+Notes:
+
+## CR-20260203-1027
+Date: 2026-02-03 10:27
+Source: chat
+
+Request (verbatim):
+I want the write frames add to the spec I do not see it can you do that I only see this [Image #1]
+
+Notes:
+
+## CR-20260203-1030
+Date: 2026-02-03 10:30
+Source: chat
+
+Request (verbatim):
+I see them now can you create an image for the web view for each stage ?
+
+Notes:
+
+## CR-20260203-1034
+Date: 2026-02-03 10:34
+Source: chat
+
+Request (verbatim):
+add the mobile views now
+
+Notes:
+
+## CR-20260203-1038
+Date: 2026-02-03 10:38
+Source: chat
+
+Request (verbatim):
+update the spec so I can see the images in context
+
+Notes:
+
+## CR-20260203-1050
+Date: 2026-02-03 10:50
+Source: chat
+
+Request (verbatim):
+$ralph this CTA change needs to include updated playright end2end for both mock and live testings
+
+Notes:
+
+## CR-20260203-1054
+Date: 2026-02-03 10:54
+Source: chat
+
+Request (verbatim):
+1. yes turn based live 
+2. same as used on main. 
+3. lets put these changes on a new feature branch
+
+Notes:
+- Live E2E should run turn-based (same as main), not streaming.
+- Create and work on a new feature branch for CTA changes.
+
+## CR-20260203-1138
+Date: 2026-02-03 11:38
+Source: chat
+
+Request (verbatim):
+OK my bad the image shows the questions that are not filled in and the session conrols file:///Volumes/T9/code/PrepTalk/docs/specs/20260203-cta-clarity/assets/web-stage1.svg and a screen shot from the video shows [Image #1] other containers like the question help, transcript, report and controls all of which are not needed.  Let update the plan in $ralph to make sure the CTA are narrows to the CTA that has content. For example at the interview starts the container for adding a resume and job description is not needed.  That can collaps or be removed until the interview is over. I am more partial to using he collapsed contianer in case the user want to open again, for their own reason.
+
+Notes:
+- Stage gating: hide non-relevant containers; CTA should only appear with relevant content.
+- Collapse Candidate Setup after interview starts; allow user to re-open.
+
+## CR-20260203-1146
+Date: 2026-02-03 11:46
+Source: chat
+
+Request (verbatim):
+yes hidden until it exists, that can be true for all content like the report at the end of the session.
+
+Notes:
+- Hide panels until they have content (insights, transcript, score/report).
+
+## CR-20260203-1044
+Date: 2026-02-03 10:44
+Source: chat
+
+Request (verbatim):
+6
+
+Notes:
+- User selected label option 6 from provided list: rename “Advanced Setup” to “Extras”.
+
+## CR-20260203-1253
+Date: 2026-02-03 12:53
+Source: chat
+
+Request (verbatim):
+using the app I did not see it collapse automatically or for the manual [Image #1] fix the UI and the test so all actions in the spec and the user action are tested.
+
+Notes:
+- Ensure Candidate Setup auto-collapses on session start and manual collapse/expand works; add tests for both.
+
+## CR-20260203-1321
+Date: 2026-02-03 13:21
+Source: chat
+
+Request (verbatim):
+I am not seeing it collapse in the video, running the app now and the container does not collapse
+
+Notes:
+- Fix auto-collapse + manual collapse visibility in the UI and update tests to verify actual hidden content.
+
+## CR-20260203-1328
+Date: 2026-02-03 13:28
+Source: chat
+
+Request (verbatim):
+lets keep going stage 2
+
+Notes:
+- Implement Stage 2 CTA gating, inactivity help hint, and rubric-based help surface with tests.
+
+## CR-20260203-1335
+Date: 2026-02-03 13:35
+Source: chat
+
+Request (verbatim):
+work on stage 3 as well and i wil test together
+
+Notes:
+- Implement Stage 3 results focus updates alongside Stage 2; update tests.
+
+## CR-20260203-1342
+Date: 2026-02-03 13:42
+Source: chat
+
+Request (verbatim):
+make sure the run play wright
+
+Notes:
+- Run Playwright E2E (mock + live) and report output.
+
+## CR-20260203-1422
+Date: 2026-02-03 14:22
+Source: chat
+
+Request (verbatim):
+ok now run the live playright and make sure it is going to generate a report
+
+Notes:
+- Run Playwright live E2E and confirm HTML report output.
+
+## CR-20260203-1424
+Date: 2026-02-03 14:24
+Source: chat
+
+Request (verbatim):
+I found a bug the in [Image #1] the pdf export is returning an error
+
+Notes:
+- Fix PDF export error handling in the Extras drawer and add test coverage.
+
+## CR-20260203-1428
+Date: 2026-02-03 14:28
+Source: chat
+
+Request (verbatim):
+Export PDF is still failing from Extras and from the report at the end of the interview
+
+Notes:
+- Fix PDF export so it succeeds from both Extras and the results panel.
+
+## CR-20260203-1500
+Date: 2026-02-03 15:00
+Source: chat
+
+Request (verbatim):
+the pdf export is still broken add the to the cta docs so I can come back and fix it later
+
+Notes:
+- Document the unresolved PDF export failure in CTA docs for follow-up.
+
+## CR-20260203-1503
+Date: 2026-02-03 15:03
+Source: chat
+
+Request (verbatim):
+help me plan how to with the hackathon with this app, i will give you the rules
+
+Notes:
+- Provide a compliance-first hackathon submission plan aligned to Gemini 3 rules.
+
+## CR-20260203-1504
+Date: 2026-02-03 15:04
+Source: chat
+
+Request (verbatim):
+Implement the plan.
+
+Notes:
+- Create submission docs, write-up draft, and video script/checklist for the hackathon.
+
+## CR-20260203-1834
+Date: 2026-02-03 18:34
+Source: chat
+
+Request (verbatim):
+using $ralph
+
+Notes:
+- Confirm RALPH workflow and capture status.
+
+## CR-20260204-1426
+Date: 2026-02-04 14:26
+Source: chat
+
+Request (verbatim):
+$ralph I want to merge the to main what needs to be done this will need to be supported so that I can host in on my google cloud account
+
+Notes:
+- Provide a merge readiness checklist and required deployment steps for Google Cloud hosting.
+
+## CR-20260204-1515
+Date: 2026-02-04 15:15
+Source: chat
+
+Request (verbatim):
+3 ignore it and make a note in $ralph about this
+
+Notes:
+- Note that mock E2E failure was intentionally ignored for now per user request.
+
+## CR-20260204-1531
+Date: 2026-02-04 15:31
+Source: chat
+
+Request (verbatim):
+use $ralph and $daisy to improve the UI and how the user interacts with it
+
+Notes:
+- Use RALPH traceability and DaisyUI/Tailwind for UI/UX improvements.
+
+## CR-20260204-1553
+Date: 2026-02-04 15:53
+Source: chat
+
+Request (verbatim):
+look at what I planned in branch to have a clear call to action in branch https://github.com/taylorparsons/PrepTalk/tree/cta-extras-e2e review the docs created by $ralph
+
+in short the first view you will see two containers [Image #1] like the image
+then when the setup info is in place generate question is actionable and when the interview is started the Candidate setup colapes but can be opened up. etc
+
+Notes:
+- Review CTA clarity docs in the cta-extras-e2e branch against the described stage gating behavior.
+
+## CR-20260204-1558
+Date: 2026-02-04 15:58
+Source: chat
+
+Request (verbatim):
+feel free to suggest visual improvements or options
+
+Notes:
+- Provide UI/visual improvement options without changing behavior.
+
+## CR-20260205-0910
+Date: 2026-02-05 09:10
+Source: chat
+
+Request (verbatim):
+i will also want any state change that the user should be aware of to be a larger font in the current state it it too small, plus once the questions are gnerated like the candidate setup I want the test below the PrepTalk header also collapes
+
+Notes:
+- Enlarge state-change messaging and auto-collapse the hero text below the PrepTalk header after questions are generated.
+
+## CR-20260205-0912
+Date: 2026-02-05 09:12
+Source: chat
+
+Request (verbatim):
+pick the three best options,explain why and then create an image for each one so I can visualize with it will look like
+
+Notes:
+- Provide three UI options with rationale and visual mock images.
+
+## CR-20260205-0925
+Date: 2026-02-05 09:25
+Source: chat
+
+Request (verbatim):
+create a 4th options that improves the existing UI, i need smaller changes to reduce risk
+
+Notes:
+- Add a low-risk option that minimally adjusts the current UI.
+
+## CR-20260205-0940
+Date: 2026-02-05 09:40
+Source: chat
+
+Request (verbatim):
+create an svg for each step in my existing ui for the state changes
+
+Notes:
+- Provide SVGs for each UI state-change step in the existing flow.
+
+## CR-20260205-1005
+Date: 2026-02-05 10:05
+Source: chat
+
+Request (verbatim):
+not that is not it, where is the voice captured I will show you the app today so nothing is missed, I really just when the existing UI to have a clear call to action and how the UI the is needed for the primary and secondary tasks 
+[Image #1] opening call to action text on what to do and setup 
+[Image #2] when the question are generated the interview questions appear the the insites panel.  I would like the following to happen when the quesiton appear the candidate setup collapes as well as the instruction. 
+[Image #3] the Candidate setup collapes now at start interview and the transcript opens at the bottom, this need to be up abobe the fold [Image #4]
+[Image #5] the extras show extas and restart show be failable when the application is stopped unlinke now it does this [Image #6] it makes re-starting the session impossible and you can't rename the session 
+If the user use the Request Help button I want the answer to be shown and persisted in the question Insites at the top so that they can practice using that example.
+
+Notes:
+- Collapse Candidate Setup and hero instructions when questions are generated.
+- Move transcript above the fold when the interview starts.
+- Keep Extras + Restart available after stopping so sessions can be renamed/restarted.
+- Persist Request Help responses in Question Insights for the active question.
+
+## CR-20260205-1110
+Date: 2026-02-05 11:10
+Source: chat
+
+Request (verbatim):
+1. Voice chat should be above the fold either center or on the left
+2. it should be active and visable during the interview at the end it can collapse and the user can open it 
+3  visable after questions appear, then hidden but open is ok  during the interview and available after the interview to restate or do other extra actions.
+
+update the assests and plan here so I am sure we are on the same page 
+docs/specs/20260205-state-change-svgs
+
+Notes:
+- Update the state-change SVGs and plan to reflect the clarified voice chat placement, collapse timing, and Extras visibility.
+
+## CR-20260204-1846
+Date: 2026-02-04 18:46
+Source: chat
+
+Request (verbatim):
+add a radial progress wait for the interview question generation and interview score
+
+Notes:
+- Add radial progress indicators for question generation and scoring states.
+
+## CR-20260205-0249
+Date: 2026-02-05 02:49
+Source: chat
+
+Request (verbatim):
+I am reviewing the updates and and it looks pretty good but use the daisy ui theme called lemonade
+
+Notes:
+- Set the DaisyUI theme to lemonade.
+
+## CR-20260205-0312
+Date: 2026-02-05 03:12
+Source: chat
+
+Request (verbatim):
+[Image #1] and [Image #2] should not be shown until shown until needed
+
+Notes:
+- Hide transcript/score panels and progress spinners until their associated state is active.
+
+## CR-20260204-1937
+Date: 2026-02-04 19:37
+Source: chat
+
+Request (verbatim):
+the export transcript has json """ic
+- {'area': 'Metrics-Driven Engineering Efficiency', 'description': "Evaluate the candidate's ability to move beyond vanity metrics. Look for deep understanding of DORA metrics (Deployment Frequency, Lead Time for Changes, etc.) and how they apply his experience with 'engineering efficiency metrics' to a platform scale rather than just a single application."}
+- {'area': 'Platform Mindset vs. Program Management', 'description': "Given the candidate's long tenure as a Technical Program Manager (TPM), assess if he can drive product vision and market differentiation (Product thinking) rather than just execution, timelines, and delivery (Project thinking)."}
+- {'area': 'Modern DevOps & Cloud Native Depth', 'description': "Assess technical fluency in modern cloud infrastructure. The candidate has managed integrations and data centers, but needs to demonstrate specific product design knowledge regarding containerization, Kubernetes, and IaC patterns relevant to OCI's customer base."}
+- {'area': 'Persona-Driven Design', 'description': "Check if the candidate can articulate the specific needs of different users (e.g., the Platform Engineer vs. the Application Developer). Look for examples of how his 'DevEx' work reduced friction and improved the 'inner loop' of development."}
+""" this will be read by a human so trending this as formatted test is prerered
+
+Notes:
+- Format exported focus areas/rubric text into human-readable bullets instead of raw JSON/dict strings.
+
+## CR-20260204-1928
+Date: 2026-02-04 19:28
+Source: chat
+
+Request (verbatim):
+both of the the radial progess bars show before they are needed and they do not progess [Image #1] I assumed by adding them you would user them and annimate when needed.
+
+Notes:
+- Ensure radial progress indicators stay hidden until active and animate while pending.
+
+## CR-20260204-1940
+Date: 2026-02-04 19:40
+Source: chat
+
+Request (verbatim):
+the score number should be diplayed with some meaning like 70 of of 100 or 0 out of 100
+
+Notes:
+- Display score values with a clear out-of-100 format.
+
+## CR-20260204-1943
+Date: 2026-02-04 19:43
+Source: chat
+
+Request (verbatim):
+the interview script needs to not ask a question """To get started, could you please confirm that you're ready to dive into the Principal Product Manager role for OCI's CI/CD platform?""" the person who is being interviewed just set it up, this formality here is not needed and is distracting.
+
+Notes:
+- Remove intro confirmation questions about readiness or role before the first interview question.
+
+## CR-20260204-1947
+Date: 2026-02-04 19:47
+Source: chat
+
+Request (verbatim):
+it looks like you addresed what I requested.  complete all work to make sure there are no regressions, the a live e2e for and create screen shots I can use to create a deeper help doc later, when running playwrite make it so each step and state change has a screen shot for the report so I can view it all before we merge to main.  Keep cheking in changes on our local env
+
+Notes:
+- Run the full test suite (pytest, Vitest, Playwright mock + live).
+- Add Playwright screenshots for each state-change step and attach them to HTML reports.
+- Create local commits for completed work.
+
+
+## CR-20260204-2024
+Date: 2026-02-04 20:24
+Source: chat
+
+Request (verbatim):
+export pdf from the Score summary is not working and shows a internal server error, this is a refression that failed make sure you are testing both of these in the end to end test and unit tests [Image #1]
+
+Notes:
+- Fix PDF export regression (unicode text crash) and add unit + E2E coverage for PDF/TXT exports.
+
+
+## CR-20260204-2034
+Date: 2026-02-04 20:34
+Source: chat
+
+Request (verbatim):
+yes run it on localhost:8000
+
+Notes:
+- Run Playwright E2E on localhost:8000 and generate HTML reports.
+
+
+## CR-20260205-2106
+Date: 2026-02-05 21:06
+Source: chat
+
+Request (verbatim):
+I see a bug the cadidate setup is being truncated [Image #1]
+
+Notes:
+- Ensure Candidate Setup panel content is fully visible (no truncation).
+
+
+## CR-20260205-2112
+Date: 2026-02-05 21:12
+Source: chat
+
+Request (verbatim):
+can the user resize the question insights
+
+Notes:
+- Make Question Insights panel vertically resizable.
+
+
+## CR-20260205-2122
+Date: 2026-02-05 21:22
+Source: chat
+
+Request (verbatim):
+I just tried it in the ui and I am not able to resize I thought I could drag it how ?
+
+Notes:
+- Make the Question Insights resize handle discoverable/functional (panel-level drag).
+
+
+## CR-20260205-2135
+Date: 2026-02-05 21:35
+Source: chat
+
+Request (verbatim):
+add the handle
+
+Notes:
+- Add a visible resize handle to Question Insights.
+
+
+## CR-20260205-2138
+Date: 2026-02-05 21:38
+Source: chat
+
+Request (verbatim):
+I want to see if I can interup the coach so I can move on. I can read faster then she can. Can that be done without causing an error
+
+Notes:
+- Turn-based mode context; interrupt coach speech and allow Submit without errors.
