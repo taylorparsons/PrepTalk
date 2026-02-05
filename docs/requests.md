@@ -1000,3 +1000,14 @@ yes run it on localhost:8000
 
 Notes:
 - Run Playwright E2E on localhost:8000 and generate HTML reports.
+
+
+## CR-20260205-2106
+Date: 2026-02-05 21:06
+Source: chat
+
+Request (verbatim):
+I see a bug the cadidate setup is being truncated [Image #1]
+
+Notes:
+- Ensure Candidate Setup panel content is fully visible (no truncation).
