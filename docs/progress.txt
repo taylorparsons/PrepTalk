@@ -2243,3 +2243,30 @@ NOTES
 - Commands run: `set -a; source .env; set +a; E2E_LIVE=1 PLAYWRIGHT_HTML_REPORT=playwright-report-live npx playwright test --reporter=html --output test-results-live` -> failed (webServer could not bind to 127.0.0.1:8129; operation not permitted).
 - Risks / open questions: Playwright HTML reports still need a local run where the server can bind.
 - Commit: ae3b5af (UX polish, exports, and Playwright screenshots).
+
+---
+
+Session: 2026-02-05 20:21
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, playwright
+Feature: 20260204-e2e-screenshots
+Input: CR-20260204-1947
+Decisions: D-20260204-1948
+Spec: docs/specs/20260204-e2e-screenshots/spec.md
+Tasks: docs/specs/20260204-e2e-screenshots/tasks.md
+Goal: Re-attempt Playwright HTML reports (mock + live).
+
+DONE
+- [2026-02-05 20:21] Re-ran Playwright mock + live report commands. (Skills: ralph, playwright)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- T-003: Re-run Playwright mock + live with HTML reports once the web server can bind to the port. (Skills: ralph, playwright)
+
+NOTES
+- Commands run: `PLAYWRIGHT_HTML_REPORT=playwright-report-mock npx playwright test --reporter=html --output test-results-mock` -> failed (webServer could not bind to 127.0.0.1:8129; operation not permitted).
+- Commands run: `set -a; source .env; set +a; E2E_LIVE=1 PLAYWRIGHT_HTML_REPORT=playwright-report-live npx playwright test --reporter=html --output test-results-live` -> failed (webServer could not bind to 127.0.0.1:8129; operation not permitted).
+- Risks / open questions: Requires local run where the server can bind; report outputs not generated here.
