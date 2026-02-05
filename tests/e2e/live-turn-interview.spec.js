@@ -167,7 +167,19 @@ test('candidate interview flow (gemini turn voice)', async ({ page }, testInfo) 
   });
   await expect(page.getByTestId('restart-interview-main')).toBeEnabled();
   await expect(page.getByTestId('restart-interview-main')).toHaveClass(/ui-button--primary/);
-  await expect(page.getByTestId('export-pdf-main')).toBeEnabled();
-  await expect(page.getByTestId('export-txt-main')).toBeEnabled();
+  const exportPdfMain = page.getByTestId('export-pdf-main');
+  const exportTxtMain = page.getByTestId('export-txt-main');
+  await expect(exportPdfMain).toBeEnabled();
+  await expect(exportTxtMain).toBeEnabled();
+  const [pdfDownload] = await Promise.all([
+    page.waitForEvent('download'),
+    exportPdfMain.click()
+  ]);
+  expect(await pdfDownload.suggestedFilename()).toMatch(/\.pdf$/i);
+  const [txtDownload] = await Promise.all([
+    page.waitForEvent('download'),
+    exportTxtMain.click()
+  ]);
+  expect(await txtDownload.suggestedFilename()).toMatch(/\.txt$/i);
   await captureStep(page, testInfo, 'state-6-scoring-results');
 });

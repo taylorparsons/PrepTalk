@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import unicodedata
 from typing import Iterable
 
 try:
@@ -15,6 +16,29 @@ except Exception:
     YPos = None
 
 from .store import InterviewRecord
+
+_UNICODE_REPLACEMENTS = {
+    "\u2018": "'",
+    "\u2019": "'",
+    "\u201c": '"',
+    "\u201d": '"',
+    "\u2013": "-",
+    "\u2014": "--",
+    "\u2026": "...",
+    "\u00a0": " ",
+}
+
+
+def _sanitize_pdf_text(text: str) -> str:
+    if text is None:
+        return ""
+    if not isinstance(text, str):
+        text = str(text)
+    for src, dest in _UNICODE_REPLACEMENTS.items():
+        text = text.replace(src, dest)
+    text = unicodedata.normalize("NFKD", text)
+    return text.encode("latin-1", "ignore").decode("latin-1")
+
 
 def _cell_newline_kwargs() -> dict:
     if XPos is None or YPos is None:
@@ -32,12 +56,12 @@ class _StudyGuidePDF(FPDF):
 
 def _write_section(pdf: FPDF, title: str, lines: Iterable[str]) -> None:
     pdf.set_font("Helvetica", style="B", size=12)
-    pdf.cell(0, 8, title, **_cell_newline_kwargs())
+    pdf.cell(0, 8, _sanitize_pdf_text(title), **_cell_newline_kwargs())
     pdf.ln(1)
     pdf.set_x(pdf.l_margin)
     pdf.set_font("Helvetica", size=11)
     for line in lines:
-        pdf.multi_cell(0, 6, line)
+        pdf.multi_cell(0, 6, _sanitize_pdf_text(line))
         pdf.set_x(pdf.l_margin)
     pdf.ln(2)
 

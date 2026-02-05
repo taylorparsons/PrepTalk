@@ -2270,3 +2270,31 @@ NOTES
 - Commands run: `PLAYWRIGHT_HTML_REPORT=playwright-report-mock npx playwright test --reporter=html --output test-results-mock` -> failed (webServer could not bind to 127.0.0.1:8129; operation not permitted).
 - Commands run: `set -a; source .env; set +a; E2E_LIVE=1 PLAYWRIGHT_HTML_REPORT=playwright-report-live npx playwright test --reporter=html --output test-results-live` -> failed (webServer could not bind to 127.0.0.1:8129; operation not permitted).
 - Risks / open questions: Requires local run where the server can bind; report outputs not generated here.
+
+---
+
+Session: 2026-02-04 20:28
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260204-pdf-export-unicode
+Input: CR-20260204-2024
+Decisions: D-20260204-2026
+Spec: docs/specs/20260204-pdf-export-unicode/spec.md
+Tasks: docs/specs/20260204-pdf-export-unicode/tasks.md
+Goal: Fix PDF export unicode regression and add unit + E2E coverage.
+
+DONE
+- [2026-02-04 20:28] T-001: Sanitize PDF export text to avoid Unicode encoding errors. (Skills: ralph)
+- [2026-02-04 20:28] T-002: Add a unit test for PDF export with Unicode punctuation. (Skills: ralph)
+- [2026-02-04 20:28] T-003: Add E2E checks to verify PDF/TXT exports trigger downloads. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `./.venv/bin/python -m pytest tests/test_pdf_service.py` -> 3 passed (10 warnings).
+- Risks / open questions: Run Playwright export checks locally (bind error in this environment).
