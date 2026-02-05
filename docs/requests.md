@@ -1071,3 +1071,63 @@ I want to see if I can interup the coach so I can move on. I can read faster the
 
 Notes:
 - Turn-based mode context; interrupt coach speech and allow Submit without errors.
+
+## CR-20260205-1020
+Date: 2026-02-05 10:20
+Source: chat
+
+Request (verbatim):
+add these to the $ralph spec for the along above on what we are targeting
+
+Notes:
+- Incorporate the latest state layouts, status/substatus/rubric mapping, and Mermaid state diagrams into the RALPH feature spec.
+
+## CR-20260205-1029
+Date: 2026-02-05 10:29
+Source: chat
+
+Request (verbatim):
+I need the top status / CTA panel to be acnhored to the top
+
+Notes:
+- Interpret “anchored” as the top panel staying directly under the header across all states.
+
+## CR-20260205-1033
+Date: 2026-02-05 10:33
+Source: chat
+
+Request (verbatim):
+remove the directive to acnchor to the top
+
+Notes:
+- Remove the anchored-top requirement from the session layout spec and PRD backlog.
+
+## CR-20260205-1049
+Date: 2026-02-05 10:49
+Source: chat
+
+Request (verbatim):
+this just a panel update with menu for hidden panels and mobile support with the menu. I am not expacting any changes for the Extras panel
+
+Notes:
+- Clarify non-changes and out-of-scope items in the session layout spec, including keeping Extras unchanged.
+
+## CR-20260205-1058
+Date: 2026-02-05 10:58
+Source: chat
+
+Request (verbatim):
+$verification-before-completion and $ralph work on completing this work
+
+Notes:
+- Implement the session layout + menu overflow changes per the spec and verify before claiming completion.
+
+## CR-20260205-1144
+Date: 2026-02-05 11:44
+Source: chat
+
+Request (verbatim):
+can you move the code changes to a feature branch?
+
+Notes:
+- Ensure the working changes live on a feature branch (not main).

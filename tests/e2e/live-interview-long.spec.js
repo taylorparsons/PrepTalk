@@ -103,7 +103,7 @@ test('candidate interview flow (gemini live long)', async ({ page }) => {
 
   await page.getByTestId('start-interview').click();
   await expect(page.getByTestId('session-status')).toHaveText('Live', { timeout: 60000 });
-  await expect(page.getByTestId('stop-interview')).toBeEnabled();
+  await expect(page.getByTestId('start-interview')).toBeEnabled();
   await page.waitForFunction(() => Boolean(window.__e2eSendAudio));
 
   const start = Date.now();
@@ -114,7 +114,7 @@ test('candidate interview flow (gemini live long)', async ({ page }) => {
       amplitude: audioAmplitude
     });
     const status = (await page.getByTestId('session-status').innerText()).trim();
-    const stopEnabled = await page.getByTestId('stop-interview').isEnabled();
+    const stopEnabled = await page.getByTestId('start-interview').isEnabled();
     if (!stopEnabled) {
       throw new Error(`Stop button disabled during live run (status: ${status}).`);
     }
@@ -129,6 +129,6 @@ test('candidate interview flow (gemini live long)', async ({ page }) => {
     { timeout: 60000 }
   ).toBeGreaterThan(0);
 
-  await page.getByTestId('stop-interview').click();
+  await page.getByTestId('start-interview').click();
   await expect(page.getByTestId('score-value')).not.toHaveText('--');
 });

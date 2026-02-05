@@ -467,17 +467,85 @@ function buildAppHeader(ui) {
   heading.appendChild(title);
   heading.appendChild(subtitle);
 
-  const toggle = createButton({
-    label: 'Collapse guide',
+  const menuWrapper = document.createElement('div');
+  menuWrapper.className = 'ui-overflow-menu';
+  menuWrapper.hidden = true;
+
+  const menuButton = createButton({
+    label: '≡',
     variant: 'ghost',
     size: 'sm',
-    attrs: { 'data-testid': 'hero-collapse' }
+    ariaLabel: 'Open menu',
+    attrs: {
+      'data-testid': 'overflow-menu-toggle',
+      'aria-haspopup': 'menu',
+      'aria-expanded': 'false'
+    }
   });
-  toggle.classList.add('ui-hero__toggle');
-  toggle.hidden = true;
+  menuButton.classList.add('ui-overflow-menu__button');
+
+  const menuList = document.createElement('div');
+  menuList.className = 'ui-overflow-menu__list';
+  menuList.setAttribute('role', 'menu');
+  menuList.hidden = true;
+
+  let menuOpen = false;
+  const setMenuOpen = (value) => {
+    menuOpen = Boolean(value);
+    menuList.hidden = !menuOpen;
+    menuButton.setAttribute('aria-expanded', String(menuOpen));
+  };
+
+  const renderMenuItems = (items = []) => {
+    const normalized = Array.isArray(items) ? items.filter(Boolean) : [];
+    menuList.innerHTML = '';
+    normalized.forEach((item) => {
+      const button = createButton({
+        label: item.label,
+        variant: 'ghost',
+        size: 'sm',
+        ariaLabel: item.label,
+        attrs: { role: 'menuitem' }
+      });
+      button.classList.add('ui-overflow-menu__item');
+      button.addEventListener('click', () => {
+        setMenuOpen(false);
+        item.onSelect?.();
+      });
+      menuList.appendChild(button);
+    });
+    menuWrapper.hidden = normalized.length === 0;
+    if (normalized.length === 0) {
+      setMenuOpen(false);
+    }
+  };
+
+  menuButton.addEventListener('click', () => {
+    if (menuWrapper.hidden) {
+      return;
+    }
+    setMenuOpen(!menuOpen);
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!menuOpen) return;
+    if (!menuWrapper.contains(event.target)) {
+      setMenuOpen(false);
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (!menuOpen) return;
+    if (event.key === 'Escape') {
+      setMenuOpen(false);
+    }
+  });
+
+  menuWrapper.appendChild(menuButton);
+  menuWrapper.appendChild(menuList);
 
   header.appendChild(heading);
-  header.appendChild(toggle);
+  header.appendChild(menuWrapper);
 
   const steps = document.createElement('ol');
   steps.className = 'ui-hero__steps';
@@ -510,20 +578,20 @@ function buildAppHeader(ui) {
     isCollapsed = Boolean(value);
     body.hidden = isCollapsed;
     wrapper.classList.toggle('ui-hero--collapsed', isCollapsed);
-    updateButtonLabel(toggle, isCollapsed ? 'Expand guide' : 'Collapse guide');
+    ui?.updateOverflowMenu?.();
   };
-
-  toggle.addEventListener('click', () => {
-    setHeroCollapsed(!isCollapsed);
-  });
 
   wrapper.appendChild(header);
   wrapper.appendChild(body);
 
   if (ui) {
     ui.heroBody = body;
-    ui.heroToggle = toggle;
     ui.setHeroCollapsed = setHeroCollapsed;
+    ui.isHeroCollapsed = () => isCollapsed;
+    ui.overflowMenuWrapper = menuWrapper;
+    ui.overflowMenuList = menuList;
+    ui.setOverflowMenuOpen = setMenuOpen;
+    ui.setOverflowMenuItems = renderMenuItems;
   }
 
   return wrapper;
@@ -853,7 +921,7 @@ function buildSetupPanel(state, ui) {
   function updateSetupCtas() {
     const hasQuestions = Boolean(state.interviewId) && state.questions.length > 0;
     setButtonVariant(generateButton, hasQuestions ? 'secondary' : 'primary');
-    if (ui.startButton) {
+    if (ui.startButton && !state.sessionActive) {
       setButtonVariant(ui.startButton, hasQuestions ? 'primary' : 'secondary');
     }
     updateSetupHint();
@@ -1020,6 +1088,7 @@ function buildSetupPanel(state, ui) {
     }
     panel.classList.toggle('ui-panel--collapsed', setupCollapsed);
     updateButtonLabel(collapseButton, setupCollapsed ? 'Expand setup' : 'Collapse setup');
+    ui.updateOverflowMenu?.();
   }
 
   collapseButton.addEventListener('click', () => {
@@ -1040,20 +1109,21 @@ function buildControlsPanel(state, ui, config) {
     tone: 'neutral',
     attrs: { 'data-testid': 'session-status', 'aria-live': 'polite', 'role': 'status' }
   });
+  const statusDetail = document.createElement('p');
+  statusDetail.className = 'ui-controls__subtext ui-state-text';
+  statusDetail.textContent = 'Waiting to start.';
+
+  const statusBlock = document.createElement('div');
+  statusBlock.className = 'ui-controls__status';
+  statusBlock.appendChild(statusPill);
+  statusBlock.appendChild(statusDetail);
+
   const startButton = createButton({
     label: 'Begin Practice',
     variant: 'primary',
     size: 'lg',
     disabled: true,
     attrs: { 'data-testid': 'start-interview' }
-  });
-
-  const stopButton = createButton({
-    label: 'Stop Session',
-    variant: 'ghost',
-    size: 'md',
-    disabled: true,
-    attrs: { 'data-testid': 'stop-interview' }
   });
 
   const muteButton = createButton({
@@ -1123,12 +1193,8 @@ function buildControlsPanel(state, ui, config) {
     }
   });
 
-  const restartMainLabel = document.createElement('div');
-  restartMainLabel.className = 'ui-field__label';
-  restartMainLabel.textContent = 'Restart Practice';
-
   const restartMainButton = createButton({
-    label: 'Restart',
+    label: 'Restart Practice',
     variant: 'ghost',
     size: 'sm',
     disabled: true,
@@ -1138,6 +1204,58 @@ function buildControlsPanel(state, ui, config) {
   const restartMainHelp = document.createElement('p');
   restartMainHelp.className = 'ui-field__help ui-state-text';
   restartMainHelp.textContent = 'Enabled after a session starts.';
+
+  const exportPdfTop = createButton({
+    label: 'PDF',
+    variant: 'secondary',
+    size: 'sm',
+    disabled: true,
+    attrs: { 'data-testid': 'export-pdf-top' }
+  });
+
+  const exportTxtTop = createButton({
+    label: 'TXT',
+    variant: 'secondary',
+    size: 'sm',
+    disabled: true,
+    attrs: { 'data-testid': 'export-txt-top' }
+  });
+
+  const candidateSetupButton = createButton({
+    label: 'Candidate Setup',
+    variant: 'ghost',
+    size: 'sm',
+    disabled: true,
+    attrs: { 'data-testid': 'open-candidate-setup' }
+  });
+
+  const exportLabel = document.createElement('span');
+  exportLabel.className = 'ui-controls__export-label';
+  exportLabel.textContent = 'Export';
+
+  function setPrimaryActionMode({ active = false, disabled } = {}) {
+    const isActive = Boolean(active);
+    updateButtonLabel(startButton, isActive ? 'End Practice' : 'Begin Practice');
+    setButtonVariant(startButton, isActive ? 'ghost' : 'primary');
+    if (typeof disabled === 'boolean') {
+      startButton.disabled = disabled;
+    }
+  }
+
+  function setStatusDetail(text) {
+    statusDetail.textContent = text || '';
+  }
+
+  function openCandidateSetup() {
+    if (ui.setSetupCollapsed) {
+      ui.setSetupCollapsed(false);
+    }
+    ui.setupPanel?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+  }
+
+  candidateSetupButton.addEventListener('click', () => {
+    openCandidateSetup();
+  });
 
   function setMuteState(isMuted) {
     state.isMuted = isMuted;
@@ -1159,6 +1277,7 @@ function buildControlsPanel(state, ui, config) {
   }
 
   setBargeInState(state.bargeInEnabled);
+  setPrimaryActionMode({ active: false });
 
   function voiceModeLabel() {
     return state.voiceMode === 'turn' ? 'Turn-based' : 'Live';
@@ -1380,12 +1499,9 @@ function buildControlsPanel(state, ui, config) {
   }
 
   function updateTurnSubmitUI() {
-    const showRow = isTurnMode() && state.sessionActive;
-    if (ui.turnActionsRow) {
-      ui.turnActionsRow.hidden = !showRow;
-    }
+    const showTurnControls = isTurnMode() && state.sessionActive;
     if (ui.turnHelp) {
-      ui.turnHelp.hidden = !showRow;
+      ui.turnHelp.hidden = !showTurnControls;
     }
     if (bargeInButton) {
       if (isTurnMode()) {
@@ -1410,7 +1526,7 @@ function buildControlsPanel(state, ui, config) {
     if (!ui.submitTurnButton) {
       return;
     }
-    if (!showRow) {
+    if (!showTurnControls) {
       ui.submitTurnButton.disabled = true;
       if (ui.helpTurnButton) {
         ui.helpTurnButton.disabled = true;
@@ -1469,6 +1585,26 @@ function buildControlsPanel(state, ui, config) {
         scheduleTurnHelpHint();
       } else {
         resetTurnHelpHint();
+      }
+    }
+
+    if (state.turnAwaitingAnswer && !state.turnSpeaking && !state.turnHelpPending) {
+      updateStatusPill(statusPill, { label: hasAnswer ? 'Your Turn' : 'Listening', tone: 'info' });
+    }
+
+    if (ui.setStatusDetail) {
+      if (state.turnSpeaking) {
+        ui.setStatusDetail('Coach is speaking. Wait to request help or submit your answer.');
+      } else if (!state.turnAwaitingAnswer) {
+        ui.setStatusDetail('Waiting for the next coach question.');
+      } else if (state.turnHelpPending) {
+        ui.setStatusDetail('Fetching help...');
+      } else if (!hasAnswer && state.turnHelpHintVisible) {
+        ui.setStatusDetail('Need a nudge? Use Request Help for a rubric-based tip.');
+      } else if (!hasAnswer) {
+        ui.setStatusDetail('Start answering to enable Submit. Help is available as soon as the coach finishes speaking.');
+      } else {
+        ui.setStatusDetail('Ready when you are. Request help or submit your answer.');
       }
     }
   }
@@ -1533,7 +1669,7 @@ function buildControlsPanel(state, ui, config) {
         state.turnReadyToSubmit = true;
         updateTurnSubmitUI();
         if (state.sessionActive && state.turnAwaitingAnswer) {
-          updateStatusPill(statusPill, { label: 'Ready to submit', tone: 'warning' });
+          updateStatusPill(statusPill, { label: 'Your Turn', tone: 'info' });
         }
       }
     } catch (error) {
@@ -1573,7 +1709,7 @@ function buildControlsPanel(state, ui, config) {
       state.turnReadyToSubmit = true;
       updateTurnSubmitUI();
       if (state.sessionActive && state.turnAwaitingAnswer) {
-        updateStatusPill(statusPill, { label: 'Ready to submit', tone: 'warning' });
+        updateStatusPill(statusPill, { label: 'Your Turn', tone: 'info' });
       }
     }
 
@@ -2160,6 +2296,7 @@ function buildControlsPanel(state, ui, config) {
     state.transcript = [];
     state.score = null;
     state.scorePending = false;
+    state.scoreError = false;
     state.sessionId = null;
     state.liveMode = null;
     state.sessionActive = false;
@@ -2180,6 +2317,7 @@ function buildControlsPanel(state, ui, config) {
     resetTurnHelpHint();
     setTurnRubricVisible(false);
     cancelLiveCoachSpeech();
+    state.resultsTranscriptVisible = false;
     state.liveAudioSeen = false;
     state.lastSpokenCoachText = '';
     state.lastCoachQuestion = '';
@@ -2290,8 +2428,7 @@ function buildControlsPanel(state, ui, config) {
       state.audioPlaybackSampleRate = null;
     }
 
-    stopButton.disabled = true;
-    startButton.disabled = !(allowRestart && state.interviewId);
+    setPrimaryActionMode({ active: false, disabled: !(allowRestart && state.interviewId) });
     ui.updateSessionToolsState?.();
   }
 
@@ -2504,74 +2641,10 @@ function buildControlsPanel(state, ui, config) {
     }
   }
 
-  startButton.addEventListener('click', async () => {
-    if (!state.interviewId) {
-      updateStatusPill(statusPill, { label: 'Missing setup', tone: 'warning' });
+  async function endSessionAndScore() {
+    if (!state.sessionActive) {
       return;
     }
-
-    const turnMode = isTurnMode();
-
-    startButton.disabled = true;
-    stopButton.disabled = false;
-    updateStatusPill(statusPill, { label: turnMode ? 'Listening' : 'Connecting', tone: 'info' });
-    resetSessionState();
-    state.sessionActive = true;
-    state.sessionStarted = true;
-    state.captionFinalText = '';
-    state.captionDraftText = '';
-    state.turnReadyToSubmit = false;
-    if (ui.setSetupCollapsed && !state.setupAutoCollapsed) {
-      ui.setSetupCollapsed(true);
-      state.setupAutoCollapsed = true;
-    }
-    updateTurnSubmitUI();
-
-    if (turnMode) {
-      state.sessionId = `turn-${Date.now()}`;
-      state.liveMode = 'turn';
-      ui.updateSessionToolsState?.();
-      await startTurnIntro();
-      return;
-    }
-
-    ui.updateSessionToolsState?.();
-
-    try {
-      await ensureTransport();
-      if (!state.audioPlayback) {
-        const adaptiveConfig = getAdaptiveConfig();
-        state.audioPlayback = createAudioPlayback({ sampleRate: adaptiveConfig.sampleRate });
-        state.audioPlaybackSampleRate = adaptiveConfig.sampleRate;
-      }
-      await state.audioPlayback.resume();
-      state.transport.start(state.interviewId, state.userId, { resume: false, liveModel: state.liveModel });
-      await startMicrophoneIfNeeded();
-      startSpeechRecognition();
-    } catch (error) {
-      if (config.adapter !== 'mock') {
-        state.transport?.stop();
-        updateStatusPill(statusPill, { label: 'Live error', tone: 'danger' });
-        state.sessionActive = false;
-        startButton.disabled = false;
-        stopButton.disabled = true;
-        ui.updateSessionToolsState?.();
-        return;
-      }
-      updateStatusPill(statusPill, { label: 'Fallback', tone: 'warning' });
-      try {
-        await startMockFallback();
-      } catch (fallbackError) {
-        updateStatusPill(statusPill, { label: 'Error', tone: 'danger' });
-        state.sessionActive = false;
-        startButton.disabled = false;
-        stopButton.disabled = true;
-        ui.updateSessionToolsState?.();
-      }
-    }
-  });
-
-  stopButton.addEventListener('click', async () => {
     state.sessionActive = false;
     state.geminiReady = false;
     clearGeminiReconnect(state);
@@ -2585,10 +2658,13 @@ function buildControlsPanel(state, ui, config) {
     state.turnQueue = [];
     state.turnRequestActive = false;
     state.turnSpeaking = false;
+    state.resultsTranscriptVisible = false;
     updateTurnSubmitUI();
-    stopButton.disabled = true;
+    setPrimaryActionMode({ active: false, disabled: true });
     state.scorePending = true;
+    state.scoreError = false;
     updateStatusPill(statusPill, { label: 'Scoring', tone: 'info' });
+    setStatusDetail('Generating coaching feedback…');
     renderScore(ui, {
       overall_score: '--',
       summary: 'Preparing your coaching feedback… This takes about 20 seconds.',
@@ -2630,10 +2706,13 @@ function buildControlsPanel(state, ui, config) {
       state.score = score;
       renderScore(ui, score);
       updateStatusPill(statusPill, { label: 'Complete', tone: 'success' });
+      setStatusDetail('Coaching feedback ready.');
       ui.scorePanel?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
       ui.scorePanel?.focus?.({ preventScroll: true });
     } catch (error) {
       updateStatusPill(statusPill, { label: 'Score Error', tone: 'danger' });
+      setStatusDetail('Scoring failed. You can restart or export the transcript.');
+      state.scoreError = true;
       state.scorePending = false;
       state.score = {
         overall_score: '--',
@@ -2646,23 +2725,89 @@ function buildControlsPanel(state, ui, config) {
         ui.scoreNotice.textContent = 'Scoring failed. You can restart or export the transcript.';
       }
     } finally {
-      startButton.disabled = !state.interviewId;
+      setPrimaryActionMode({ active: false, disabled: !state.interviewId });
       setMuteState(false);
       ui.updateSessionToolsState?.();
+    }
+  }
+
+  startButton.addEventListener('click', async () => {
+    if (state.sessionActive) {
+      await endSessionAndScore();
+      return;
+    }
+    if (!state.interviewId) {
+      updateStatusPill(statusPill, { label: 'Missing setup', tone: 'warning' });
+      return;
+    }
+
+    const turnMode = isTurnMode();
+
+    setPrimaryActionMode({ active: false, disabled: true });
+    updateStatusPill(statusPill, { label: turnMode ? 'Listening' : 'Connecting', tone: 'info' });
+    resetSessionState();
+    state.sessionActive = true;
+    state.sessionStarted = true;
+    state.captionFinalText = '';
+    state.captionDraftText = '';
+    state.turnReadyToSubmit = false;
+    state.scoreError = false;
+    if (ui.setSetupCollapsed && !state.setupAutoCollapsed) {
+      ui.setSetupCollapsed(true);
+      state.setupAutoCollapsed = true;
+    }
+    setPrimaryActionMode({ active: true, disabled: false });
+    updateTurnSubmitUI();
+
+    if (turnMode) {
+      state.sessionId = `turn-${Date.now()}`;
+      state.liveMode = 'turn';
+      ui.updateSessionToolsState?.();
+      await startTurnIntro();
+      return;
+    }
+
+    ui.updateSessionToolsState?.();
+
+    try {
+      await ensureTransport();
+      if (!state.audioPlayback) {
+        const adaptiveConfig = getAdaptiveConfig();
+        state.audioPlayback = createAudioPlayback({ sampleRate: adaptiveConfig.sampleRate });
+        state.audioPlaybackSampleRate = adaptiveConfig.sampleRate;
+      }
+      await state.audioPlayback.resume();
+      state.transport.start(state.interviewId, state.userId, { resume: false, liveModel: state.liveModel });
+      await startMicrophoneIfNeeded();
+      startSpeechRecognition();
+    } catch (error) {
+      if (config.adapter !== 'mock') {
+        state.transport?.stop();
+        updateStatusPill(statusPill, { label: 'Live error', tone: 'danger' });
+        state.sessionActive = false;
+        setPrimaryActionMode({ active: false, disabled: false });
+        ui.updateSessionToolsState?.();
+        return;
+      }
+      updateStatusPill(statusPill, { label: 'Fallback', tone: 'warning' });
+      try {
+        await startMockFallback();
+      } catch (fallbackError) {
+        updateStatusPill(statusPill, { label: 'Error', tone: 'danger' });
+        state.sessionActive = false;
+        setPrimaryActionMode({ active: false, disabled: false });
+        ui.updateSessionToolsState?.();
+      }
     }
   });
 
   const actionsRow = document.createElement('div');
-  actionsRow.className = 'ui-controls__row';
+  actionsRow.className = 'ui-controls__row ui-controls__row--actions';
   actionsRow.appendChild(startButton);
-  actionsRow.appendChild(stopButton);
   actionsRow.appendChild(muteButton);
   actionsRow.appendChild(bargeInButton);
-
-  const turnActionsRow = document.createElement('div');
-  turnActionsRow.className = 'ui-controls__row';
-  turnActionsRow.appendChild(helpTurnButton);
-  turnActionsRow.appendChild(submitTurnButton);
+  actionsRow.appendChild(helpTurnButton);
+  actionsRow.appendChild(submitTurnButton);
 
   const turnHelp = document.createElement('div');
   turnHelp.className = 'ui-turn-help ui-state-text alert alert-info';
@@ -2686,40 +2831,53 @@ function buildControlsPanel(state, ui, config) {
   turnRubric.appendChild(turnRubricTitle);
   turnRubric.appendChild(turnRubricList);
 
+  const exportGroup = document.createElement('div');
+  exportGroup.className = 'ui-controls__export';
+  exportGroup.appendChild(exportLabel);
+  exportGroup.appendChild(exportPdfTop);
+  exportGroup.appendChild(exportTxtTop);
+
   const toolsRow = document.createElement('div');
   toolsRow.className = 'ui-controls__row ui-controls__row--tools';
   toolsRow.appendChild(sessionToolsButton);
 
-  const restartRow = document.createElement('div');
-  restartRow.className = 'ui-controls__restart';
-  restartRow.appendChild(restartMainLabel);
-  restartRow.appendChild(restartMainButton);
-  restartRow.appendChild(restartMainHelp);
+  const resultsRow = document.createElement('div');
+  resultsRow.className = 'ui-controls__row ui-controls__row--results';
+  resultsRow.appendChild(restartMainButton);
+  resultsRow.appendChild(exportGroup);
+  resultsRow.appendChild(candidateSetupButton);
 
   const content = document.createElement('div');
   content.className = 'layout-stack';
-  content.appendChild(statusPill);
+  content.appendChild(statusBlock);
   content.appendChild(actionsRow);
-  content.appendChild(turnActionsRow);
   content.appendChild(turnHelp);
   content.appendChild(turnRubric);
   content.appendChild(toolsRow);
-  content.appendChild(restartRow);
+  content.appendChild(resultsRow);
+  content.appendChild(restartMainHelp);
 
   ui.statusPill = statusPill;
+  ui.statusDetail = statusDetail;
   ui.startButton = startButton;
-  ui.stopButton = stopButton;
   ui.muteButton = muteButton;
   ui.bargeInToggle = bargeInButton;
   ui.helpTurnButton = helpTurnButton;
   ui.submitTurnButton = submitTurnButton;
-  ui.turnActionsRow = turnActionsRow;
+  ui.actionRow = actionsRow;
   ui.turnHelp = turnHelp;
   ui.turnRubric = turnRubric;
   ui.turnRubricList = turnRubricList;
   ui.sessionToolsToggle = sessionToolsButton;
   ui.restartButtonMain = restartMainButton;
   ui.restartMainHelp = restartMainHelp;
+  ui.exportPdfTop = exportPdfTop;
+  ui.exportTxtTop = exportTxtTop;
+  ui.candidateSetupButton = candidateSetupButton;
+  ui.toolsRow = toolsRow;
+  ui.resultsRow = resultsRow;
+  ui.setPrimaryActionMode = setPrimaryActionMode;
+  ui.setStatusDetail = setStatusDetail;
   ui.updateMeta = updateMeta;
   ui.applyModelOverrides = applyModelOverrides;
   ui.resetModelOverrides = resetModelOverrides;
@@ -2729,12 +2887,14 @@ function buildControlsPanel(state, ui, config) {
   updateTurnSubmitUI();
   ui.updateSetupCtas?.();
 
-  return createPanel({
+  const panel = createPanel({
     title: 'Session Controls',
     subtitle: 'Turn-based coaching controls.',
     content,
     attrs: { 'data-testid': 'controls-panel' }
   });
+  panel.classList.add('ui-controls-panel');
+  return panel;
 }
 
 function buildSessionToolsDrawer(state, ui, config) {
@@ -3304,6 +3464,7 @@ export function buildVoiceLayout() {
     transcript: [],
     score: null,
     scorePending: false,
+    scoreError: false,
     adapter: config.adapter,
     voiceMode: 'turn',
     voiceOutputMode: config.voiceOutputMode,
@@ -3364,6 +3525,7 @@ export function buildVoiceLayout() {
     lastCoachQuestion: '',
     setupAutoCollapsed: false,
     heroAutoCollapsed: false,
+    resultsTranscriptVisible: false,
     questionHelpExamples: [],
     // Learning Mode state (teach-first coaching)
     showExampleFirst: getLearningModePreference(),
@@ -3733,13 +3895,13 @@ export function buildVoiceLayout() {
   ui.autoStartNextQuestion = autoStartNextQuestion;
 
 
-  const leftColumn = document.createElement('div');
-  leftColumn.className = 'layout-stack';
   const setupPanel = buildSetupPanel(state, ui);
-  leftColumn.appendChild(setupPanel);
   const controlsPanel = buildControlsPanel(state, ui, config);
   ui.controlsPanel = controlsPanel;
-  leftColumn.appendChild(controlsPanel);
+
+  const leftColumn = document.createElement('div');
+  leftColumn.className = 'layout-stack';
+  leftColumn.appendChild(setupPanel);
 
   const rightColumn = document.createElement('div');
   rightColumn.className = 'layout-stack';
@@ -3753,15 +3915,22 @@ export function buildVoiceLayout() {
   rightColumn.appendChild(buildScorePanel(ui));
   ui.rightColumn = rightColumn;
   ui.reorderTranscript = (showTranscript) => {
-    if (!ui.rightColumn || !ui.transcriptPanel || !ui.questionRow) {
+    if (!ui.rightColumn || !ui.transcriptPanel || !ui.questionRow || !ui.scorePanel) {
       return;
     }
-    const shouldLead = Boolean(showTranscript);
+    const shouldShow = Boolean(showTranscript);
+    const inResults = (state.score || state.scorePending) && !state.sessionActive;
+    if (shouldShow && inResults) {
+      if (ui.scorePanel.nextSibling !== ui.transcriptPanel) {
+        ui.rightColumn.insertBefore(ui.transcriptPanel, ui.scorePanel.nextSibling);
+      }
+      return;
+    }
     const firstChild = ui.rightColumn.firstChild;
-    if (shouldLead && firstChild !== ui.transcriptPanel) {
+    if (shouldShow && firstChild !== ui.transcriptPanel) {
       ui.rightColumn.insertBefore(ui.transcriptPanel, ui.questionRow);
     }
-    if (!shouldLead && firstChild === ui.transcriptPanel) {
+    if (!shouldShow && firstChild === ui.transcriptPanel) {
       ui.rightColumn.insertBefore(ui.questionRow, ui.transcriptPanel);
     }
   };
@@ -3770,11 +3939,113 @@ export function buildVoiceLayout() {
   layout.className = 'layout-split';
   layout.appendChild(leftColumn);
   layout.appendChild(rightColumn);
+  ui.layout = layout;
 
   const page = document.createElement('div');
   page.className = 'layout-page';
-  page.appendChild(buildAppHeader(ui));
+  const header = buildAppHeader(ui);
+  page.appendChild(header);
+  page.appendChild(controlsPanel);
   page.appendChild(layout);
+
+  function isElementBelowFold(element) {
+    if (!element || element.hidden || typeof window === 'undefined') {
+      return false;
+    }
+    const rect = element.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    return rect.top >= viewportHeight - 12;
+  }
+
+  function scrollToElement(element) {
+    element?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+    element?.focus?.({ preventScroll: true });
+  }
+
+  function updateOverflowMenu() {
+    if (!ui.setOverflowMenuItems) {
+      return;
+    }
+    const items = [];
+    if (ui.heroBody?.hidden && ui.setHeroCollapsed) {
+      items.push({
+        label: 'Guide (expand)',
+        onSelect: () => {
+          ui.setHeroCollapsed(false);
+          scrollToElement(ui.heroBody);
+        }
+      });
+    }
+
+    const setupHidden = Boolean(ui.setupBody?.hidden);
+    const setupBelow = isElementBelowFold(ui.setupPanel);
+    if ((setupHidden || setupBelow) && ui.setSetupCollapsed) {
+      items.push({
+        label: 'Candidate Setup',
+        onSelect: () => {
+          ui.setSetupCollapsed(false);
+          scrollToElement(ui.setupPanel);
+        }
+      });
+    }
+
+    if (ui.questionRow && !ui.questionRow.hidden && isElementBelowFold(ui.questionRow)) {
+      items.push({
+        label: 'Questions',
+        onSelect: () => scrollToElement(ui.questionRow)
+      });
+    }
+
+    if (ui.insightsPanel && !ui.insightsPanel.hidden && isElementBelowFold(ui.insightsPanel)) {
+      items.push({
+        label: 'Insights',
+        onSelect: () => scrollToElement(ui.insightsPanel)
+      });
+    }
+
+    const hasTranscript = Array.isArray(state.transcript) && state.transcript.length > 0;
+    const transcriptHidden = Boolean(ui.transcriptPanel?.hidden);
+    const transcriptBelow = isElementBelowFold(ui.transcriptPanel);
+    if ((hasTranscript && transcriptHidden) || transcriptBelow) {
+      items.push({
+        label: 'Transcript',
+        onSelect: () => {
+          if (transcriptHidden) {
+            state.resultsTranscriptVisible = true;
+            ui.updateSessionToolsState?.();
+          }
+          scrollToElement(ui.transcriptPanel);
+        }
+      });
+    }
+
+    if (ui.scorePanel && !ui.scorePanel.hidden && isElementBelowFold(ui.scorePanel)) {
+      items.push({
+        label: 'Session Insights',
+        onSelect: () => scrollToElement(ui.scorePanel)
+      });
+    }
+
+    ui.setOverflowMenuItems(items);
+  }
+
+  ui.updateOverflowMenu = updateOverflowMenu;
+
+  let overflowMenuRaf = null;
+  const scheduleOverflowMenuUpdate = () => {
+    if (overflowMenuRaf) {
+      return;
+    }
+    overflowMenuRaf = window.requestAnimationFrame(() => {
+      overflowMenuRaf = null;
+      updateOverflowMenu();
+    });
+  };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', scheduleOverflowMenuUpdate);
+    window.addEventListener('scroll', scheduleOverflowMenuUpdate, { passive: true });
+  }
 
   const { drawer, backdrop } = buildSessionToolsDrawer(state, ui, config);
   page.appendChild(drawer);
@@ -3865,6 +4136,8 @@ export function buildVoiceLayout() {
         }
         : null;
       state.scorePending = false;
+      state.scoreError = false;
+      state.resultsTranscriptVisible = false;
       state.adapter = summary.adapter || state.adapter;
       state.sessionName = summary.session_name || '';
       state.askedQuestionIndex = summary.asked_question_index ?? null;
@@ -3907,8 +4180,7 @@ export function buildVoiceLayout() {
         ui.setupStatus.textContent = 'Session loaded. Start the session when ready.';
       }
       ui.sessionHelp.textContent = 'Session loaded.';
-      ui.startButton.disabled = !state.interviewId;
-      ui.stopButton.disabled = true;
+      ui.setPrimaryActionMode?.({ active: false, disabled: !state.interviewId });
       updateStatusPill(ui.statusPill, { label: 'Idle', tone: 'neutral' });
       ui.updateMeta?.();
       ui.updateSessionToolsState?.();
@@ -3944,8 +4216,10 @@ export function buildVoiceLayout() {
     const hasScore = Boolean(state.score);
     const showScore = hasScore || state.scorePending;
     const inResults = showScore && !state.sessionActive;
-    const showControls = hasQuestions || state.sessionActive || inResults;
-    const restartPrimary = inResults;
+    const showResultsActions = hasScore && !state.sessionActive;
+    const showActions = (state.sessionActive || hasQuestions) && !inResults;
+    const showActiveControls = state.sessionActive;
+    const restartPrimary = showResultsActions;
     const nameValue = ui.sessionNameInput?.value.trim() || '';
     const questionValue = ui.customQuestionInput?.value.trim() || '';
     const selectedSession = ui.sessionSelect?.value || '';
@@ -3971,6 +4245,15 @@ export function buildVoiceLayout() {
     }
     if (ui.exportTxtMain) {
       ui.exportTxtMain.disabled = !(hasInterview && hasTranscript);
+    }
+    if (ui.exportPdfTop) {
+      ui.exportPdfTop.disabled = !(hasInterview && hasTranscript);
+    }
+    if (ui.exportTxtTop) {
+      ui.exportTxtTop.disabled = !(hasInterview && hasTranscript);
+    }
+    if (ui.candidateSetupButton) {
+      ui.candidateSetupButton.disabled = !hasInterview;
     }
     if (ui.restartButton) {
       ui.restartButton.disabled = !canRestart;
@@ -4004,9 +4287,6 @@ export function buildVoiceLayout() {
       state.setupAutoCollapsed = true;
     }
 
-    if (ui.heroToggle) {
-      ui.heroToggle.hidden = !hasQuestions;
-    }
     if (!hasQuestions) {
       state.heroAutoCollapsed = false;
       if (ui.setHeroCollapsed) {
@@ -4018,8 +4298,38 @@ export function buildVoiceLayout() {
       state.heroAutoCollapsed = true;
     }
 
+    if (state.sessionActive) {
+      ui.setPrimaryActionMode?.({ active: true, disabled: false });
+    } else if (state.scorePending) {
+      ui.setPrimaryActionMode?.({ active: false, disabled: true });
+    } else {
+      ui.setPrimaryActionMode?.({ active: false, disabled: !hasInterview });
+    }
+
+    if (!state.sessionActive) {
+      if (state.scorePending) {
+        updateStatusPill(ui.statusPill, { label: 'Scoring', tone: 'info' });
+        ui.setStatusDetail?.('Generating coaching feedback…');
+      } else if (state.scoreError) {
+        updateStatusPill(ui.statusPill, { label: 'Score Error', tone: 'danger' });
+        ui.setStatusDetail?.('Scoring failed. You can restart or export the transcript.');
+      } else if (hasScore) {
+        updateStatusPill(ui.statusPill, { label: 'Complete', tone: 'success' });
+        ui.setStatusDetail?.('Coaching feedback ready.');
+      } else if (hasQuestions) {
+        updateStatusPill(ui.statusPill, { label: 'Ready', tone: 'info' });
+        ui.setStatusDetail?.('Questions ready. Press Begin Practice to start.');
+      } else {
+        updateStatusPill(ui.statusPill, { label: 'Setup', tone: 'neutral' });
+        ui.setStatusDetail?.('Add resume + job details to generate questions.');
+      }
+    }
+
     const showQuestions = hasQuestions && !inResults;
-    const showTranscript = state.sessionActive || (hasTranscript && !inResults);
+    const showTranscript = state.sessionActive
+      || (!inResults && hasTranscript)
+      || (hasScore && state.resultsTranscriptVisible);
+    const showRightColumn = showQuestions || showTranscript || showScore;
 
     if (ui.questionRow) {
       ui.questionRow.hidden = !showQuestions;
@@ -4037,6 +4347,12 @@ export function buildVoiceLayout() {
     if (ui.scorePanel) {
       ui.scorePanel.hidden = !showScore;
     }
+    if (ui.rightColumn) {
+      ui.rightColumn.hidden = !showRightColumn;
+    }
+    if (ui.layout) {
+      ui.layout.classList.toggle('layout-split--single', !showRightColumn);
+    }
     if (ui.scoreProgress) {
       const scoreProgressActive = state.scorePending;
       ui.scoreProgress.hidden = !scoreProgressActive;
@@ -4044,8 +4360,38 @@ export function buildVoiceLayout() {
       ui.scoreProgress.classList.toggle('ui-radial-progress--active', scoreProgressActive);
     }
     if (ui.controlsPanel) {
-      ui.controlsPanel.hidden = !showControls;
-      ui.controlsPanel.classList.toggle('ui-controls--results', inResults && !state.sessionActive);
+      ui.controlsPanel.hidden = false;
+      ui.controlsPanel.classList.toggle('ui-controls--results', inResults);
+    }
+    if (ui.actionRow) {
+      ui.actionRow.hidden = !showActions;
+    }
+    if (ui.muteButton) {
+      ui.muteButton.hidden = !showActiveControls;
+    }
+    if (ui.bargeInToggle) {
+      ui.bargeInToggle.hidden = !showActiveControls;
+    }
+    if (ui.helpTurnButton) {
+      ui.helpTurnButton.hidden = !showActiveControls;
+    }
+    if (ui.submitTurnButton) {
+      ui.submitTurnButton.hidden = !showActiveControls;
+    }
+    if (ui.toolsRow) {
+      ui.toolsRow.hidden = !hasInterview || state.scorePending || showResultsActions;
+    }
+    if (ui.resultsRow) {
+      ui.resultsRow.hidden = !showResultsActions;
+    }
+    if (ui.restartMainHelp) {
+      ui.restartMainHelp.hidden = !showResultsActions;
+    }
+    if (ui.sessionToolsToggle && ui.toolsRow && ui.resultsRow) {
+      const targetRow = showResultsActions ? ui.resultsRow : ui.toolsRow;
+      if (ui.sessionToolsToggle.parentElement !== targetRow) {
+        targetRow.insertBefore(ui.sessionToolsToggle, targetRow.firstChild);
+      }
     }
 
     if (ui.exportHelp) {
@@ -4068,6 +4414,7 @@ export function buildVoiceLayout() {
         ? 'Stop the session to restart.'
         : 'Enabled after a session starts.';
     }
+    ui.updateOverflowMenu?.();
   }
 
   ui.updateSessionToolsState = updateSessionToolsState;
@@ -4203,6 +4550,36 @@ export function buildVoiceLayout() {
     });
   });
 
+  ui.exportPdfTop?.addEventListener('click', async () => {
+    await downloadStudyGuideFile('pdf', {
+      onSuccess: () => {
+        if (ui.exportMainHelp) {
+          ui.exportMainHelp.textContent = 'Download started.';
+        }
+      },
+      onError: (error) => {
+        if (ui.exportMainHelp) {
+          ui.exportMainHelp.textContent = error?.message || 'Unable to export PDF.';
+        }
+      }
+    });
+  });
+
+  ui.exportTxtTop?.addEventListener('click', async () => {
+    await downloadStudyGuideFile('txt', {
+      onSuccess: () => {
+        if (ui.exportMainHelp) {
+          ui.exportMainHelp.textContent = 'Download started.';
+        }
+      },
+      onError: (error) => {
+        if (ui.exportMainHelp) {
+          ui.exportMainHelp.textContent = error?.message || 'Unable to export TXT.';
+        }
+      }
+    });
+  });
+
   ui.exportPdfMain?.addEventListener('click', async () => {
     await downloadStudyGuideFile('pdf', {
       onSuccess: () => {
@@ -4240,8 +4617,7 @@ export function buildVoiceLayout() {
       ui.resetSessionState?.();
       state.sessionStarted = false;
       state.askedQuestionIndex = null;
-      ui.startButton.disabled = false;
-      ui.stopButton.disabled = true;
+      ui.setPrimaryActionMode?.({ active: false, disabled: false });
       updateStatusPill(ui.statusPill, { label: 'Idle', tone: 'neutral' });
     } catch (error) {
       const message = error.message || 'Unable to restart session.';
