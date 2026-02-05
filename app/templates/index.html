@@ -1,12 +1,16 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="lemonade">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>PrepTalk Interview Coach</title>
     <link rel="stylesheet" href="/static/css/components.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/daisyui@2.13.3/dist/full.css"
+    />
   </head>
-  <body>
+  <body class="app-body">
     <div id="app" class="app-shell"></div>
     <script>
       window.__APP_CONFIG__ = {{ app_config | safe }};

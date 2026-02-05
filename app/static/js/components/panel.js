@@ -13,7 +13,7 @@ export function createPanel(options = {}) {
   const panel = document.createElement('section');
   const resolvedVariant = PANEL_VARIANTS.includes(variant) ? variant : 'surface';
 
-  panel.className = `ui-panel ui-panel--${resolvedVariant}`;
+  panel.className = `ui-panel ui-panel--${resolvedVariant} card`;
 
   Object.entries(attrs).forEach(([key, value]) => {
     if (value === undefined || value === null) return;
@@ -26,7 +26,7 @@ export function createPanel(options = {}) {
 
     if (title) {
       const heading = document.createElement('h2');
-      heading.className = 'ui-panel__title';
+      heading.className = 'ui-panel__title card-title';
       heading.textContent = title;
       header.appendChild(heading);
     }
@@ -42,7 +42,7 @@ export function createPanel(options = {}) {
   }
 
   const body = document.createElement('div');
-  body.className = 'ui-panel__body';
+  body.className = 'ui-panel__body card-body';
 
   if (Array.isArray(content)) {
     content.forEach((item) => {

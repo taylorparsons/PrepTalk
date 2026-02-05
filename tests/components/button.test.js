@@ -17,6 +17,9 @@ describe('createButton', () => {
     expect(button.classList.contains('ui-button')).toBe(true);
     expect(button.classList.contains('ui-button--secondary')).toBe(true);
     expect(button.classList.contains('ui-button--lg')).toBe(true);
+    expect(button.classList.contains('btn')).toBe(true);
+    expect(button.classList.contains('btn-secondary')).toBe(true);
+    expect(button.classList.contains('btn-lg')).toBe(true);
   });
 
   it('supports disabled and click handler', () => {

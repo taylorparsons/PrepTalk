@@ -8,13 +8,20 @@ function buildPdfBuffer(label) {
   return Buffer.from(content, 'utf-8');
 }
 
-test('candidate interview flow (mock adapter)', async ({ page }) => {
+async function captureStep(page, testInfo, name) {
+  const screenshot = await page.screenshot({ fullPage: true });
+  await testInfo.attach(name, { body: screenshot, contentType: 'image/png' });
+}
+
+test('candidate interview flow (mock adapter)', async ({ page }, testInfo) => {
   test.skip(isLive, 'Skip mock flow when running live adapter.');
   await page.addInitScript(() => {
     window.__E2E__ = true;
   });
   await page.goto('/');
   const voiceMode = await page.evaluate(() => window.__APP_CONFIG__?.voiceMode || 'live');
+
+  await captureStep(page, testInfo, 'state-1-setup-empty');
 
   const resumeBuffer = buildPdfBuffer('Resume');
   const jobBuffer = buildPdfBuffer('Job');
@@ -30,6 +37,8 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
     mimeType: 'application/pdf',
     buffer: jobBuffer
   });
+
+  await captureStep(page, testInfo, 'state-2-ready-to-generate');
 
   const generateButton = page.getByTestId('generate-questions');
   const startButton = page.getByTestId('start-interview');
@@ -50,6 +59,8 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
   await expect(scorePanel).toBeHidden();
 
   await generateButton.click();
+  await expect(page.getByTestId('generate-progress')).toBeVisible({ timeout: 10000 });
+  await captureStep(page, testInfo, 'state-3-generating');
   await expect(startButton).toBeEnabled({ timeout: 30000 });
   await expect(questionsPanel).toBeVisible({ timeout: 30000 });
   await expect(page.getByTestId('question-list')).toContainText(/walk me through/i);
@@ -60,6 +71,8 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
   await expect(controlsPanel).toBeVisible();
   await expect(transcriptPanel).toBeHidden();
   await expect(scorePanel).toBeHidden();
+  await expect(setupPanel).toHaveClass(/ui-panel--collapsed/);
+  await captureStep(page, testInfo, 'state-4-questions-ready');
 
   await startButton.click();
   if (voiceMode === 'turn') {
@@ -86,10 +99,12 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
   await expect(turnHelp).toContainText(/Need a nudge/i, { timeout: 20000 });
   await helpTurn.click();
   await expect(page.getByTestId('turn-rubric')).toBeVisible();
+  await captureStep(page, testInfo, 'state-5-interview-turn');
 
   await page.getByTestId('stop-interview').click();
   await expect(scorePanel).toBeVisible();
-  await expect(controlsPanel).toBeHidden();
+  await expect(controlsPanel).toBeVisible();
+  await expect(controlsPanel).toHaveClass(/ui-controls--results/);
   await expect(questionsPanel).toBeHidden();
   await expect(insightsPanel).toBeHidden();
   await expect(transcriptPanel).toBeHidden();
@@ -97,4 +112,5 @@ test('candidate interview flow (mock adapter)', async ({ page }) => {
   await expect(page.getByTestId('restart-interview-main')).toHaveClass(/ui-button--primary/);
   await expect(page.getByTestId('export-pdf-main')).toBeEnabled();
   await expect(page.getByTestId('export-txt-main')).toBeEnabled();
+  await captureStep(page, testInfo, 'state-6-scoring-results');
 });

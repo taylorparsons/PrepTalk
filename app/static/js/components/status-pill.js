@@ -12,7 +12,15 @@ export function createStatusPill(options = {}) {
   const pill = document.createElement('span');
   const resolvedTone = PILL_TONES.includes(tone) ? tone : 'neutral';
 
-  pill.className = `ui-pill ui-pill--${resolvedTone}`;
+  const daisyTone = {
+    neutral: 'badge-neutral',
+    success: 'badge-success',
+    warning: 'badge-warning',
+    danger: 'badge-error',
+    info: 'badge-info'
+  }[resolvedTone];
+
+  pill.className = `ui-pill ui-pill--${resolvedTone} badge ${daisyTone}`;
 
   if (ariaLabel) {
     pill.setAttribute('aria-label', ariaLabel);
