@@ -2698,3 +2698,28 @@ NEXT
 
 NOTES
 - Commands run: none (tests not requested).
+
+---
+
+Session: 2026-02-05 14:08
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260205-session-layout-target
+Input: CR-20260205-1408
+Decisions: (none)
+Spec: docs/specs/20260205-session-layout-target/spec.md
+Tasks: docs/specs/20260205-session-layout-target/tasks.md
+Goal: Update PRD so the completed prototype-c E2E removal is not listed in backlog.
+
+DONE
+- [2026-02-05 14:08] T-011: Update PRD shipped/backlog to reflect prototype-c E2E removal. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: none (tests not requested).
