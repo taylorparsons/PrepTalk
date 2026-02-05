@@ -8,7 +8,8 @@ const launchOptions = isLive
   ? { args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] }
   : {};
 const port = process.env.E2E_PORT || '8129';
-const baseURL = process.env.E2E_BASE_URL || `http://localhost:${port}`;
+const host = process.env.E2E_HOST || '127.0.0.1';
+const baseURL = process.env.E2E_BASE_URL || `http://${host}:${port}`;
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -27,7 +28,7 @@ export default defineConfig({
     launchOptions
   },
   webServer: {
-    command: `INTERVIEW_ADAPTER=${adapter} VOICE_MODE=${voiceMode} RELOAD=0 PORT=${port} ./run.sh ui`,
+    command: `INTERVIEW_ADAPTER=${adapter} VOICE_MODE=${voiceMode} RELOAD=0 PORT=${port} HOST=${host} ./run.sh ui`,
     url: `${baseURL}/health`,
     reuseExistingServer: !process.env.CI,
     timeout: 120000

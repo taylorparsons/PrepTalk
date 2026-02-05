@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <rect width="1200" height="720" fill="#f6f3ea" />
+
+  <text x="60" y="60" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700" fill="#2b2b2b">PrepTalk</text>
+  <text x="60" y="82" font-family="Inter, Arial, sans-serif" font-size="13" fill="#6a6259">Contextual interview coach</text>
+
+  <rect x="60" y="110" width="1080" height="90" rx="16" fill="#d9f3e6" stroke="#b6e0cc" />
+  <text x="90" y="152" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700" fill="#0f3d2e">State: Questions ready</text>
+  <text x="90" y="175" font-family="Inter, Arial, sans-serif" font-size="13" fill="#2f5b49">Start the coach when you are ready.</text>
+  <rect x="860" y="132" width="240" height="46" rx="12" fill="#0f766e" />
+  <text x="920" y="160" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#ffffff">Start Interview</text>
+
+  <rect x="60" y="220" width="1080" height="70" rx="14" fill="#ffffff" stroke="#e2dbcf" />
+  <text x="90" y="260" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#2b2b2b">Guide (collapsed)</text>
+  <text x="240" y="260" font-family="Inter, Arial, sans-serif" font-size="12" fill="#6b7280">Show how-to and setup steps</text>
+  <rect x="1010" y="238" width="110" height="34" rx="10" fill="#f3f4f6" />
+  <text x="1032" y="260" font-family="Inter, Arial, sans-serif" font-size="12" fill="#6b7280">Show guide</text>
+
+  <rect x="60" y="320" width="520" height="340" rx="18" fill="#ffffff" stroke="#e2dbcf" />
+  <text x="90" y="360" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#2b2b2b">Candidate Setup</text>
+  <rect x="90" y="385" width="140" height="26" rx="13" fill="#f3f4f6" />
+  <text x="110" y="403" font-family="Inter, Arial, sans-serif" font-size="12" fill="#6b7280">Collapsed</text>
+  <text x="90" y="440" font-family="Inter, Arial, sans-serif" font-size="12" fill="#8b8b8b">Resume + Job details hidden until re-opened.</text>
+
+  <rect x="610" y="320" width="530" height="340" rx="18" fill="#fbfbfb" stroke="#e2dbcf" />
+  <text x="640" y="360" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" fill="#2b2b2b">Session Controls (ready)</text>
+  <rect x="640" y="390" width="200" height="36" rx="10" fill="#2563eb" />
+  <text x="690" y="414" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700" fill="#ffffff">Submit Answer</text>
+  <rect x="860" y="390" width="200" height="36" rx="10" fill="#e5e7eb" />
+  <text x="920" y="414" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700" fill="#6b7280">Request Help</text>
+</svg>

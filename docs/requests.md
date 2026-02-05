@@ -785,3 +785,196 @@ Request (verbatim):
 
 Notes:
 - Note that mock E2E failure was intentionally ignored for now per user request.
+
+## CR-20260204-1531
+Date: 2026-02-04 15:31
+Source: chat
+
+Request (verbatim):
+use $ralph and $daisy to improve the UI and how the user interacts with it
+
+Notes:
+- Use RALPH traceability and DaisyUI/Tailwind for UI/UX improvements.
+
+## CR-20260204-1553
+Date: 2026-02-04 15:53
+Source: chat
+
+Request (verbatim):
+look at what I planned in branch to have a clear call to action in branch https://github.com/taylorparsons/PrepTalk/tree/cta-extras-e2e review the docs created by $ralph
+
+in short the first view you will see two containers [Image #1] like the image
+then when the setup info is in place generate question is actionable and when the interview is started the Candidate setup colapes but can be opened up. etc
+
+Notes:
+- Review CTA clarity docs in the cta-extras-e2e branch against the described stage gating behavior.
+
+## CR-20260204-1558
+Date: 2026-02-04 15:58
+Source: chat
+
+Request (verbatim):
+feel free to suggest visual improvements or options
+
+Notes:
+- Provide UI/visual improvement options without changing behavior.
+
+## CR-20260205-0910
+Date: 2026-02-05 09:10
+Source: chat
+
+Request (verbatim):
+i will also want any state change that the user should be aware of to be a larger font in the current state it it too small, plus once the questions are gnerated like the candidate setup I want the test below the PrepTalk header also collapes
+
+Notes:
+- Enlarge state-change messaging and auto-collapse the hero text below the PrepTalk header after questions are generated.
+
+## CR-20260205-0912
+Date: 2026-02-05 09:12
+Source: chat
+
+Request (verbatim):
+pick the three best options,explain why and then create an image for each one so I can visualize with it will look like
+
+Notes:
+- Provide three UI options with rationale and visual mock images.
+
+## CR-20260205-0925
+Date: 2026-02-05 09:25
+Source: chat
+
+Request (verbatim):
+create a 4th options that improves the existing UI, i need smaller changes to reduce risk
+
+Notes:
+- Add a low-risk option that minimally adjusts the current UI.
+
+## CR-20260205-0940
+Date: 2026-02-05 09:40
+Source: chat
+
+Request (verbatim):
+create an svg for each step in my existing ui for the state changes
+
+Notes:
+- Provide SVGs for each UI state-change step in the existing flow.
+
+## CR-20260205-1005
+Date: 2026-02-05 10:05
+Source: chat
+
+Request (verbatim):
+not that is not it, where is the voice captured I will show you the app today so nothing is missed, I really just when the existing UI to have a clear call to action and how the UI the is needed for the primary and secondary tasks 
+[Image #1] opening call to action text on what to do and setup 
+[Image #2] when the question are generated the interview questions appear the the insites panel.  I would like the following to happen when the quesiton appear the candidate setup collapes as well as the instruction. 
+[Image #3] the Candidate setup collapes now at start interview and the transcript opens at the bottom, this need to be up abobe the fold [Image #4]
+[Image #5] the extras show extas and restart show be failable when the application is stopped unlinke now it does this [Image #6] it makes re-starting the session impossible and you can't rename the session 
+If the user use the Request Help button I want the answer to be shown and persisted in the question Insites at the top so that they can practice using that example.
+
+Notes:
+- Collapse Candidate Setup and hero instructions when questions are generated.
+- Move transcript above the fold when the interview starts.
+- Keep Extras + Restart available after stopping so sessions can be renamed/restarted.
+- Persist Request Help responses in Question Insights for the active question.
+
+## CR-20260205-1110
+Date: 2026-02-05 11:10
+Source: chat
+
+Request (verbatim):
+1. Voice chat should be above the fold either center or on the left
+2. it should be active and visable during the interview at the end it can collapse and the user can open it 
+3  visable after questions appear, then hidden but open is ok  during the interview and available after the interview to restate or do other extra actions.
+
+update the assests and plan here so I am sure we are on the same page 
+docs/specs/20260205-state-change-svgs
+
+Notes:
+- Update the state-change SVGs and plan to reflect the clarified voice chat placement, collapse timing, and Extras visibility.
+
+## CR-20260204-1846
+Date: 2026-02-04 18:46
+Source: chat
+
+Request (verbatim):
+add a radial progress wait for the interview question generation and interview score
+
+Notes:
+- Add radial progress indicators for question generation and scoring states.
+
+## CR-20260205-0249
+Date: 2026-02-05 02:49
+Source: chat
+
+Request (verbatim):
+I am reviewing the updates and and it looks pretty good but use the daisy ui theme called lemonade
+
+Notes:
+- Set the DaisyUI theme to lemonade.
+
+## CR-20260205-0312
+Date: 2026-02-05 03:12
+Source: chat
+
+Request (verbatim):
+[Image #1] and [Image #2] should not be shown until shown until needed
+
+Notes:
+- Hide transcript/score panels and progress spinners until their associated state is active.
+
+## CR-20260204-1937
+Date: 2026-02-04 19:37
+Source: chat
+
+Request (verbatim):
+the export transcript has json """ic
+- {'area': 'Metrics-Driven Engineering Efficiency', 'description': "Evaluate the candidate's ability to move beyond vanity metrics. Look for deep understanding of DORA metrics (Deployment Frequency, Lead Time for Changes, etc.) and how they apply his experience with 'engineering efficiency metrics' to a platform scale rather than just a single application."}
+- {'area': 'Platform Mindset vs. Program Management', 'description': "Given the candidate's long tenure as a Technical Program Manager (TPM), assess if he can drive product vision and market differentiation (Product thinking) rather than just execution, timelines, and delivery (Project thinking)."}
+- {'area': 'Modern DevOps & Cloud Native Depth', 'description': "Assess technical fluency in modern cloud infrastructure. The candidate has managed integrations and data centers, but needs to demonstrate specific product design knowledge regarding containerization, Kubernetes, and IaC patterns relevant to OCI's customer base."}
+- {'area': 'Persona-Driven Design', 'description': "Check if the candidate can articulate the specific needs of different users (e.g., the Platform Engineer vs. the Application Developer). Look for examples of how his 'DevEx' work reduced friction and improved the 'inner loop' of development."}
+""" this will be read by a human so trending this as formatted test is prerered
+
+Notes:
+- Format exported focus areas/rubric text into human-readable bullets instead of raw JSON/dict strings.
+
+## CR-20260204-1928
+Date: 2026-02-04 19:28
+Source: chat
+
+Request (verbatim):
+both of the the radial progess bars show before they are needed and they do not progess [Image #1] I assumed by adding them you would user them and annimate when needed.
+
+Notes:
+- Ensure radial progress indicators stay hidden until active and animate while pending.
+
+## CR-20260204-1940
+Date: 2026-02-04 19:40
+Source: chat
+
+Request (verbatim):
+the score number should be diplayed with some meaning like 70 of of 100 or 0 out of 100
+
+Notes:
+- Display score values with a clear out-of-100 format.
+
+## CR-20260204-1943
+Date: 2026-02-04 19:43
+Source: chat
+
+Request (verbatim):
+the interview script needs to not ask a question """To get started, could you please confirm that you're ready to dive into the Principal Product Manager role for OCI's CI/CD platform?""" the person who is being interviewed just set it up, this formality here is not needed and is distracting.
+
+Notes:
+- Remove intro confirmation questions about readiness or role before the first interview question.
+
+## CR-20260204-1947
+Date: 2026-02-04 19:47
+Source: chat
+
+Request (verbatim):
+it looks like you addresed what I requested.  complete all work to make sure there are no regressions, the a live e2e for and create screen shots I can use to create a deeper help doc later, when running playwrite make it so each step and state change has a screen shot for the report so I can view it all before we merge to main.  Keep cheking in changes on our local env
+
+Notes:
+- Run the full test suite (pytest, Vitest, Playwright mock + live).
+- Add Playwright screenshots for each state-change step and attach them to HTML reports.
+- Create local commits for completed work.

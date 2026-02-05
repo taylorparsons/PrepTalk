@@ -40,7 +40,12 @@ startxref
   return Buffer.from(content, 'utf-8');
 }
 
-test('candidate interview flow (gemini turn voice)', async ({ page }) => {
+async function captureStep(page, testInfo, name) {
+  const screenshot = await page.screenshot({ fullPage: true });
+  await testInfo.attach(name, { body: screenshot, contentType: 'image/png' });
+}
+
+test('candidate interview flow (gemini turn voice)', async ({ page }, testInfo) => {
   test.skip(!isLive || !hasKey, 'Requires E2E_LIVE=1 and GEMINI_API_KEY or GOOGLE_API_KEY.');
   test.setTimeout(120000);
 
@@ -51,6 +56,8 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
   await page.goto('/');
   const voiceMode = await page.evaluate(() => window.__APP_CONFIG__?.voiceMode || 'live');
   test.skip(voiceMode !== 'turn', 'Requires VOICE_MODE=turn for turn-based voice.');
+
+  await captureStep(page, testInfo, 'state-1-setup-empty');
 
   const resumeFileInput = page.getByTestId('resume-file');
   const jobFileInput = page.getByTestId('job-file');
@@ -75,6 +82,8 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
     });
   }
 
+  await captureStep(page, testInfo, 'state-2-ready-to-generate');
+
   const generateButton = page.getByTestId('generate-questions');
   const startButton = page.getByTestId('start-interview');
   const setupPanel = page.getByTestId('setup-panel');
@@ -94,6 +103,8 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
   await expect(scorePanel).toBeHidden();
 
   await generateButton.click();
+  await expect(page.getByTestId('generate-progress')).toBeVisible({ timeout: 10000 });
+  await captureStep(page, testInfo, 'state-3-generating');
   await expect(startButton).toBeEnabled({
     timeout: isLive ? 30000 : 10000
   });
@@ -104,6 +115,8 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
   await expect(controlsPanel).toBeVisible();
   await expect(transcriptPanel).toBeHidden();
   await expect(scorePanel).toBeHidden();
+  await expect(setupPanel).toHaveClass(/ui-panel--collapsed/);
+  await captureStep(page, testInfo, 'state-4-questions-ready');
 
   await startButton.click();
   await expect(page.getByTestId('session-status')).toHaveText(/Welcoming|Listening/);
@@ -128,6 +141,7 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
   await expect(turnHelp).toContainText(/Need a nudge/i, { timeout: 20000 });
   await helpTurn.click();
   await expect(page.getByTestId('turn-rubric')).toBeVisible();
+  await captureStep(page, testInfo, 'state-5-interview-turn');
 
   await page.waitForFunction(() => Boolean(window.__e2eQueueTurn));
   await page.evaluate(() => window.__e2eQueueTurn?.('Hello from the e2e test.'));
@@ -143,7 +157,8 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
 
   await page.getByTestId('stop-interview').click();
   await expect(scorePanel).toBeVisible();
-  await expect(controlsPanel).toBeHidden();
+  await expect(controlsPanel).toBeVisible();
+  await expect(controlsPanel).toHaveClass(/ui-controls--results/);
   await expect(questionsPanel).toBeHidden();
   await expect(insightsPanel).toBeHidden();
   await expect(transcriptPanel).toBeHidden();
@@ -154,4 +169,5 @@ test('candidate interview flow (gemini turn voice)', async ({ page }) => {
   await expect(page.getByTestId('restart-interview-main')).toHaveClass(/ui-button--primary/);
   await expect(page.getByTestId('export-pdf-main')).toBeEnabled();
   await expect(page.getByTestId('export-txt-main')).toBeEnabled();
+  await captureStep(page, testInfo, 'state-6-scoring-results');
 });

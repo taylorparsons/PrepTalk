@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <rect width="1200" height="720" fill="#f6f3ea" />
+
+  <rect x="60" y="40" width="1080" height="180" rx="18" fill="#ffffff" stroke="#e2dbcf" />
+  <text x="90" y="85" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700" fill="#2b2b2b">PrepTalk</text>
+  <text x="90" y="110" font-family="Inter, Arial, sans-serif" font-size="13" fill="#6a6259">Contextual interview coach</text>
+
+  <text x="90" y="155" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700" fill="#1f2937">State: Waiting on job URL</text>
+  <rect x="860" y="128" width="240" height="50" rx="12" fill="#2563eb" />
+  <text x="915" y="160" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#ffffff">Generate Questions</text>
+
+  <rect x="60" y="240" width="1080" height="70" rx="14" fill="#ffffff" stroke="#e2dbcf" />
+  <text x="90" y="282" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#2b2b2b">Guide (collapsed)</text>
+  <text x="240" y="282" font-family="Inter, Arial, sans-serif" font-size="12" fill="#6b7280">Show setup + turn-based instructions</text>
+  <rect x="1020" y="258" width="90" height="34" rx="10" fill="#f3f4f6" />
+  <text x="1040" y="280" font-family="Inter, Arial, sans-serif" font-size="12" fill="#6b7280">Expand</text>
+
+  <rect x="60" y="340" width="520" height="320" rx="18" fill="#ffffff" stroke="#e2dbcf" />
+  <text x="90" y="380" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#2b2b2b">Candidate Setup</text>
+  <rect x="90" y="410" width="460" height="50" rx="10" fill="#f9fafb" stroke="#e5e7eb" />
+  <text x="110" y="442" font-family="Inter, Arial, sans-serif" font-size="12" fill="#6b7280">Resume (PDF/DOCX)</text>
+  <rect x="90" y="480" width="460" height="50" rx="10" fill="#f9fafb" stroke="#e5e7eb" />
+  <text x="110" y="512" font-family="Inter, Arial, sans-serif" font-size="12" fill="#6b7280">Job Description URL</text>
+
+  <rect x="610" y="340" width="530" height="320" rx="18" fill="#fbfbfb" stroke="#e2dbcf" />
+  <text x="640" y="380" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" fill="#2b2b2b">Session Controls (hidden until ready)</text>
+  <text x="640" y="410" font-family="Inter, Arial, sans-serif" font-size="12" fill="#8b8b8b">Only appears after questions exist.</text>
+</svg>

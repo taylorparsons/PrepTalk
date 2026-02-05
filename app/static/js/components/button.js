@@ -21,7 +21,26 @@ export function createButton(options = {}) {
 
   button.type = type;
   button.disabled = Boolean(disabled);
-  button.className = `ui-button ui-button--${resolvedVariant} ui-button--${resolvedSize}`;
+  const daisyVariant = {
+    primary: 'btn-primary',
+    secondary: 'btn-secondary',
+    ghost: 'btn-ghost',
+    danger: 'btn-error'
+  }[resolvedVariant];
+  const daisySize = {
+    sm: 'btn-sm',
+    md: 'btn-md',
+    lg: 'btn-lg'
+  }[resolvedSize];
+
+  button.className = [
+    'ui-button',
+    `ui-button--${resolvedVariant}`,
+    `ui-button--${resolvedSize}`,
+    'btn',
+    daisyVariant,
+    daisySize
+  ].join(' ');
 
   if (ariaLabel) {
     button.setAttribute('aria-label', ariaLabel);

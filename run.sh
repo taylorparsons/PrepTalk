@@ -108,9 +108,10 @@ start_backend() {
   if [[ "${RELOAD:-1}" != "1" ]]; then
     reload_flag=""
   fi
+  local host="${HOST:-0.0.0.0}"
 
-  echo "Starting backend server on ${PORT:-8000}"
-  exec "$VENV_DIR/bin/python" -m uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}" $reload_flag
+  echo "Starting backend server on ${host}:${PORT:-8000}"
+  exec "$VENV_DIR/bin/python" -m uvicorn app.main:app --host "${host}" --port "${PORT:-8000}" $reload_flag
 }
 
 case "$MODE" in
@@ -132,8 +133,9 @@ case "$MODE" in
         echo "Error: $STATIC_DIR not found." >&2
         exit 1
       fi
-      echo "Serving static UI on http://localhost:${UI_PORT:-5173}"
-      exec "$VENV_DIR/bin/python" -m http.server "${UI_PORT:-5173}" --directory "$STATIC_DIR"
+      host="${HOST:-0.0.0.0}"
+      echo "Serving static UI on http://${host}:${UI_PORT:-5173}"
+      exec "$VENV_DIR/bin/python" -m http.server "${UI_PORT:-5173}" --bind "${host}" --directory "$STATIC_DIR"
     fi
     ;;
   test)

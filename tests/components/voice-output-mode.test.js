@@ -4,6 +4,7 @@ import { buildVoiceLayout } from '../../app/static/js/ui.js';
 describe('turn voice output', () => {
   beforeEach(() => {
     window.__E2E__ = true;
+    window.__E2E_ALLOW_TTS = true;
     window.__APP_CONFIG__ = {
       voiceMode: 'turn',
       voiceOutputMode: 'browser',
@@ -15,6 +16,7 @@ describe('turn voice output', () => {
   afterEach(() => {
     vi.useRealTimers();
     delete window.__E2E__;
+    delete window.__E2E_ALLOW_TTS;
     delete window.__APP_CONFIG__;
     delete window.speechSynthesis;
     delete window.SpeechSynthesisUtterance;

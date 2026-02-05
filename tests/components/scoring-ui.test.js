@@ -73,7 +73,6 @@ describe('scoring UI', () => {
     await flushAsync();
 
     expect(scoreInterview).toHaveBeenCalledTimes(1);
-    expect(scoreValue?.textContent).toBe('88');
+    expect(scoreValue?.textContent).toBe('88 / 100');
   });
 });
-

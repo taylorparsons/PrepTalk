@@ -19,7 +19,26 @@ export function createIconButton(options = {}) {
 
   button.type = 'button';
   button.disabled = Boolean(disabled);
-  button.className = `ui-icon-button ui-icon-button--${resolvedVariant} ui-icon-button--${resolvedSize}`;
+  const daisyVariant = {
+    primary: 'btn-primary',
+    secondary: 'btn-secondary',
+    ghost: 'btn-ghost',
+    danger: 'btn-error'
+  }[resolvedVariant];
+  const daisySize = {
+    sm: 'btn-sm',
+    md: 'btn-md',
+    lg: 'btn-lg'
+  }[resolvedSize];
+
+  button.className = [
+    'ui-icon-button',
+    `ui-icon-button--${resolvedVariant}`,
+    `ui-icon-button--${resolvedSize}`,
+    'btn',
+    daisyVariant,
+    daisySize
+  ].join(' ');
   button.setAttribute('aria-label', ariaLabel || label || 'Icon button');
 
   Object.entries(attrs).forEach(([key, value]) => {

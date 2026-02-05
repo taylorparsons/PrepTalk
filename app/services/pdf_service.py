@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 from typing import Iterable
 
 try:
@@ -39,6 +40,55 @@ def _write_section(pdf: FPDF, title: str, lines: Iterable[str]) -> None:
         pdf.multi_cell(0, 6, line)
         pdf.set_x(pdf.l_margin)
     pdf.ln(2)
+
+
+def _normalize_focus_area_dict(entry: dict) -> tuple[str, str] | None:
+    title = entry.get("area") or entry.get("title") or entry.get("name") or ""
+    description = entry.get("description") or entry.get("details") or entry.get("summary") or ""
+    title = str(title).strip() if title else ""
+    description = str(description).strip() if description else ""
+    if not title and description:
+        title, description = description, ""
+    if not title and not description:
+        return None
+    return title, description
+
+
+def _coerce_focus_area_entries(entry) -> list[tuple[str, str]]:
+    if not entry:
+        return []
+    if isinstance(entry, dict):
+        normalized = _normalize_focus_area_dict(entry)
+        return [normalized] if normalized else []
+    if isinstance(entry, (list, tuple)):
+        items: list[tuple[str, str]] = []
+        for item in entry:
+            items.extend(_coerce_focus_area_entries(item))
+        return items
+    if isinstance(entry, str):
+        raw = entry.strip()
+        if not raw:
+            return []
+        if raw.startswith("{") and raw.endswith("}"):
+            try:
+                parsed = ast.literal_eval(raw)
+            except (ValueError, SyntaxError):
+                parsed = None
+            if isinstance(parsed, (dict, list, tuple)):
+                return _coerce_focus_area_entries(parsed)
+        return [(raw, "")]
+    return []
+
+
+def _format_focus_areas(entries: Iterable) -> list[str]:
+    lines: list[str] = []
+    for entry in entries or []:
+        for title, description in _coerce_focus_area_entries(entry):
+            if title:
+                lines.append(f"- {title}")
+            if description:
+                lines.append(f"  {description}")
+    return lines
 
 
 def build_study_guide_pdf(record: InterviewRecord) -> bytes:
@@ -81,7 +131,9 @@ def build_study_guide_pdf(record: InterviewRecord) -> bytes:
         _write_section(pdf, "Focus Next", [f"- {item}" for item in improvements])
 
     if record.focus_areas:
-        _write_section(pdf, "Rubric", [f"- {item}" for item in record.focus_areas])
+        rubric_lines = _format_focus_areas(record.focus_areas)
+        if rubric_lines:
+            _write_section(pdf, "Rubric", rubric_lines)
 
     transcript_lines = []
     for entry in record.transcript:
@@ -137,9 +189,11 @@ def build_study_guide_text(record: InterviewRecord) -> str:
         lines.append("")
 
     if record.focus_areas:
-        lines.append("Rubric")
-        lines.extend([f"- {item}" for item in record.focus_areas])
-        lines.append("")
+        rubric_lines = _format_focus_areas(record.focus_areas)
+        if rubric_lines:
+            lines.append("Rubric")
+            lines.extend(rubric_lines)
+            lines.append("")
 
     if record.transcript:
         lines.append("Transcript")
