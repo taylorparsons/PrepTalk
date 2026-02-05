@@ -2353,3 +2353,4 @@ NEXT
 
 NOTES
 - Commands run: `./run.sh test` -> 66/66 passed (Vitest). Warnings about `--localstorage-file` path.
+- Commit: 411a33f (T-009: Keep Candidate Setup scrollable).
