@@ -31,6 +31,37 @@ describe('voice layout', () => {
     expect(layout.querySelector('[data-testid="restart-interview-main"]')).toBeTruthy();
   });
 
+  it('interrupts coach speech in turn mode without errors', () => {
+    window.__E2E__ = true;
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const state = window.__e2eState;
+    const ui = window.__e2eUi;
+    state.sessionActive = true;
+    state.turnAwaitingAnswer = true;
+    state.turnSpeaking = true;
+    state.captionDraftText = 'Draft answer';
+    ui.updateTurnSubmitUI();
+
+    const interrupt = layout.querySelector('[data-testid="barge-in-toggle"]');
+    const submit = layout.querySelector('[data-testid="submit-turn"]');
+
+    expect(interrupt).toBeTruthy();
+    expect(interrupt.disabled).toBe(false);
+    expect(submit.disabled).toBe(true);
+
+    interrupt.click();
+
+    expect(state.turnSpeaking).toBe(false);
+    expect(interrupt.disabled).toBe(true);
+    expect(submit.disabled).toBe(false);
+
+    delete window.__E2E__;
+    delete window.__e2eState;
+    delete window.__e2eUi;
+  });
+
   it('mounts the layout into a root container', () => {
     const root = document.createElement('div');
     mountVoiceApp(root);
