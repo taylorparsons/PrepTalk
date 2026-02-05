@@ -958,7 +958,7 @@ function buildSetupPanel(state, ui) {
   });
 
   const content = document.createElement('div');
-  content.className = 'layout-stack';
+  content.className = 'layout-stack overflow-auto max-h-screen';
   content.appendChild(resumeField.wrapper);
   content.appendChild(jobField.wrapper);
   content.appendChild(jobUrlField.wrapper);
@@ -2943,10 +2943,15 @@ function buildSessionToolsDrawer(state, ui, config) {
   ui.questionList = list;
   ui.questionPlaceholder = placeholder;
 
+  const body = document.createElement('div');
+  body.className = 'ui-questions__body resize-y overflow-auto';
+  body.setAttribute('data-testid', 'questions-resize');
+  body.appendChild(list);
+
   const panel = createPanel({
     title: 'Interview Questions',
     subtitle: 'Generated from the resume and role. Hover to see insights.',
-    content: list,
+    content: body,
     attrs: { 'data-testid': 'questions-panel' }
   });
   ui.questionsPanel = panel;

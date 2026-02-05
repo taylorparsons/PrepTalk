@@ -2328,3 +2328,28 @@ NOTES
 - Notes: Adjusted results-state UI to hide transcript and make restart primary; increased mock flow timeout for stability.
 - Risks / open questions: Live E2E blocked until Gemini credentials/network allow question generation.
 - Commit: bef2213 (T-008: Hide transcript in results and stabilize mock E2E).
+
+---
+
+Session: 2026-02-05 21:06
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, daisy
+Feature: 20260204-state-clarity
+Input: CR-20260205-2106
+Decisions: (none)
+Spec: docs/specs/20260204-state-clarity/spec.md
+Tasks: docs/specs/20260204-state-clarity/tasks.md
+Goal: Prevent Candidate Setup truncation by making the panel content scrollable.
+
+DONE
+- [2026-02-05 21:06] T-009: Make Candidate Setup content scrollable to avoid truncation. (Skills: ralph, daisy)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `./run.sh test` -> 66/66 passed (Vitest). Warnings about `--localstorage-file` path.

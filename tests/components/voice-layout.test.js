@@ -31,6 +31,32 @@ describe('voice layout', () => {
     expect(layout.querySelector('[data-testid="restart-interview-main"]')).toBeTruthy();
   });
 
+  it('makes the interview questions panel vertically resizable', () => {
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const resizer = layout.querySelector('[data-testid="questions-resize"]');
+    expect(resizer).toBeTruthy();
+    expect(resizer.classList.contains('ui-questions__body')).toBe(true);
+    expect(resizer.classList.contains('resize-y')).toBe(true);
+    expect(resizer.classList.contains('overflow-auto')).toBe(true);
+    expect(resizer.querySelector('[data-testid="question-list"]')).toBeTruthy();
+  });
+
+  it('keeps the candidate setup panel scrollable when tall', () => {
+    window.__E2E__ = true;
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const ui = window.__e2eUi;
+    expect(ui.setupBody.classList.contains('overflow-auto')).toBe(true);
+    expect(ui.setupBody.classList.contains('max-h-screen')).toBe(true);
+
+    delete window.__E2E__;
+    delete window.__e2eState;
+    delete window.__e2eUi;
+  });
+
   it('mounts the layout into a root container', () => {
     const root = document.createElement('div');
     mountVoiceApp(root);
