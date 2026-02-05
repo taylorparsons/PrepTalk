@@ -124,12 +124,12 @@ def build_study_guide_pdf(record: InterviewRecord) -> bytes:
     pdf.add_page()
 
     pdf.set_font("Helvetica", size=11)
-    pdf.cell(0, 6, f"Interview ID: {record.interview_id}", **_cell_newline_kwargs())
+    pdf.cell(0, 6, _sanitize_pdf_text(f"Interview ID: {record.interview_id}"), **_cell_newline_kwargs())
     pdf.set_x(pdf.l_margin)
     if record.role_title:
-        pdf.cell(0, 6, f"Role: {record.role_title}", **_cell_newline_kwargs())
+        pdf.cell(0, 6, _sanitize_pdf_text(f"Role: {record.role_title}"), **_cell_newline_kwargs())
         pdf.set_x(pdf.l_margin)
-    pdf.cell(0, 6, f"Adapter: {record.adapter}", **_cell_newline_kwargs())
+    pdf.cell(0, 6, _sanitize_pdf_text(f"Adapter: {record.adapter}"), **_cell_newline_kwargs())
     pdf.set_x(pdf.l_margin)
     pdf.ln(4)
 
@@ -139,7 +139,7 @@ def build_study_guide_pdf(record: InterviewRecord) -> bytes:
 
     if overall is not None:
         pdf.set_font("Helvetica", style="B", size=12)
-        pdf.cell(0, 8, f"Overall Score: {overall}", **_cell_newline_kwargs())
+        pdf.cell(0, 8, _sanitize_pdf_text(f"Overall Score: {overall}"), **_cell_newline_kwargs())
         pdf.set_x(pdf.l_margin)
         pdf.set_font("Helvetica", size=11)
         pdf.ln(2)
