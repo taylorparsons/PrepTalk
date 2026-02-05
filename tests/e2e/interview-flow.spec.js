@@ -94,6 +94,24 @@ test('candidate interview flow (mock adapter)', async ({ page }, testInfo) => {
   await expect(resumeInput).toBeHidden();
   const helpTurn = page.getByTestId('help-turn');
   const submitTurn = page.getByTestId('submit-turn');
+  if (voiceMode === 'turn') {
+    await page.evaluate(() => {
+      const state = window.__e2eState;
+      const ui = window.__e2eUi;
+      state.sessionActive = true;
+      state.turnAwaitingAnswer = true;
+      state.turnSpeaking = true;
+      state.captionDraftText = 'Draft answer';
+      ui.updateTurnSubmitUI();
+    });
+
+    const interrupt = page.getByTestId('barge-in-toggle');
+    await expect(interrupt).toBeEnabled();
+    await expect(submitTurn).toBeDisabled();
+    await interrupt.click();
+    await expect(interrupt).toBeDisabled();
+    await expect(submitTurn).toBeEnabled();
+  }
   const turnHelp = page.getByTestId('turn-help');
   await expect(helpTurn).toBeEnabled({ timeout: 20000 });
   await expect(submitTurn).toBeDisabled();
