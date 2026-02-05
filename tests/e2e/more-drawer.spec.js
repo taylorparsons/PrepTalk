@@ -32,9 +32,12 @@ test('more drawer is scrollable on small viewports', async ({ page }) => {
     timeout: 30000
   });
 
-  const sessionToolsToggle = page.getByTestId('session-tools-toggle');
-  await expect(sessionToolsToggle).toBeVisible();
-  await sessionToolsToggle.click();
+  const menuToggle = page.getByTestId('overflow-menu-toggle');
+  await expect(menuToggle).toBeVisible();
+  await menuToggle.click();
+  const showExtras = page.getByRole('menuitem', { name: 'Show Extras' });
+  await expect(showExtras).toBeVisible();
+  await showExtras.click();
 
   const drawer = page.getByTestId('session-tools-drawer');
   await expect(drawer).toHaveAttribute('aria-hidden', 'false');

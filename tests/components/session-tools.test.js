@@ -1,8 +1,15 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { buildVoiceLayout } from '../../app/static/js/ui.js';
 
 describe('session tools drawer', () => {
+  beforeEach(() => {
+    window.__E2E__ = true;
+  });
+
   afterEach(() => {
+    delete window.__E2E__;
+    delete window.__e2eState;
+    delete window.__e2eUi;
     delete window.__APP_CONFIG__;
     document.body.innerHTML = '';
   });
@@ -26,7 +33,8 @@ describe('session tools drawer', () => {
     document.body.appendChild(layout);
 
     expect(layout.querySelector('[data-testid="mute-interview"]')).toBeTruthy();
-    expect(layout.querySelector('[data-testid="session-tools-toggle"]')).toBeTruthy();
+    const ui = window.__e2eUi;
+    expect(typeof ui.setSessionToolsOpen).toBe('function');
 
     const drawer = layout.querySelector('[data-testid="session-tools-drawer"]');
     expect(drawer).toBeTruthy();
@@ -39,14 +47,13 @@ describe('session tools drawer', () => {
     const layout = buildVoiceLayout();
     document.body.appendChild(layout);
 
-    const toggle = layout.querySelector('[data-testid="session-tools-toggle"]');
-    const close = layout.querySelector('[data-testid="session-tools-close"]');
+    const ui = window.__e2eUi;
     const drawer = layout.querySelector('[data-testid="session-tools-drawer"]');
 
-    toggle.click();
+    ui.setSessionToolsOpen(true);
     expect(drawer.getAttribute('aria-hidden')).toBe('false');
 
-    close.click();
+    ui.setSessionToolsOpen(false);
     expect(drawer.getAttribute('aria-hidden')).toBe('true');
   });
 

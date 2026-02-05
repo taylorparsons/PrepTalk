@@ -47,8 +47,10 @@ test('export transcript surfaces API error detail', async ({ page }) => {
     })
   );
 
-  const sessionToolsToggle = page.getByTestId('session-tools-toggle');
-  await sessionToolsToggle.click();
+  const menuToggle = page.getByTestId('overflow-menu-toggle');
+  await menuToggle.click();
+  const showExtras = page.getByRole('menuitem', { name: 'Show Extras' });
+  await showExtras.click();
 
   const exportButton = page.getByTestId('export-transcript');
   await expect(exportButton).toBeEnabled();

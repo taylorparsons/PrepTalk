@@ -52,7 +52,6 @@ test('candidate interview flow (mock adapter)', async ({ page }, testInfo) => {
 
   await expect(generateButton).toHaveClass(/ui-button--primary/);
   await expect(startButton).toHaveClass(/ui-button--secondary/);
-  await expect(page.getByTestId('session-tools-toggle')).toHaveText('Extras');
   await expect(questionsPanel).toBeHidden();
   await expect(insightsPanel).toBeHidden();
   await expect(controlsPanel).toBeHidden();
@@ -72,7 +71,6 @@ test('candidate interview flow (mock adapter)', async ({ page }, testInfo) => {
   await expect(controlsPanel).toBeVisible();
   await expect(transcriptPanel).toBeHidden();
   await expect(scorePanel).toBeHidden();
-  await expect(setupPanel).toHaveClass(/ui-panel--collapsed/);
   await captureStep(page, testInfo, 'state-4-questions-ready');
 
   await startButton.click();
@@ -81,22 +79,18 @@ test('candidate interview flow (mock adapter)', async ({ page }, testInfo) => {
   } else {
     await expect(page.getByTestId('session-status')).toHaveText(/Live|Listening|Welcoming/);
   }
-  await expect(setupPanel).toHaveClass(/ui-panel--collapsed/);
-  const resumeInput = page.getByTestId('resume-file');
-  await expect(resumeInput).toBeHidden();
   const menuToggle = page.getByTestId('overflow-menu-toggle');
   await expect(menuToggle).toBeVisible();
   await menuToggle.click();
-  const candidateMenuItem = page.getByRole('menuitem', { name: 'Candidate Setup' });
-  await expect(candidateMenuItem).toBeVisible();
-  await candidateMenuItem.click();
-  await expect(resumeInput).toBeVisible();
-  const setupToggle = page.getByTestId('setup-collapse');
-  await expect(setupToggle).toBeEnabled();
-  await setupToggle.click();
-  await expect(resumeInput).toBeHidden();
-  await setupToggle.click();
-  await expect(resumeInput).toBeVisible();
+  const hideCandidate = page.getByRole('menuitem', { name: 'Hide Candidate Setup' });
+  await expect(hideCandidate).toBeVisible();
+  await hideCandidate.click();
+  await expect(setupPanel).toBeHidden();
+  await menuToggle.click();
+  const showCandidate = page.getByRole('menuitem', { name: 'Show Candidate Setup' });
+  await expect(showCandidate).toBeVisible();
+  await showCandidate.click();
+  await expect(setupPanel).toBeVisible();
   const helpTurn = page.getByTestId('help-turn');
   const submitTurn = page.getByTestId('submit-turn');
   if (voiceMode === 'turn') {
@@ -117,10 +111,10 @@ test('candidate interview flow (mock adapter)', async ({ page }, testInfo) => {
     await expect(interrupt).toBeDisabled();
     await expect(submitTurn).toBeEnabled();
   }
-  const turnHelp = page.getByTestId('turn-help');
+  const statusDetail = page.getByTestId('status-detail');
   await expect(helpTurn).toBeEnabled({ timeout: 20000 });
   await expect(submitTurn).toBeDisabled();
-  await expect(turnHelp).toContainText(/Need a nudge/i, { timeout: 20000 });
+  await expect(statusDetail).toContainText(/Need a nudge/i, { timeout: 20000 });
   await helpTurn.click();
   await expect(page.getByTestId('turn-rubric')).toBeVisible();
   await captureStep(page, testInfo, 'state-5-interview-turn');
