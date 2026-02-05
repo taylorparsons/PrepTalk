@@ -2585,7 +2585,7 @@ Agent: Codex CLI
 Model: GPT-5
 Skills: ralph, verification-before-completion, daisy
 Feature: 20260205-session-layout-target
-Input: CR-20260205-1058, CR-20260205-1144, CR-20260205-1157
+Input: CR-20260205-1058, CR-20260205-1144, CR-20260205-1157, CR-20260205-1203
 Decisions: D-20260205-2138
 Spec: docs/specs/20260205-session-layout-target/spec.md
 Tasks: docs/specs/20260205-session-layout-target/tasks.md
@@ -2598,6 +2598,7 @@ DONE
 - [2026-02-05 11:47] T-004: Update UI tests for new controls/menu behavior. (Skills: ralph)
 - [2026-02-05 11:47] T-005: Run verification suites per verification-before-completion. (Skills: ralph, verification-before-completion)
 - [2026-02-05 11:57] Fix State B candidate setup visibility (hide panel, access via overflow menu). (Skills: ralph, daisy)
+- [2026-02-05 12:03] Make active panels full width when Candidate Setup is hidden. (Skills: ralph, daisy)
 
 IN PROGRESS
 - (none)
@@ -2607,6 +2608,7 @@ NEXT
 
 NOTES
 - Commands run: date '+%Y-%m-%d %H:%M'; npm run test -> 22 files, 75 tests passed (localstorage-file warnings).
+- Commands run: npm run test -> 22 files, 75 tests passed (localstorage-file warnings).
 - Commands run: npm run test -> 22 files, 75 tests passed (localstorage-file warnings).
 - Branch: work already on feature/session-layout-menu per CR-20260205-1144.
 - Tests not run: Playwright e2e (mock/live).
