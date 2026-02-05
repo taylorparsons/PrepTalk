@@ -222,6 +222,7 @@ describe('voice layout', () => {
     ui.updateSessionToolsState();
 
     expect(ui.setupBody.hidden).toBe(true);
+    expect(ui.setupPanel.hidden).toBe(true);
     expect(ui.heroBody.hidden).toBe(true);
 
     ui.setHeroCollapsed(false);
