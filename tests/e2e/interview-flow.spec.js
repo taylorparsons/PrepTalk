@@ -84,14 +84,19 @@ test('candidate interview flow (mock adapter)', async ({ page }, testInfo) => {
   await expect(setupPanel).toHaveClass(/ui-panel--collapsed/);
   const resumeInput = page.getByTestId('resume-file');
   await expect(resumeInput).toBeHidden();
+  const menuToggle = page.getByTestId('overflow-menu-toggle');
+  await expect(menuToggle).toBeVisible();
+  await menuToggle.click();
+  const candidateMenuItem = page.getByRole('menuitem', { name: 'Candidate Setup' });
+  await expect(candidateMenuItem).toBeVisible();
+  await candidateMenuItem.click();
+  await expect(resumeInput).toBeVisible();
   const setupToggle = page.getByTestId('setup-collapse');
   await expect(setupToggle).toBeEnabled();
   await setupToggle.click();
-  await expect(setupPanel).not.toHaveClass(/ui-panel--collapsed/);
-  await expect(resumeInput).toBeVisible();
-  await setupToggle.click();
-  await expect(setupPanel).toHaveClass(/ui-panel--collapsed/);
   await expect(resumeInput).toBeHidden();
+  await setupToggle.click();
+  await expect(resumeInput).toBeVisible();
   const helpTurn = page.getByTestId('help-turn');
   const submitTurn = page.getByTestId('submit-turn');
   if (voiceMode === 'turn') {

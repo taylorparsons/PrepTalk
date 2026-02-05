@@ -1131,3 +1131,13 @@ can you move the code changes to a feature branch?
 
 Notes:
 - Ensure the working changes live on a feature branch (not main).
+
+## CR-20260205-1157
+Date: 2026-02-05 11:57
+Source: chat
+
+Request (verbatim):
+at stage B ready the cadidate setp should be hidden I see it
+
+Notes:
+- Hide Candidate Setup in State B (Ready) and expose it via the overflow menu.
