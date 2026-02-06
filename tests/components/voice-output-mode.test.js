@@ -131,4 +131,46 @@ describe('turn voice output', () => {
       HTMLMediaElement.prototype.canPlayType = originalCanPlayType;
     }
   });
+
+  it('falls back to browser speech when server audio mime is not playable', async () => {
+    window.__APP_CONFIG__ = {
+      voiceMode: 'turn',
+      voiceOutputMode: 'server',
+      voiceTtsLanguage: 'en-US'
+    };
+
+    const speak = vi.fn((utterance) => {
+      utterance.onend?.();
+    });
+    window.speechSynthesis = { speak, cancel: vi.fn() };
+    window.SpeechSynthesisUtterance = function SpeechSynthesisUtterance(text) {
+      this.text = text;
+    };
+
+    const createObjectURL = vi.fn(() => 'blob:mock-audio');
+    const revokeObjectURL = vi.fn();
+    URL.createObjectURL = createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL;
+    const originalCanPlayType = HTMLMediaElement.prototype.canPlayType;
+    HTMLMediaElement.prototype.canPlayType = vi.fn(() => '');
+
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const audioBytes = btoa('\x00\x01\x02\x03');
+    try {
+      await window.__e2ePlayCoachReply({
+        text: 'Fallback because mime is unsupported',
+        audio: audioBytes,
+        audioMime: 'audio/pcm;rate=24000'
+      });
+
+      expect(createObjectURL).toHaveBeenCalledTimes(0);
+      expect(revokeObjectURL).toHaveBeenCalledTimes(0);
+      expect(speak).toHaveBeenCalledTimes(1);
+      expect(speak.mock.calls[0][0].text).toBe('Fallback because mime is unsupported');
+    } finally {
+      HTMLMediaElement.prototype.canPlayType = originalCanPlayType;
+    }
+  });
 });
