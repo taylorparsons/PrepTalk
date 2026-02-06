@@ -1071,3 +1071,22 @@ Alternatives considered:
 Acceptance / test:
 - Spec and PRD describe always-available panel visibility toggles in the overflow menu.
 - PRD backlog is reconciled to match shipped behavior with evidence paths.
+
+## D-20260205-1702
+Date: 2026-02-05 17:02
+Inputs: CR-20260205-1701
+PRD: Next / backlog
+
+Decision:
+Treat the iPhone no-sound issue as a client playback reliability bug in turn mode server audio, and implement two safeguards: (1) only treat server audio as successful after actual playback starts, and (2) immediately fall back to browser speech when audio MIME is unsupported.
+
+Rationale:
+Safari/Chrome on iOS can resolve `audio.play()` without entering a true playing state, which leaves users with no audible output. Gating success on `onplaying` and preserving browser-speech fallback ensures the user still hears the coach response.
+
+Alternatives considered:
+- Force browser-only output globally (rejected: loses higher-quality server audio where playback works).
+- Switch to live voice to bypass turn-mode TTS (rejected: does not remove iOS autoplay/codec constraints and adds live-streaming error surface).
+
+Acceptance / test:
+- If server audio never reaches playing state, browser speech fallback still speaks the coach text.
+- If server audio MIME is not playable, client skips blob playback and falls back to browser speech.
