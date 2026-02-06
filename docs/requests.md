@@ -1237,3 +1237,14 @@ I see a reponse but do not hear anything nore can it hear me
 Notes:
 - Turn-mode UI shows coach responses but user hears no audio on iPhone Safari/Chrome.
 - Runtime logs show Gemini TTS calls succeeding in some paths and timing out/missing audio in others.
+
+## CR-20260205-2118
+Date: 2026-02-05 21:18
+Source: chat
+
+Request (verbatim):
+ok check this into main and merge, make sure $ralph is updated include the PRD
+
+Notes:
+- Merge the iOS TTS fix branch into local `main`.
+- Ensure RALPH artifacts and `docs/PRD.md` are reconciled post-merge.

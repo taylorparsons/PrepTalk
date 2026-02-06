@@ -1110,3 +1110,22 @@ Acceptance / test:
 - `generate_tts_audio` returns browser-playable `audio/wav` when Gemini emits `audio/L16`/`audio/pcm`.
 - Turn-mode intro/help/turn endpoints continue waiting up to `VOICE_TTS_TIMEOUT_MS` after hitting `VOICE_TTS_WAIT_MS`, so slow but successful TTS is returned instead of null audio.
 - On Start click, client primes speech/audio contexts to improve iOS autoplay reliability.
+
+## D-20260205-2119
+Date: 2026-02-05 21:19
+Inputs: CR-20260205-2118
+PRD: Functional requirements; Next / backlog
+
+Decision:
+Merge `ios-tts-audio-unlock` into local `main` now that targeted tests and Cloud Run verification show the iOS TTS fixes are working, and reconcile RALPH artifacts immediately after merge.
+
+Rationale:
+The user explicitly requested merging to main and keeping RALPH/PRD current. The branch already contains the required traceability and verification evidence for the shipped iOS TTS work.
+
+Alternatives considered:
+- Keep changes on the feature branch only (rejected: conflicts with explicit merge request).
+- Merge without PRD/progress reconciliation (rejected: violates RALPH audit requirements).
+
+Acceptance / test:
+- Local `main` includes the iOS TTS commits from `ios-tts-audio-unlock`.
+- `docs/PRD.md`, `docs/specs/20260205-ios-tts-fallback/spec.md`, and `docs/progress.txt` reflect shipped status on main with merge evidence.
