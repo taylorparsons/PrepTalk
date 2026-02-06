@@ -1215,3 +1215,14 @@ make sure the docs/PRD.md is updated so the item completed at no longer on the b
 
 Notes:
 - Record the completed prototype-c E2E removal in PRD shipped items and ensure it is not listed in backlog.
+
+## CR-20260205-1701
+Date: 2026-02-05 17:01
+Source: chat
+
+Request (verbatim):
+I am stepping away fix do not merge any code but check it in and keep $ralph loop in on this work
+
+Notes:
+- Complete the iOS no-sound fix, keep work on a branch, and commit changes without merging.
+- Maintain RALPH traceability artifacts for the work.
