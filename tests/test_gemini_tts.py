@@ -101,3 +101,57 @@ def test_generate_tts_audio_logs_peas_eval(monkeypatch):
         and "status=complete" in message
         for message in messages
     )
+
+
+def test_generate_tts_audio_normalizes_pcm_to_wav(monkeypatch):
+    class _DummyLogger:
+        def info(self, *_args, **_kwargs):
+            return None
+
+        def exception(self, *_args, **_kwargs):
+            return None
+
+    class _FakeResponse:
+        def __init__(self, model):
+            self.model = model
+            self.candidates = [
+                {
+                    "content": {
+                        "parts": [
+                            {
+                                "inline_data": {
+                                    "data": base64.b64encode(b"\x00\x00" * 100).decode("ascii"),
+                                    "mime_type": "audio/L16;codec=pcm;rate=24000"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+
+    class _FakeModels:
+        def generate_content(self, model, contents, config=None):
+            return _FakeResponse(model)
+
+    class _FakeClient:
+        def __init__(self, **kwargs):
+            self.models = _FakeModels()
+
+    class _FakeGenAI:
+        def Client(self, **kwargs):
+            return _FakeClient(**kwargs)
+
+    monkeypatch.setattr(gemini_tts, "genai", _FakeGenAI())
+    monkeypatch.setattr(gemini_tts, "types", None)
+    monkeypatch.setattr(gemini_tts, "logger", _DummyLogger())
+
+    audio, mime = gemini_tts.generate_tts_audio(
+        api_key="key",
+        model="gemini-2.5-pro-preview-tts",
+        text="Hello",
+        voice_name=None,
+        language_code=None
+    )
+
+    assert mime == "audio/wav"
+    assert audio.startswith(b"RIFF")

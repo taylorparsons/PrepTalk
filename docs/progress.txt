@@ -2754,3 +2754,34 @@ NOTES
 - Merge status: pending merge by request (do not merge).
 - [2026-02-05 19:28] T-004: Add unsupported MIME fallback regression coverage for turn-mode coach audio. (Skills: ralph)
 - Commands run: `npx vitest run tests/components/voice-output-mode.test.js --reporter=verbose` -> 4 passed.
+
+---
+
+Session: 2026-02-05 20:14
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260205-ios-tts-fallback
+Input: CR-20260205-1701, CR-20260205-1959
+Decisions: D-20260205-2012
+Spec: docs/specs/20260205-ios-tts-fallback/spec.md
+Tasks: docs/specs/20260205-ios-tts-fallback/tasks.md
+Goal: Eliminate remaining iPhone turn-mode no-audio paths and check in fixes on branch only.
+
+DONE
+- [2026-02-05 20:05] T-005: Normalize Gemini PCM/L16 payloads to WAV in TTS responses. (Skills: ralph)
+- [2026-02-05 20:13] T-006: Extend turn-mode TTS wait handling to full timeout budget after slow threshold. (Skills: ralph)
+- [2026-02-05 20:05] T-007: Prime audio contexts on Start user gesture for iOS fallback speech reliability. (Skills: ralph)
+- [2026-02-05 20:14] T-008: Validate live intro endpoint returns non-empty WAV audio under Gemini adapter. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- Keep branch unmerged per CR-20260205-1701. (Skills: ralph)
+
+NOTES
+- Commands run: `pytest tests/test_gemini_tts.py tests/test_voice_turn_tts.py -q` -> 7 passed.
+- Commands run: `npm run test -- tests/components/voice-output-mode.test.js` -> 4 passed.
+- Commands run: local Gemini probe against `/api/interviews` + `/api/voice/intro` -> `coach_audio_mime=audio/wav`, `audio_base64_len=2571000`.
+- Runtime evidence: server logs show `voice_intro_tts status=slow` followed by `tts_model_call status=complete` and `voice_intro status=complete` with audio present.
