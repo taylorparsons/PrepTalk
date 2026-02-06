@@ -1,7 +1,7 @@
 # PRD: PrepTalk
 
 Status: Active
-Updated: 2026-02-05 14:08
+Updated: 2026-02-05 20:14
 Inputs: CR-20260128-1409
 Decisions: D-20260128-1410
 
@@ -37,6 +37,7 @@ Voice-first interview practice app for the Gemini hackathon. (Sources: CR-202601
 - FR-APP-009: The Question Insights panel is vertically resizable with scrollable content. (Sources: CR-20260205-2112, CR-20260205-2122)
 - FR-UI-001: Session layout spec is documented with ASCII frames, Mermaid state diagrams, and explicit status/substatus/rubric rules plus overflow menu toggles. (Sources: CR-20260205-1020, CR-20260205-1328; D-20260205-1020, D-20260205-1330) Implemented in: docs/specs/20260205-session-layout-target/spec.md
 - FR-APP-010: Turn mode supports Interrupt to cancel coach speech and re-enable interaction without errors. (Sources: CR-20260205-2138; D-20260205-2138) Implemented in: app/static/js/ui.js, app/static/js/transport.js, app/services/gemini_live.py
+- FR-APP-011: Turn-mode coaching audio is iOS-hardened: frontend treats server playback as successful only on real `playing`, backend normalizes PCM/L16 audio to WAV for browser playback, and TTS wait handling allows slow responses to complete within timeout budget before returning without audio. (Sources: CR-20260205-1701, CR-20260205-1959; D-20260205-1702, D-20260205-2012) Implemented in: app/static/js/ui.js, app/services/gemini_tts.py, app/services/interview_service.py
 
 ## Non-functional requirements (shipped)
 - NFR-APP-001: The repo supports local development via `./run.sh` scripts (install, run UI, unit tests, e2e). (Sources: CR-20260128-1409; D-20260128-1410)
@@ -68,7 +69,6 @@ These commits are used as implementation evidence for the “shipped” scope ab
 - `af3f2d4`: turn-mode timing adjustment
 
 ## Next / backlog (not shipped requirements)
-- Turn mode: on iOS/WebKit, treat server audio as successful only after real playback starts and fall back to browser speech when server audio is unplayable. (Sources: CR-20260205-1701; D-20260205-1702)
 - UI: enlarge state-change messaging and auto-collapse the header intro after questions are generated (with manual re-open). (Sources: CR-20260204-1553, CR-20260205-0910; D-20260204-1554)
 - UI: add radial progress indicators for question generation and scoring pending states, animate them while active, and keep them hidden until needed. (Sources: CR-20260204-1846, CR-20260204-1928; D-20260204-1848, D-20260204-1930)
 - UI: set the DaisyUI theme to `lemonade`. (Sources: CR-20260205-0249)

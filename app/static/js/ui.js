@@ -1848,6 +1848,47 @@ function buildControlsPanel(state, ui, config) {
     updateTurnSubmitUI();
   }
 
+  async function primeAudioOnUserGesture() {
+    if (state.audioPrimed) {
+      return;
+    }
+    state.audioPrimed = true;
+
+    if (typeof window !== 'undefined' && window.speechSynthesis && window.SpeechSynthesisUtterance) {
+      try {
+        const unlockUtterance = new SpeechSynthesisUtterance(' ');
+        unlockUtterance.volume = 0;
+        window.speechSynthesis.speak(unlockUtterance);
+        window.speechSynthesis.cancel();
+      } catch (error) {
+        // Best-effort unlock for mobile Safari.
+      }
+    }
+
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) {
+      return;
+    }
+    try {
+      const context = new Ctx();
+      if (context.state === 'suspended') {
+        await context.resume();
+      }
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      gain.gain.value = 0;
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start();
+      oscillator.stop(context.currentTime + 0.01);
+      setTimeout(() => {
+        context.close().catch(() => {});
+      }, 20);
+    } catch (error) {
+      // Best-effort unlock for mobile Safari.
+    }
+  }
+
   function interruptCoachSpeech() {
     if (!isTurnMode() || !state.sessionActive || !state.turnSpeaking) {
       return;
@@ -2752,6 +2793,7 @@ function buildControlsPanel(state, ui, config) {
     }
 
     const turnMode = isTurnMode();
+    await primeAudioOnUserGesture();
 
     setPrimaryActionMode({ active: false, disabled: true });
     updateStatusPill(statusPill, { label: turnMode ? 'Listening' : 'Connecting', tone: 'info' });
@@ -3501,6 +3543,7 @@ export function buildVoiceLayout() {
     turnQueue: [],
     turnRequestActive: false,
     turnHelpPending: false,
+    audioPrimed: false,
     turnSpeaking: false,
     turnAudioStop: null,
     turnAnswerStartedAt: null,

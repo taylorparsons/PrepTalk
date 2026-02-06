@@ -150,6 +150,72 @@ def _format_help_text(payload: dict) -> str:
     return f"{message}\n\nAnswer in your own words."
 
 
+def _generate_tts_with_wait(
+    *,
+    event_name: str,
+    interview_id: str,
+    user_id: str | None,
+    api_key: str,
+    models: list[str],
+    text: str,
+    settings
+) -> tuple[bytes | None, str | None]:
+    kwargs = {
+        "api_key": api_key,
+        "models": models,
+        "text": text,
+        "voice_name": settings.voice_tts_voice or None,
+        "language_code": settings.voice_tts_language or None,
+        "timeout_ms": getattr(settings, "voice_tts_timeout_ms", None)
+    }
+    wait_ms = max(int(getattr(settings, "voice_tts_wait_ms", 0) or 0), 0)
+    timeout_ms = max(int(getattr(settings, "voice_tts_timeout_ms", 0) or 0), 0)
+    if wait_ms <= 0:
+        audio_bytes, audio_mime, _ = generate_tts_audio_with_fallbacks(**kwargs)
+        return audio_bytes, audio_mime
+
+    future = _TTS_EXECUTOR.submit(generate_tts_audio_with_fallbacks, **kwargs)
+    try:
+        audio_bytes, audio_mime, _ = future.result(timeout=wait_ms / 1000)
+        return audio_bytes, audio_mime
+    except FutureTimeout:
+        remaining_ms = timeout_ms - wait_ms
+        if remaining_ms <= 0:
+            future.cancel()
+            logger.warning(
+                "event=%s status=timeout interview_id=%s user_id=%s wait_ms=%s timeout_ms=%s",
+                event_name,
+                short_id(interview_id),
+                short_id(user_id),
+                wait_ms,
+                timeout_ms
+            )
+            return None, None
+
+        logger.warning(
+            "event=%s status=slow interview_id=%s user_id=%s wait_ms=%s timeout_ms=%s",
+            event_name,
+            short_id(interview_id),
+            short_id(user_id),
+            wait_ms,
+            timeout_ms
+        )
+        try:
+            audio_bytes, audio_mime, _ = future.result(timeout=remaining_ms / 1000)
+            return audio_bytes, audio_mime
+        except FutureTimeout:
+            future.cancel()
+            logger.warning(
+                "event=%s status=timeout interview_id=%s user_id=%s wait_ms=%s timeout_ms=%s",
+                event_name,
+                short_id(interview_id),
+                short_id(user_id),
+                wait_ms,
+                timeout_ms
+            )
+            return None, None
+
+
 def run_voice_intro(
     interview_id: str,
     user_id: str | None = None,
@@ -196,37 +262,15 @@ def run_voice_intro(
                 models = list(getattr(settings, "voice_tts_models", ())) or [settings.voice_tts_model]
                 if tts_model_override:
                     models = [tts_model_override, *[model for model in models if model != tts_model_override]]
-                wait_ms = getattr(settings, "voice_tts_wait_ms", 0)
-                audio_bytes = None
-                if wait_ms > 0:
-                    future = _TTS_EXECUTOR.submit(
-                        generate_tts_audio_with_fallbacks,
-                        api_key=adapter.api_key,
-                        models=models,
-                        text=coach_cleaned,
-                        voice_name=settings.voice_tts_voice or None,
-                        language_code=settings.voice_tts_language or None,
-                        timeout_ms=getattr(settings, "voice_tts_timeout_ms", None)
-                    )
-                    try:
-                        audio_bytes, audio_mime, _ = future.result(timeout=wait_ms / 1000)
-                    except FutureTimeout:
-                        future.cancel()
-                        logger.warning(
-                            "event=voice_intro_tts status=timeout interview_id=%s user_id=%s wait_ms=%s",
-                            short_id(interview_id),
-                            short_id(user_id),
-                            wait_ms
-                        )
-                else:
-                    audio_bytes, audio_mime, _ = generate_tts_audio_with_fallbacks(
-                        api_key=adapter.api_key,
-                        models=models,
-                        text=coach_cleaned,
-                        voice_name=settings.voice_tts_voice or None,
-                        language_code=settings.voice_tts_language or None,
-                        timeout_ms=getattr(settings, "voice_tts_timeout_ms", None)
-                    )
+                audio_bytes, audio_mime = _generate_tts_with_wait(
+                    event_name="voice_intro_tts",
+                    interview_id=interview_id,
+                    user_id=user_id,
+                    api_key=adapter.api_key,
+                    models=models,
+                    text=coach_cleaned,
+                    settings=settings
+                )
             else:
                 audio_bytes, audio_mime = build_mock_tts_audio()
             if audio_bytes:
@@ -304,37 +348,15 @@ def run_voice_turn(
                 models = list(getattr(settings, "voice_tts_models", ())) or [settings.voice_tts_model]
                 if tts_model_override:
                     models = [tts_model_override, *[model for model in models if model != tts_model_override]]
-                wait_ms = getattr(settings, "voice_tts_wait_ms", 0)
-                audio_bytes = None
-                if wait_ms > 0:
-                    future = _TTS_EXECUTOR.submit(
-                        generate_tts_audio_with_fallbacks,
-                        api_key=adapter.api_key,
-                        models=models,
-                        text=coach_cleaned,
-                        voice_name=settings.voice_tts_voice or None,
-                        language_code=settings.voice_tts_language or None,
-                        timeout_ms=getattr(settings, "voice_tts_timeout_ms", None)
-                    )
-                    try:
-                        audio_bytes, audio_mime, _ = future.result(timeout=wait_ms / 1000)
-                    except FutureTimeout:
-                        future.cancel()
-                        logger.warning(
-                            "event=voice_tts status=timeout interview_id=%s user_id=%s wait_ms=%s",
-                            short_id(interview_id),
-                            short_id(user_id),
-                            wait_ms
-                        )
-                else:
-                    audio_bytes, audio_mime, _ = generate_tts_audio_with_fallbacks(
-                        api_key=adapter.api_key,
-                        models=models,
-                        text=coach_cleaned,
-                        voice_name=settings.voice_tts_voice or None,
-                        language_code=settings.voice_tts_language or None,
-                        timeout_ms=getattr(settings, "voice_tts_timeout_ms", None)
-                    )
+                audio_bytes, audio_mime = _generate_tts_with_wait(
+                    event_name="voice_tts",
+                    interview_id=interview_id,
+                    user_id=user_id,
+                    api_key=adapter.api_key,
+                    models=models,
+                    text=coach_cleaned,
+                    settings=settings
+                )
             else:
                 audio_bytes, audio_mime = build_mock_tts_audio()
             if audio_bytes:
@@ -465,37 +487,15 @@ def run_voice_help(
                 models = list(getattr(settings, "voice_tts_models", ())) or [settings.voice_tts_model]
                 if tts_model_override:
                     models = [tts_model_override, *[model for model in models if model != tts_model_override]]
-                wait_ms = getattr(settings, "voice_tts_wait_ms", 0)
-                audio_bytes = None
-                if wait_ms > 0:
-                    future = _TTS_EXECUTOR.submit(
-                        generate_tts_audio_with_fallbacks,
-                        api_key=adapter.api_key,
-                        models=models,
-                        text=help_cleaned,
-                        voice_name=settings.voice_tts_voice or None,
-                        language_code=settings.voice_tts_language or None,
-                        timeout_ms=getattr(settings, "voice_tts_timeout_ms", None)
-                    )
-                    try:
-                        audio_bytes, audio_mime, _ = future.result(timeout=wait_ms / 1000)
-                    except FutureTimeout:
-                        future.cancel()
-                        logger.warning(
-                            "event=voice_help_tts status=timeout interview_id=%s user_id=%s wait_ms=%s",
-                            short_id(interview_id),
-                            short_id(user_id),
-                            wait_ms
-                        )
-                else:
-                    audio_bytes, audio_mime, _ = generate_tts_audio_with_fallbacks(
-                        api_key=adapter.api_key,
-                        models=models,
-                        text=help_cleaned,
-                        voice_name=settings.voice_tts_voice or None,
-                        language_code=settings.voice_tts_language or None,
-                        timeout_ms=getattr(settings, "voice_tts_timeout_ms", None)
-                    )
+                audio_bytes, audio_mime = _generate_tts_with_wait(
+                    event_name="voice_help_tts",
+                    interview_id=interview_id,
+                    user_id=user_id,
+                    api_key=adapter.api_key,
+                    models=models,
+                    text=help_cleaned,
+                    settings=settings
+                )
             else:
                 audio_bytes, audio_mime = build_mock_tts_audio()
             if audio_bytes:

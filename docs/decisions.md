@@ -1090,3 +1090,23 @@ Alternatives considered:
 Acceptance / test:
 - If server audio never reaches playing state, browser speech fallback still speaks the coach text.
 - If server audio MIME is not playable, client skips blob playback and falls back to browser speech.
+
+## D-20260205-2012
+Date: 2026-02-05 20:12
+Inputs: CR-20260205-1701, CR-20260205-1959
+PRD: Functional requirements; Next / backlog
+
+Decision:
+Treat the remaining iPhone no-sound issue as two additional reliability gaps: (1) Gemini TTS can return raw PCM (`audio/L16`) that iOS browsers do not play directly, and (2) turn-mode endpoints can return before slow TTS completes due the wait budget. Convert raw PCM/L16 payloads to WAV server-side and extend turn-mode TTS waiting from `voice_tts_wait_ms` to the full timeout budget before returning without audio. Also prime client audio on the Start user gesture.
+
+Rationale:
+User logs showed successful TTS generation with silent playback and intermittent empty audio payloads. WAV normalization addresses browser compatibility, and extended wait prevents premature empty-audio responses on slow TTS generations.
+
+Alternatives considered:
+- Force browser-only speech output (rejected: lower quality and still subject to iOS speech synthesis constraints).
+- Switch to live streaming mode (rejected: user reports instability and it does not remove iOS audio unlock/codec constraints in turn mode).
+
+Acceptance / test:
+- `generate_tts_audio` returns browser-playable `audio/wav` when Gemini emits `audio/L16`/`audio/pcm`.
+- Turn-mode intro/help/turn endpoints continue waiting up to `VOICE_TTS_TIMEOUT_MS` after hitting `VOICE_TTS_WAIT_MS`, so slow but successful TTS is returned instead of null audio.
+- On Start click, client primes speech/audio contexts to improve iOS autoplay reliability.
