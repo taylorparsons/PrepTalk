@@ -2785,3 +2785,33 @@ NOTES
 - Commands run: `npm run test -- tests/components/voice-output-mode.test.js` -> 4 passed.
 - Commands run: local Gemini probe against `/api/interviews` + `/api/voice/intro` -> `coach_audio_mime=audio/wav`, `audio_base64_len=2571000`.
 - Runtime evidence: server logs show `voice_intro_tts status=slow` followed by `tts_model_call status=complete` and `voice_intro status=complete` with audio present.
+
+---
+
+Session: 2026-02-06 08:26
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260205-ios-tts-fallback
+Input: CR-20260205-2118, CR-20260206-0824
+Decisions: D-20260205-2119, D-20260206-0825
+Spec: docs/specs/20260205-ios-tts-fallback/spec.md
+Tasks: docs/specs/20260205-ios-tts-fallback/tasks.md
+Goal: Merge iOS TTS fixes to local main and reconcile post-merge PRD/RALPH artifacts.
+
+DONE
+- [2026-02-06 08:25] T-009: Merge `ios-tts-audio-unlock` into local `main` with stash/merge/pop and restore local WIP changes. (Skills: ralph)
+- [2026-02-06 08:26] Reconcile PRD/spec/tasks/progress after merge to main. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `pytest tests/test_gemini_tts.py tests/test_voice_turn_tts.py -q` -> 7 passed.
+- Commands run: `npm run test -- tests/components/voice-output-mode.test.js` -> 4 passed.
+- Commands run: `git stash push --include-untracked` -> saved local `main` WIP.
+- Merge evidence: `git merge --ff-only ios-tts-audio-unlock` -> fast-forward `98bcd1c..d92449f`.
+- Commands run: `git stash pop` -> local `main` WIP restored cleanly (including `app/static/js/ui.js` changes).

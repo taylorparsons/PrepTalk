@@ -1129,3 +1129,23 @@ Alternatives considered:
 Acceptance / test:
 - Local `main` includes the iOS TTS commits from `ios-tts-audio-unlock`.
 - `docs/PRD.md`, `docs/specs/20260205-ios-tts-fallback/spec.md`, and `docs/progress.txt` reflect shipped status on main with merge evidence.
+
+## D-20260206-0825
+Date: 2026-02-06 08:25
+Inputs: CR-20260205-2118, CR-20260206-0824
+PRD: Functional requirements; Next / backlog
+
+Decision:
+Execute the merge by stashing uncommitted `main` work (including untracked files), fast-forwarding `main` to `ios-tts-audio-unlock`, then popping the stash to restore the local in-progress changes.
+
+Rationale:
+`main` had overlapping uncommitted edits, so direct merge failed. The user explicitly selected option `2`, which preserves local work and allows merge completion without discarding changes.
+
+Alternatives considered:
+- Commit local `main` work before merge (rejected: user selected stash flow).
+- Defer merge (rejected: conflicts with explicit merge request).
+
+Acceptance / test:
+- Fast-forward merge completes on `main`.
+- Pre-existing local `main` edits are restored after `git stash pop`.
+- RALPH artifacts and PRD are reconciled post-merge.

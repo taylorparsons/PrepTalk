@@ -1248,3 +1248,13 @@ ok check this into main and merge, make sure $ralph is updated include the PRD
 Notes:
 - Merge the iOS TTS fix branch into local `main`.
 - Ensure RALPH artifacts and `docs/PRD.md` are reconciled post-merge.
+
+## CR-20260206-0824
+Date: 2026-02-06 08:24
+Source: chat
+
+Request (verbatim):
+2
+
+Notes:
+- Use stash/merge/unstash flow to preserve uncommitted local `main` work while merging `ios-tts-audio-unlock`.
