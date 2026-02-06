@@ -2752,3 +2752,5 @@ NOTES
 - Commands run: `npx vitest run tests/components/voice-output-mode.test.js --reporter=verbose` -> 3 passed.
 - Branch: `ios-tts-audio-unlock`.
 - Merge status: pending merge by request (do not merge).
+- [2026-02-05 19:28] T-004: Add unsupported MIME fallback regression coverage for turn-mode coach audio. (Skills: ralph)
+- Commands run: `npx vitest run tests/components/voice-output-mode.test.js --reporter=verbose` -> 4 passed.
