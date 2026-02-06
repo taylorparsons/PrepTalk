@@ -1,7 +1,7 @@
 # PRD: PrepTalk
 
 Status: Active
-Updated: 2026-02-05 20:14
+Updated: 2026-02-06 08:26
 Inputs: CR-20260128-1409
 Decisions: D-20260128-1410
 
@@ -67,6 +67,7 @@ These commits are used as implementation evidence for the “shipped” scope ab
 - `6becd48`: Live Stats dashboard UI
 - `07106a3` / `6dca54e`: Gemini Live reconnect + resumption
 - `af3f2d4`: turn-mode timing adjustment
+- `fe46243` / `50f5dc1` / `b1617f2`: iOS turn-mode TTS playback hardening (real-playback gating, MIME fallback, PCM-to-WAV normalization, and slow-TTS wait handling)
 
 ## Next / backlog (not shipped requirements)
 - UI: enlarge state-change messaging and auto-collapse the header intro after questions are generated (with manual re-open). (Sources: CR-20260204-1553, CR-20260205-0910; D-20260204-1554)
