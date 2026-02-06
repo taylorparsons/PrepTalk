@@ -68,6 +68,7 @@ These commits are used as implementation evidence for the “shipped” scope ab
 - `af3f2d4`: turn-mode timing adjustment
 
 ## Next / backlog (not shipped requirements)
+- Turn mode: on iOS/WebKit, treat server audio as successful only after real playback starts and fall back to browser speech when server audio is unplayable. (Sources: CR-20260205-1701; D-20260205-1702)
 - UI: enlarge state-change messaging and auto-collapse the header intro after questions are generated (with manual re-open). (Sources: CR-20260204-1553, CR-20260205-0910; D-20260204-1554)
 - UI: add radial progress indicators for question generation and scoring pending states, animate them while active, and keep them hidden until needed. (Sources: CR-20260204-1846, CR-20260204-1928; D-20260204-1848, D-20260204-1930)
 - UI: set the DaisyUI theme to `lemonade`. (Sources: CR-20260205-0249)

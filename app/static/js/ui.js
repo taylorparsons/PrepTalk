@@ -1870,9 +1870,32 @@ function buildControlsPanel(state, ui, config) {
     return buffer;
   }
 
+  function canBrowserPlayAudioMime(mimeType) {
+    const normalized = String(mimeType || '').trim();
+    if (!normalized || typeof document === 'undefined') {
+      return true;
+    }
+    const probe = document.createElement('audio');
+    if (!probe || typeof probe.canPlayType !== 'function') {
+      return true;
+    }
+    const baseMime = normalized.split(';', 1)[0].trim();
+    const checks = [normalized, baseMime].filter(Boolean);
+    for (const check of checks) {
+      const support = probe.canPlayType(check);
+      if (support === 'probably' || support === 'maybe') {
+        return true;
+      }
+    }
+    return false;
+  }
+
   async function playCoachAudio(base64, mimeType, options = {}) {
     const audioBytes = decodeBase64Audio(base64);
     if (!audioBytes || audioBytes.length === 0 || typeof Audio === 'undefined') {
+      return false;
+    }
+    if (!canBrowserPlayAudioMime(mimeType)) {
       return false;
     }
     const { preserveCaptions = false } = options || {};
@@ -1886,6 +1909,9 @@ function buildControlsPanel(state, ui, config) {
       const blob = new Blob([audioBytes], { type: mimeType || 'audio/wav' });
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
+      audio.preload = 'auto';
+      audio.playsInline = true;
+      audio.setAttribute('playsinline', '');
       let started = false;
       let finished = false;
 
@@ -1906,14 +1932,14 @@ function buildControlsPanel(state, ui, config) {
         resolve(started);
       };
 
+      audio.onplaying = () => {
+        started = true;
+      };
       audio.onended = finish;
       audio.onerror = finish;
       audio.onabort = finish;
       state.turnAudioStop = finish;
       audio.play()
-        .then(() => {
-          started = true;
-        })
         .catch(() => {
           finish();
         });
