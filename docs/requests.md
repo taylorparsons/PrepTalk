@@ -1226,3 +1226,14 @@ I am stepping away fix do not merge any code but check it in and keep $ralph loo
 Notes:
 - Complete the iOS no-sound fix, keep work on a branch, and commit changes without merging.
 - Maintain RALPH traceability artifacts for the work.
+
+## CR-20260205-1959
+Date: 2026-02-05 19:59
+Source: chat
+
+Request (verbatim):
+I see a reponse but do not hear anything nore can it hear me
+
+Notes:
+- Turn-mode UI shows coach responses but user hears no audio on iPhone Safari/Chrome.
+- Runtime logs show Gemini TTS calls succeeding in some paths and timing out/missing audio in others.

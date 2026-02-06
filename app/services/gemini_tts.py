@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import base64
+import io
 import time
+import wave
+import re
 
 from ..logging_config import get_logger
 
@@ -98,6 +101,33 @@ def _extract_audio(response) -> tuple[bytes | None, str | None]:
     return None, None
 
 
+def _parse_pcm_rate(mime_type: str | None, fallback: int = 24000) -> int:
+    if not mime_type:
+        return fallback
+    match = re.search(r"rate=(\d+)", mime_type)
+    if not match:
+        return fallback
+    try:
+        return int(match.group(1))
+    except ValueError:
+        return fallback
+
+
+def _normalize_audio_for_browser(audio_bytes: bytes, mime_type: str | None) -> tuple[bytes, str]:
+    normalized_mime = (mime_type or "").lower()
+    if "audio/l16" not in normalized_mime and "audio/pcm" not in normalized_mime:
+        return audio_bytes, (mime_type or "audio/wav")
+
+    sample_rate = _parse_pcm_rate(mime_type, fallback=24000)
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as wav_file:
+        wav_file.setnchannels(1)
+        wav_file.setsampwidth(2)
+        wav_file.setframerate(sample_rate)
+        wav_file.writeframes(audio_bytes)
+    return buffer.getvalue(), "audio/wav"
+
+
 def generate_tts_audio(
     *,
     api_key: str,
@@ -146,6 +176,7 @@ def generate_tts_audio(
         audio_bytes, mime_type = _extract_audio(response)
         if not audio_bytes:
             raise RuntimeError("No audio returned from the TTS model.")
+        audio_bytes, mime_type = _normalize_audio_for_browser(audio_bytes, mime_type)
         duration_ms = int((time.monotonic() - start_time) * 1000)
         logger.info(
             "event=peas_eval status=complete category=gemini_tts requested_model=%s effective_model=%s duration_ms=%s",
