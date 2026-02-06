@@ -17,3 +17,4 @@ Spec: docs/specs/20260205-ios-tts-fallback/spec.md
 - [2026-02-05 20:13] T-006: Extend turn-mode intro/turn/help TTS wait behavior so slow responses can complete within timeout budget. (Implements: FR-004)
 - [2026-02-05 20:05] T-007: Prime speech/audio contexts on Start tap to improve iOS fallback speech reliability. (Implements: FR-005)
 - [2026-02-05 20:14] T-008: Validate live intro endpoint returns non-empty WAV audio under Gemini adapter. (Implements: FR-003, FR-004)
+- [2026-02-06 08:26] T-009: Merge `ios-tts-audio-unlock` into local `main` and reconcile RALPH/PRD artifacts post-merge. (Implements: FR-001, FR-002, FR-003, FR-004, FR-005)
