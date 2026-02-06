@@ -2,8 +2,8 @@
 
 Status: Done
 Created: 2026-02-05 17:03
-Inputs: CR-20260205-1701, CR-20260205-1959
-Decisions: D-20260205-1702, D-20260205-2012
+Inputs: CR-20260205-1701, CR-20260205-1959, CR-20260205-2118
+Decisions: D-20260205-1702, D-20260205-2012, D-20260205-2119
 
 ## Summary
 Fix turn-mode coach audio audibility on iPhone by making server-audio playback success stricter and preserving browser-speech fallback when server audio is not actually playable.
