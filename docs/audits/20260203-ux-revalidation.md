@@ -180,5 +180,5 @@ All 6 identified issues have been properly addressed. The fixes maintain consist
 
 ## Files Reviewed
 
-- `/Users/jennifermckinney/Documents/_AUTOMATION/Claude_Projects/PrepTalk/app/static/js/ui.js`
-- `/Users/jennifermckinney/Documents/_AUTOMATION/Claude_Projects/PrepTalk/app/templates/index.html`
+- `app/static/js/ui.js`
+- `app/templates/index.html`
