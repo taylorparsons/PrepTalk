@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { withAccessToken } from './helpers/route.js';
 
 const e2eLiveRaw = (process.env.E2E_LIVE || '').trim().toLowerCase();
 const isLive = e2eLiveRaw === '1' || e2eLiveRaw === 'true' || e2eLiveRaw === 'yes';
@@ -10,7 +11,7 @@ function buildPdfBuffer(label) {
 
 test('more drawer is scrollable on small viewports', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 });
-  await page.goto('/');
+  await page.goto(withAccessToken('/'));
 
   const resumeBuffer = buildPdfBuffer('Resume');
   const jobBuffer = buildPdfBuffer('Job');

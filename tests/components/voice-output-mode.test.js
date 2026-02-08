@@ -67,6 +67,40 @@ describe('turn voice output', () => {
     expect(speak.mock.calls[0][0].text).toBe('Fallback audio');
   });
 
+  it('recovers if browser speech callbacks never fire', async () => {
+    window.__APP_CONFIG__ = {
+      voiceMode: 'turn',
+      voiceOutputMode: 'browser',
+      voiceTtsLanguage: 'en-US'
+    };
+
+    const speak = vi.fn();
+    const cancel = vi.fn();
+    window.speechSynthesis = { speak, cancel };
+    window.SpeechSynthesisUtterance = function SpeechSynthesisUtterance(text) {
+      this.text = text;
+    };
+
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const state = window.__e2eState;
+    state.sessionActive = true;
+    state.turnAwaitingAnswer = true;
+
+    const playPromise = window.__e2ePlayCoachReply({
+      text: 'This response should not leave the UI stuck in speaking state.',
+      audio: null
+    });
+
+    vi.advanceTimersByTime(10000);
+    await playPromise;
+
+    expect(speak).toHaveBeenCalledTimes(1);
+    expect(cancel).toHaveBeenCalled();
+    expect(state.turnSpeaking).toBe(false);
+  });
+
   it('falls back to browser speech when server audio never starts playback', async () => {
     window.__APP_CONFIG__ = {
       voiceMode: 'turn',

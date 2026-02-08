@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { withAccessToken } from './helpers/route.js';
 
 test.describe('Journey Messaging Validation (Coach, Not Judge)', () => {
   test('validates coach-first messaging throughout UI', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(withAccessToken('/'));
     await page.waitForLoadState('networkidle');
 
     // Screenshot for visual audit
@@ -47,7 +48,7 @@ test.describe('Journey Messaging Validation (Coach, Not Judge)', () => {
   });
 
   test('validates deprecated terminology has been removed', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(withAccessToken('/'));
     await page.waitForLoadState('networkidle');
 
     const pageText = await page.evaluate(() => document.body.textContent);
@@ -77,7 +78,7 @@ test.describe('Journey Messaging Validation (Coach, Not Judge)', () => {
   });
 
   test('validates journey phase messaging changes', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(withAccessToken('/'));
     await page.waitForLoadState('networkidle');
 
     const messagingChecks = [];

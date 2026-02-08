@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 import io
 import time
 import wave
@@ -17,6 +18,16 @@ except ImportError:
 
 
 logger = get_logger()
+_HEDGE_TTS_EXECUTOR = ThreadPoolExecutor(max_workers=4)
+
+_RETRYABLE_TTS_ERROR_MARKERS = (
+    "500 internal",
+    "503",
+    "service unavailable",
+    "temporarily unavailable",
+    "deadline exceeded",
+    "timeout",
+)
 
 
 def _friendly_tts_error(model: str, exc: Exception) -> str:
@@ -77,7 +88,50 @@ def _get_inline_data(part):
     return getattr(part, "inline_data", None) or getattr(part, "inlineData", None)
 
 
+def _merge_wav_chunks(chunks: list[bytes]) -> bytes | None:
+    if not chunks:
+        return None
+    if len(chunks) == 1:
+        return chunks[0]
+
+    frames: list[bytes] = []
+    params: tuple[int, int, int, str, str] | None = None
+
+    for chunk in chunks:
+        try:
+            with wave.open(io.BytesIO(chunk), "rb") as wav_file:
+                current_params = (
+                    wav_file.getnchannels(),
+                    wav_file.getsampwidth(),
+                    wav_file.getframerate(),
+                    wav_file.getcomptype(),
+                    wav_file.getcompname()
+                )
+                chunk_frames = wav_file.readframes(wav_file.getnframes())
+        except Exception:
+            return None
+        if params is None:
+            params = current_params
+        elif current_params != params:
+            return None
+        frames.append(chunk_frames)
+
+    if params is None:
+        return None
+
+    output = io.BytesIO()
+    with wave.open(output, "wb") as wav_file:
+        wav_file.setnchannels(params[0])
+        wav_file.setsampwidth(params[1])
+        wav_file.setframerate(params[2])
+        wav_file.setcomptype(params[3], params[4])
+        wav_file.writeframes(b"".join(frames))
+    return output.getvalue()
+
+
 def _extract_audio(response) -> tuple[bytes | None, str | None]:
+    chunks: list[bytes] = []
+    resolved_mime: str | None = None
     for part in _iter_parts(response):
         inline_data = _get_inline_data(part)
         if inline_data is None:
@@ -91,14 +145,30 @@ def _extract_audio(response) -> tuple[bytes | None, str | None]:
                 getattr(inline_data, "mime_type", None)
                 or getattr(inline_data, "mimeType", None)
             )
+        chunk: bytes | None = None
         if isinstance(data, (bytes, bytearray)):
-            return bytes(data), mime_type
-        if isinstance(data, str):
+            chunk = bytes(data)
+        elif isinstance(data, str):
             try:
-                return base64.b64decode(data), mime_type
+                chunk = base64.b64decode(data)
             except Exception:
                 continue
-    return None, None
+        if not chunk:
+            continue
+        chunks.append(chunk)
+        if not resolved_mime and mime_type:
+            resolved_mime = mime_type
+    if not chunks:
+        return None, None
+    if len(chunks) == 1:
+        return chunks[0], resolved_mime
+
+    normalized_mime = (resolved_mime or "").lower()
+    if "wav" in normalized_mime:
+        merged_wav = _merge_wav_chunks(chunks)
+        if merged_wav:
+            return merged_wav, resolved_mime
+    return b"".join(chunks), resolved_mime
 
 
 def _parse_pcm_rate(mime_type: str | None, fallback: int = 24000) -> int:
@@ -126,6 +196,128 @@ def _normalize_audio_for_browser(audio_bytes: bytes, mime_type: str | None) -> t
         wav_file.setframerate(sample_rate)
         wav_file.writeframes(audio_bytes)
     return buffer.getvalue(), "audio/wav"
+
+
+def _is_retryable_tts_error(exc: Exception) -> bool:
+    message = str(exc).lower()
+    return any(marker in message for marker in _RETRYABLE_TTS_ERROR_MARKERS)
+
+
+def _generate_tts_with_retry_budget(
+    *,
+    api_key: str,
+    model: str,
+    text: str,
+    voice_name: str | None,
+    language_code: str | None,
+    timeout_ms: int | None,
+    retry_count: int,
+    retry_backoff_ms: int,
+    first_error: Exception | None = None
+) -> tuple[bytes, str]:
+    if first_error is None:
+        return generate_tts_audio(
+            api_key=api_key,
+            model=model,
+            text=text,
+            voice_name=voice_name,
+            language_code=language_code,
+            timeout_ms=timeout_ms
+        )
+
+    last_exc: Exception = first_error
+    for attempt in range(retry_count):
+        if retry_backoff_ms > 0:
+            time.sleep(retry_backoff_ms / 1000)
+        try:
+            return generate_tts_audio(
+                api_key=api_key,
+                model=model,
+                text=text,
+                voice_name=voice_name,
+                language_code=language_code,
+                timeout_ms=timeout_ms
+            )
+        except Exception as exc:
+            last_exc = exc
+            if attempt < retry_count - 1:
+                logger.warning(
+                    "event=tts_model_call status=retry requested_model=%s attempt=%s/%s",
+                    model,
+                    attempt + 1,
+                    retry_count
+                )
+    raise last_exc
+
+
+def _run_retry_with_parallel_fallback(
+    *,
+    api_key: str,
+    models: list[str],
+    text: str,
+    voice_name: str | None,
+    language_code: str | None,
+    timeout_ms: int | None,
+    primary_retry_count: int,
+    retry_backoff_ms: int,
+    first_error: Exception
+) -> tuple[bytes, str, str]:
+    primary_model = models[0]
+    fallback_models = models[1:]
+
+    def _retry_primary() -> tuple[bytes, str, str]:
+        audio_bytes, mime_type = _generate_tts_with_retry_budget(
+            api_key=api_key,
+            model=primary_model,
+            text=text,
+            voice_name=voice_name,
+            language_code=language_code,
+            timeout_ms=timeout_ms,
+            retry_count=primary_retry_count,
+            retry_backoff_ms=retry_backoff_ms,
+            first_error=first_error
+        )
+        return audio_bytes, mime_type, primary_model
+
+    def _fallback_chain() -> tuple[bytes, str, str]:
+        return generate_tts_audio_with_fallbacks(
+            api_key=api_key,
+            models=fallback_models,
+            text=text,
+            voice_name=voice_name,
+            language_code=language_code,
+            timeout_ms=timeout_ms,
+            primary_retry_count=0,
+            retry_backoff_ms=retry_backoff_ms,
+            parallel_fallback_on_retry=False
+        )
+
+    primary_future = _HEDGE_TTS_EXECUTOR.submit(_retry_primary)
+    fallback_future = _HEDGE_TTS_EXECUTOR.submit(_fallback_chain)
+    done, _ = wait({primary_future, fallback_future}, return_when=FIRST_COMPLETED)
+    first = next(iter(done))
+    second = fallback_future if first is primary_future else primary_future
+    winner = "primary_retry" if first is primary_future else "fallback_chain"
+    loser = "fallback_chain" if first is primary_future else "primary_retry"
+
+    try:
+        result = first.result()
+        # Best effort: cancel the loser path so only one model result is used.
+        second.cancel()
+        logger.info("event=tts_model_call status=hedge_winner winner=%s loser=%s", winner, loser)
+        return result
+    except Exception as first_exc:
+        try:
+            result = second.result()
+            logger.info(
+                "event=tts_model_call status=hedge_winner winner=%s loser=%s first_error=%s",
+                loser,
+                winner,
+                str(first_exc)
+            )
+            return result
+        except Exception:
+            raise first_exc
 
 
 def generate_tts_audio(
@@ -210,7 +402,10 @@ def generate_tts_audio_with_fallbacks(
     text: str,
     voice_name: str | None = None,
     language_code: str | None = None,
-    timeout_ms: int | None = None
+    timeout_ms: int | None = None,
+    primary_retry_count: int = 0,
+    retry_backoff_ms: int = 0,
+    parallel_fallback_on_retry: bool = False
 ) -> tuple[bytes, str, str]:
     if not models:
         raise RuntimeError("No TTS models configured.")
@@ -227,6 +422,30 @@ def generate_tts_audio_with_fallbacks(
             )
             return audio_bytes, mime_type, model
         except Exception as exc:
+            if (
+                index == 0
+                and parallel_fallback_on_retry
+                and primary_retry_count > 0
+                and len(models) > 1
+                and _is_retryable_tts_error(exc)
+            ):
+                logger.warning(
+                    "event=tts_model_call status=hedge requested_model=%s retries=%s fallback_models=%s",
+                    model,
+                    primary_retry_count,
+                    len(models) - 1
+                )
+                return _run_retry_with_parallel_fallback(
+                    api_key=api_key,
+                    models=models,
+                    text=text,
+                    voice_name=voice_name,
+                    language_code=language_code,
+                    timeout_ms=timeout_ms,
+                    primary_retry_count=primary_retry_count,
+                    retry_backoff_ms=retry_backoff_ms,
+                    first_error=exc
+                )
             last_exc = exc
             if index < len(models) - 1:
                 logger.warning("event=tts_model_call status=fallback requested_model=%s", model)

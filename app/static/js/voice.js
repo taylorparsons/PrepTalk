@@ -23,6 +23,8 @@ const DEFAULT_SAMPLE_RATE = 24000;
 const DEFAULT_FRAME_MS = 20;
 const DEFAULT_SPEECH_THRESHOLD = 0.02;
 const DEFAULT_SPEECH_HOLD_FRAMES = 6;
+const DEFAULT_SPEECH_START_MS = 180;
+const DEFAULT_SPEECH_END_MS = 650;
 
 function downsampleBuffer(buffer, inputRate, outputRate) {
   if (outputRate >= inputRate) {
@@ -89,7 +91,9 @@ export async function startMicrophoneCapture({
   targetSampleRate = DEFAULT_SAMPLE_RATE,
   frameDurationMs = DEFAULT_FRAME_MS,
   speechThreshold = DEFAULT_SPEECH_THRESHOLD,
-  speechHoldFrames = DEFAULT_SPEECH_HOLD_FRAMES
+  speechHoldFrames = DEFAULT_SPEECH_HOLD_FRAMES,
+  speechStartMs = DEFAULT_SPEECH_START_MS,
+  speechEndMs = DEFAULT_SPEECH_END_MS
 } = {}) {
   if (!navigator?.mediaDevices?.getUserMedia) {
     throw new Error('Microphone capture not supported.');
@@ -117,11 +121,16 @@ export async function startMicrophoneCapture({
   const processor = context.createScriptProcessor(adaptiveConfig.bufferSize, 1, 1);
   const inputSampleRate = context.sampleRate;
   const frameSize = Math.round((targetSampleRate * frameDurationMs) / 1000);
+  const speechStartFrames = Math.max(1, Math.ceil(speechStartMs / frameDurationMs));
+  const resolvedSpeechHoldFrames = Number.isFinite(speechEndMs)
+    ? Math.max(1, Math.ceil(speechEndMs / frameDurationMs))
+    : speechHoldFrames;
 
   onStatus?.('ready');
 
   let speaking = false;
   let silenceFrames = 0;
+  let voicedFrames = 0;
 
   processor.onaudioprocess = (event) => {
     const inputBuffer = event.inputBuffer.getChannelData(0);
@@ -140,16 +149,22 @@ export async function startMicrophoneCapture({
         if (rms >= speechThreshold) {
           silenceFrames = 0;
           if (!speaking) {
-            speaking = true;
-            onSpeechStart?.();
+            voicedFrames += 1;
+            if (voicedFrames >= speechStartFrames) {
+              speaking = true;
+              voicedFrames = 0;
+              onSpeechStart?.();
+            }
           }
         } else if (speaking) {
           silenceFrames += 1;
-          if (silenceFrames >= speechHoldFrames) {
+          if (silenceFrames >= resolvedSpeechHoldFrames) {
             speaking = false;
             silenceFrames = 0;
             onSpeechEnd?.();
           }
+        } else {
+          voicedFrames = 0;
         }
         onAudioFrame?.(frame);
       }
@@ -173,13 +188,15 @@ export async function startMicrophoneCapture({
 }
 
 export function createAudioPlayback({ sampleRate = DEFAULT_SAMPLE_RATE } = {}) {
-  // Apply adaptive config with fallback defaults
+  // Respect explicit stream sample rate; only fall back to adaptive/default.
   const adaptiveConfig = getAdaptiveConfig();
-  sampleRate = adaptiveConfig.sampleRate;
+  const resolvedSampleRate = Number.isFinite(sampleRate) && sampleRate > 0
+    ? sampleRate
+    : adaptiveConfig.sampleRate;
 
   let context;
   try {
-    context = new AudioContext({ sampleRate });
+    context = new AudioContext({ sampleRate: resolvedSampleRate });
   } catch (error) {
     context = new AudioContext();
   }
@@ -187,7 +204,8 @@ export function createAudioPlayback({ sampleRate = DEFAULT_SAMPLE_RATE } = {}) {
 
   function schedule(pcm16) {
     if (!pcm16 || pcm16.length === 0) return;
-    const buffer = context.createBuffer(1, pcm16.length, sampleRate);
+    // PCM samples are encoded at the stream sample rate; keep that rate for correct speed/pitch.
+    const buffer = context.createBuffer(1, pcm16.length, resolvedSampleRate);
     const channel = buffer.getChannelData(0);
     channel.set(pcm16ToFloat32(pcm16));
 

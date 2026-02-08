@@ -58,4 +58,28 @@ describe('config user id', () => {
     expect(config.userId).toBe('server-user');
     expect(window.localStorage.getItem('preptalk_user_id')).toBe('server-user');
   });
+
+  it('uses configured voice mode when valid', () => {
+    window.__APP_CONFIG__ = { voiceMode: 'live' };
+    const config = getAppConfig();
+    expect(config.voiceMode).toBe('live');
+  });
+
+  it('falls back to turn voice mode when invalid', () => {
+    window.__APP_CONFIG__ = { voiceMode: 'desktop' };
+    const config = getAppConfig();
+    expect(config.voiceMode).toBe('turn');
+  });
+
+  it('uses configured tts provider when valid', () => {
+    window.__APP_CONFIG__ = { ttsProvider: 'gemini' };
+    const config = getAppConfig();
+    expect(config.ttsProvider).toBe('gemini');
+  });
+
+  it('falls back to openai tts provider when invalid', () => {
+    window.__APP_CONFIG__ = { ttsProvider: 'unknown-provider' };
+    const config = getAppConfig();
+    expect(config.ttsProvider).toBe('openai');
+  });
 });

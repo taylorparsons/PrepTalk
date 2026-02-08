@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { withAccessToken } from './helpers/route.js';
 
 test.describe('Learning Card Component Validation', () => {
   test('validates Learning Card component structure exists', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(withAccessToken('/'));
     await page.waitForLoadState('networkidle');
 
     // Verify Learning Card CSS classes exist in components.css
@@ -24,7 +25,7 @@ test.describe('Learning Card Component Validation', () => {
   });
 
   test('validates Learning Card component factory function', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(withAccessToken('/'));
     await page.waitForLoadState('networkidle');
 
     // Import and test the component in browser context
@@ -68,7 +69,7 @@ test.describe('Learning Card Component Validation', () => {
   });
 
   test('validates generateLearningContent helper function', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(withAccessToken('/'));
     await page.waitForLoadState('networkidle');
 
     const content = await page.evaluate(async () => {
@@ -94,7 +95,7 @@ Managed team of 5 engineers across 3 time zones`;
   });
 
   test('does not render Learning Mode toggle in UI', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(withAccessToken('/'));
     await page.waitForLoadState('networkidle');
 
     // Check for Learning Mode toggle button
@@ -109,7 +110,7 @@ Managed team of 5 engineers across 3 time zones`;
   });
 
   test('validates Learning Card accessibility', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(withAccessToken('/'));
     await page.waitForLoadState('networkidle');
 
     const a11yResults = await page.evaluate(async () => {

@@ -12,6 +12,22 @@ function parseBoolean(value) {
   return false;
 }
 
+function normalizeVoiceMode(value) {
+  const cleaned = (value || '').trim().toLowerCase();
+  if (cleaned === 'live' || cleaned === 'turn') {
+    return cleaned;
+  }
+  return 'turn';
+}
+
+function normalizeTtsProvider(value) {
+  const cleaned = (value || '').trim().toLowerCase();
+  if (cleaned === 'openai' || cleaned === 'gemini' || cleaned === 'auto') {
+    return cleaned;
+  }
+  return 'openai';
+}
+
 export function getAppConfig() {
   if (typeof window === 'undefined') {
     return {
@@ -23,6 +39,7 @@ export function getAppConfig() {
       uiDevMode: false,
       voiceMode: 'turn',
       voiceOutputMode: 'auto',
+      ttsProvider: 'openai',
       voiceTtsLanguage: 'en-US',
       voiceTurnEndDelayMs: 10000,
       voiceTurnCompletionConfidence: 0.9,
@@ -81,8 +98,9 @@ export function getAppConfig() {
     textModel: config.textModel || '',
     ttsModel: config.ttsModel || '',
     uiDevMode: false,
-    voiceMode: 'turn',
+    voiceMode: normalizeVoiceMode(config.voiceMode),
     voiceOutputMode: config.voiceOutputMode || 'auto',
+    ttsProvider: normalizeTtsProvider(config.ttsProvider),
     voiceTtsLanguage: config.voiceTtsLanguage || 'en-US',
     voiceTurnEndDelayMs: Number.isFinite(config.voiceTurnEndDelayMs) ? config.voiceTurnEndDelayMs : 10000,
     voiceTurnCompletionConfidence: Number.isFinite(config.voiceTurnCompletionConfidence)

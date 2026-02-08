@@ -1,5 +1,6 @@
 import time
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -17,6 +18,11 @@ def _pdf_bytes(label: str) -> bytes:
         "xref\n0 5\n0000000000 65535 f \n0000000010 00000 n \n0000000060 00000 n \n0000000111 00000 n \n0000000212 00000 n \n"
         "trailer\n<< /Root 1 0 R /Size 5 >>\nstartxref\n312\n%%EOF\n"
     ).encode("utf-8")
+
+
+@pytest.fixture(autouse=True)
+def _force_mock_adapter(monkeypatch):
+    monkeypatch.setenv("INTERVIEW_ADAPTER", "mock")
 
 
 def _create_interview(client: TestClient, user_id: str | None = None) -> str:
@@ -46,6 +52,47 @@ def test_create_interview_returns_questions():
     assert len(payload["questions"]) >= 3
     assert payload["adapter"] == "mock"
     assert payload["question_statuses"]
+
+
+def test_create_interview_requires_access_token_when_configured(monkeypatch):
+    monkeypatch.setenv("APP_ACCESS_TOKENS", "token-1")
+    client = TestClient(app)
+    files = {
+        "resume": ("resume.pdf", _pdf_bytes("Resume"), "application/pdf"),
+        "job_description": ("job.pdf", _pdf_bytes("Job"), "application/pdf")
+    }
+
+    response = client.post("/api/interviews", files=files)
+
+    assert response.status_code == 401
+    assert "access token" in response.json()["detail"].lower()
+
+
+def test_create_interview_accepts_access_token_header(monkeypatch):
+    monkeypatch.setenv("APP_ACCESS_TOKENS", "token-1:user-123")
+    client = TestClient(app)
+    files = {
+        "resume": ("resume.pdf", _pdf_bytes("Resume"), "application/pdf"),
+        "job_description": ("job.pdf", _pdf_bytes("Job"), "application/pdf")
+    }
+
+    response = client.post(
+        "/api/interviews",
+        files=files,
+        headers={"X-Access-Token": "token-1", "X-User-Id": "spoofed-user"}
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["interview_id"]
+
+    sessions = client.get(
+        "/api/interviews",
+        headers={"X-Access-Token": "token-1", "X-User-Id": "different-user"}
+    )
+    assert sessions.status_code == 200
+    session_ids = {item["interview_id"] for item in sessions.json().get("sessions", [])}
+    assert payload["interview_id"] in session_ids
 
 
 def test_create_interview_warns_on_job_url_failure(monkeypatch):
@@ -138,6 +185,23 @@ def test_voice_help_appends_transcript_entry():
     assert transcript[-1]["role"] == "coach_feedback"
 
 
+def test_voice_help_not_found_returns_session_expired_hint():
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/voice/help",
+        json={
+            "interview_id": "missing-id",
+            "question": "Tell me about yourself"
+        }
+    )
+
+    assert response.status_code == 404
+    detail = response.json().get("detail", "")
+    assert "Interview not found" in detail
+    assert "Generate questions" in detail
+
+
 def test_score_returns_summary_and_transcript():
     client = TestClient(app)
     interview_id = _create_interview(client)
@@ -192,6 +256,35 @@ def test_summary_and_pdf_exports():
     assert b"Interview Study Guide" in text_response.content
 
 
+def test_summary_export_keeps_coach_feedback_role():
+    client = TestClient(app)
+    interview_id = _create_interview(client)
+
+    transcript = [
+        {"role": "coach", "text": "Welcome", "timestamp": "00:00"},
+        {"role": "coach_feedback", "text": "Use STAR and quantify impact.", "timestamp": "00:02"},
+        {"role": "candidate", "text": "I led a migration.", "timestamp": "00:04"}
+    ]
+
+    score_response = client.post(
+        f"/api/interviews/{interview_id}/score",
+        json={"transcript": transcript}
+    )
+    assert score_response.status_code == 200
+
+    summary_response = client.get(f"/api/interviews/{interview_id}")
+    assert summary_response.status_code == 200
+    summary = summary_response.json()
+    assert summary["transcript"] == transcript
+    assert summary["transcript"][1]["role"] == "coach_feedback"
+
+    text_response = client.get(f"/api/interviews/{interview_id}/study-guide?format=txt")
+    assert text_response.status_code == 200
+    text_output = text_response.text
+    assert "coach_feedback: Use STAR and quantify impact." in text_output
+    assert "candidate: I led a migration." in text_output
+
+
 def test_create_interview_accepts_txt():
     client = TestClient(app)
     files = {
@@ -203,6 +296,28 @@ def test_create_interview_accepts_txt():
     assert response.status_code == 200
     payload = response.json()
     assert payload["interview_id"]
+
+
+def test_create_interview_redacts_resume_pii(monkeypatch):
+    monkeypatch.setenv("APP_REDACT_RESUME_PII", "1")
+    client = TestClient(app)
+    resume_text = (
+        "Taylor Parsons\n"
+        "Seattle, WA | 206-356-8736 | taylor.parsons@gmail.com | linkedin.com/in/taylorparsons\n"
+        "Built roadmap for AI products."
+    )
+    files = {
+        "resume": ("resume.txt", resume_text.encode("utf-8"), "text/plain"),
+        "job_description": ("job.txt", b"Job text", "text/plain")
+    }
+
+    response = client.post("/api/interviews", files=files)
+
+    assert response.status_code == 200
+    excerpt = response.json()["resume_excerpt"]
+    assert "Taylor [redacted]" in excerpt
+    assert "206-356-8736" not in excerpt
+    assert "[redacted]@gmail.com" in excerpt
 
 
 

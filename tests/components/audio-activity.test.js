@@ -6,14 +6,17 @@ function frame(value, length = 160) {
 }
 
 describe('activity detector', () => {
-  it('emits start on first voiced frame', () => {
+  it('emits start only after sustained voiced frames', () => {
     const detector = createActivityDetector({
       frameDurationMs: 20,
       silenceThreshold: 0.02,
-      silenceWindowMs: 60
+      silenceWindowMs: 60,
+      startWindowMs: 60
     });
 
     expect(detector.update(frame(0))).toBe(null);
+    expect(detector.update(frame(10000))).toBe(null);
+    expect(detector.update(frame(10000))).toBe(null);
     expect(detector.update(frame(10000))).toBe('start');
     expect(detector.update(frame(10000))).toBe(null);
   });
@@ -22,7 +25,8 @@ describe('activity detector', () => {
     const detector = createActivityDetector({
       frameDurationMs: 20,
       silenceThreshold: 0.02,
-      silenceWindowMs: 60
+      silenceWindowMs: 60,
+      startWindowMs: 20
     });
 
     expect(detector.update(frame(12000))).toBe('start');
@@ -35,12 +39,27 @@ describe('activity detector', () => {
     const detector = createActivityDetector({
       frameDurationMs: 20,
       silenceThreshold: 0.02,
-      silenceWindowMs: 40
+      silenceWindowMs: 40,
+      startWindowMs: 20
     });
 
     expect(detector.update(frame(12000))).toBe('start');
     expect(detector.update(frame(0))).toBe(null);
     expect(detector.update(frame(0))).toBe('end');
     expect(detector.update(frame(12000))).toBe('start');
+  });
+
+  it('ignores short transient noise bursts', () => {
+    const detector = createActivityDetector({
+      frameDurationMs: 20,
+      silenceThreshold: 0.02,
+      silenceWindowMs: 60,
+      startWindowMs: 120
+    });
+
+    expect(detector.update(frame(12000))).toBe(null);
+    expect(detector.update(frame(0))).toBe(null);
+    expect(detector.update(frame(12000))).toBe(null);
+    expect(detector.update(frame(0))).toBe(null);
   });
 });

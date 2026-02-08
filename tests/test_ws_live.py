@@ -75,6 +75,32 @@ def test_websocket_streams_mock_transcript(monkeypatch):
         assert stopped["state"] in {"stopped", "stream-complete"}
 
 
+def test_websocket_requires_access_token_when_configured(monkeypatch):
+    monkeypatch.setenv("INTERVIEW_ADAPTER", "mock")
+    monkeypatch.setenv("APP_ACCESS_TOKENS", "token-1")
+    os.environ.pop("GEMINI_API_KEY", None)
+
+    client = TestClient(app)
+
+    with client.websocket_connect("/ws/live") as websocket:
+        payload = websocket.receive_json()
+        assert payload["type"] == "error"
+        assert "access token" in payload["message"].lower()
+
+
+def test_websocket_accepts_access_token_query(monkeypatch):
+    monkeypatch.setenv("INTERVIEW_ADAPTER", "mock")
+    monkeypatch.setenv("APP_ACCESS_TOKENS", "token-1")
+    os.environ.pop("GEMINI_API_KEY", None)
+
+    client = TestClient(app)
+
+    with client.websocket_connect("/ws/live?access_token=token-1") as websocket:
+        status = websocket.receive_json()
+        assert status["type"] == "status"
+        assert status["state"] == "connected"
+
+
 def test_websocket_ping_returns_alive(monkeypatch):
     monkeypatch.setenv("INTERVIEW_ADAPTER", "mock")
     os.environ.pop("GEMINI_API_KEY", None)
