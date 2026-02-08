@@ -48,13 +48,21 @@ const GEMINI_RECONNECT_DELAY_MS = 600;
 const AUDIO_FRAME_INTERVAL_MS = 20;
 const AUDIO_BUFFER_WINDOW_MS = 1200;
 const AUDIO_BUFFER_MAX_FRAMES = Math.ceil(AUDIO_BUFFER_WINDOW_MS / AUDIO_FRAME_INTERVAL_MS);
-const AUDIO_ACTIVITY_SILENCE_MS = 500;
-const AUDIO_ACTIVITY_THRESHOLD = 0.02;
+const AUDIO_ACTIVITY_START_MS = 180;
+const AUDIO_ACTIVITY_SILENCE_MS = 650;
+const AUDIO_ACTIVITY_THRESHOLD = 0.028;
 const CAPTION_MAX_CHARS = 240;
 const LIVE_COACH_SPEAK_DELAY_MS = 700;
 const TURN_SUBMIT_COMMAND_PHRASES = ['submit my answer', 'how did i do'];
 const TURN_HELP_COMMAND_PHRASES = ['help me', 'coach help', 'request help', 'help with this answer'];
 const TURN_HELP_HINT_DELAY_MS = 12000;
+const TURN_EMPTY_SUBMIT_FALLBACK = 'No spoken answer provided. Please continue.';
+const SPEECH_RECOGNITION_WATCHDOG_MS = 6000;
+const SPEECH_RECOGNITION_STALL_MS = 12000;
+const TURN_PLAYBACK_WATCHDOG_MS = 300000;
+const TURN_SPEECH_START_WATCHDOG_MS = 2500;
+const TURN_SPEECH_MIN_WATCHDOG_MS = 8000;
+const TURN_SPEECH_MAX_WATCHDOG_MS = 300000;
 const COACH_QUESTION_PATTERN = /\b(what|why|how|tell me|can you|could you|describe|walk me|give me|share|would you)\b/i;
 const QUESTION_STATUS_OPTIONS = [
   { value: 'not_started', label: 'Not started' },
@@ -601,6 +609,7 @@ function buildAppHeader(ui) {
     isCollapsed = Boolean(value);
     body.hidden = isCollapsed;
     wrapper.classList.toggle('ui-hero--collapsed', isCollapsed);
+    ui?.syncStickyOffsets?.();
     ui?.updateOverflowMenu?.();
   };
 
@@ -608,6 +617,7 @@ function buildAppHeader(ui) {
   wrapper.appendChild(body);
 
   if (ui) {
+    ui.heroHeader = header;
     ui.heroBody = body;
     ui.setHeroCollapsed = setHeroCollapsed;
     ui.isHeroCollapsed = () => isCollapsed;
@@ -965,11 +975,20 @@ function buildSetupPanel(state, ui) {
   generateButton.addEventListener('click', async () => {
     if (generateButton.disabled) return;
 
+    // Preserve iOS autoplay unlock by priming audio on the original Generate user gesture.
+    try {
+      await ui.primeAudioOnUserGesture?.();
+    } catch (error) {
+      // Best-effort unlock: continue generation even if priming fails.
+    }
+
     status.className = 'ui-field__help ui-state-text';
     status.textContent = 'Analyzing documents and generating questions...';
     generateButton.disabled = true;
     updateButtonLabel(generateButton, 'Generating...');
     isGenerating = true;
+    state.generateStarted = true;
+    state.generatingQuestions = true;
     setGenerateProgressVisible(true);
     updateSetupHint();
     state.interviewId = null;
@@ -1030,10 +1049,10 @@ function buildSetupPanel(state, ui) {
       ui.updateSetupCtas?.();
       if (result.job_url_warning) {
         status.className = 'ui-field__warning ui-state-text';
-        status.textContent = 'Questions ready. The job URL could not be reached, so we used the uploaded file.';
+        status.textContent = 'Questions ready. The job URL could not be reached, so we used the uploaded file. Starting coach...';
       } else {
         status.className = 'ui-field__help ui-state-text';
-        status.textContent = 'Questions ready. Start the session when ready.';
+        status.textContent = 'Questions ready. Starting coach...';
       }
       ui.updateMeta?.();
       if (ui.sessionNameInput) {
@@ -1046,12 +1065,16 @@ function buildSetupPanel(state, ui) {
       ui.refreshSessionList?.();
       const defaultInsightIndex = state.questions.length > 0 ? 0 : null;
       ui.updateQuestionInsights?.(defaultInsightIndex, { clear: true });
+      if (typeof ui.startSession === 'function' && !state.sessionActive) {
+        await ui.startSession({ source: 'auto_generate' });
+      }
     } catch (error) {
       status.className = 'ui-field__error ui-state-text';
       status.textContent = error.message || 'Unable to generate questions.';
     } finally {
       updateButtonLabel(generateButton, 'Generate Questions');
       isGenerating = false;
+      state.generatingQuestions = false;
       setGenerateProgressVisible(false);
       updateGenerateState();
     }
@@ -1106,38 +1129,9 @@ function buildControlsPanel(state, ui, config) {
   statusDetail.setAttribute('role', 'status');
   statusDetail.textContent = 'Waiting to start.';
 
-  const turnRubric = document.createElement('div');
-  turnRubric.className = 'ui-turn-rubric ui-turn-rubric--popover';
-  turnRubric.setAttribute('data-testid', 'turn-rubric');
-  turnRubric.hidden = true;
-
-  const turnRubricTitle = document.createElement('div');
-  turnRubricTitle.className = 'ui-turn-rubric__title';
-  turnRubricTitle.textContent = 'Answer rubric';
-
-  const turnRubricList = document.createElement('ul');
-  turnRubricList.className = 'ui-turn-rubric__list';
-
-  turnRubric.appendChild(turnRubricTitle);
-  turnRubric.appendChild(turnRubricList);
-
-  const rubricToggle = createButton({
-    label: 'Rubric',
-    variant: 'ghost',
-    size: 'sm',
-    attrs: { 'data-testid': 'rubric-toggle', 'aria-expanded': 'false' }
-  });
-  rubricToggle.classList.add('ui-controls__rubric-toggle');
-
-  const rubricWrapper = document.createElement('div');
-  rubricWrapper.className = 'ui-controls__rubric';
-  rubricWrapper.appendChild(rubricToggle);
-  rubricWrapper.appendChild(turnRubric);
-
   const statusHeader = document.createElement('div');
   statusHeader.className = 'ui-controls__status-header';
   statusHeader.appendChild(statusPill);
-  statusHeader.appendChild(rubricWrapper);
 
   const statusBlock = document.createElement('div');
   statusBlock.className = 'ui-controls__status';
@@ -1178,7 +1172,26 @@ function buildControlsPanel(state, ui, config) {
         interruptCoachSpeech();
         return;
       }
-      setBargeInState(!state.bargeInEnabled);
+      if (!state.sessionActive) {
+        return;
+      }
+      if (state.audioPlayback) {
+        state.audioPlayback.stop();
+        state.audioPlayback = null;
+        state.audioPlaybackSampleRate = null;
+      }
+      state.transport?.bargeIn();
+      sendClientEvent(state, 'barge_in', { status: 'button_press' });
+    }
+  });
+
+  const forceTtsButton = createButton({
+    label: 'Force TTS',
+    variant: 'secondary',
+    size: 'sm',
+    disabled: true,
+    attrs: {
+      'data-testid': 'force-tts-recovery'
     }
   });
 
@@ -1266,17 +1279,18 @@ function buildControlsPanel(state, ui, config) {
     }
   }
 
-  function setBargeInState(enabled) {
-    state.bargeInEnabled = enabled;
-    updateButtonLabel(bargeInButton, enabled ? 'Interrupt On' : 'Interrupt Off');
-    bargeInButton.setAttribute('aria-pressed', String(enabled));
-  }
-
-  setBargeInState(state.bargeInEnabled);
   setPrimaryActionMode({ active: false });
 
   function voiceModeLabel() {
     return state.voiceMode === 'turn' ? 'Turn-based' : 'Live';
+  }
+
+  function normalizeVoiceMode(value) {
+    const cleaned = (value || '').trim().toLowerCase();
+    if (cleaned === 'live' || cleaned === 'turn') {
+      return cleaned;
+    }
+    return 'turn';
   }
 
   function normalizeVoiceOutputMode(value) {
@@ -1287,6 +1301,14 @@ function buildControlsPanel(state, ui, config) {
     return 'auto';
   }
 
+  function normalizeTtsProvider(value) {
+    const cleaned = (value || '').trim().toLowerCase();
+    if (cleaned === 'openai' || cleaned === 'gemini' || cleaned === 'auto') {
+      return cleaned;
+    }
+    return 'openai';
+  }
+
   function voiceOutputModeLabel() {
     const mode = normalizeVoiceOutputMode(state.voiceOutputMode);
     if (mode === 'browser') return 'Browser TTS';
@@ -1294,8 +1316,8 @@ function buildControlsPanel(state, ui, config) {
     return 'Auto';
   }
 
-  function applyVoiceMode() {
-    state.voiceMode = 'turn';
+  function applyVoiceMode(value) {
+    state.voiceMode = normalizeVoiceMode(value ?? state.voiceMode);
     updateMeta();
     updateTurnSubmitUI();
   }
@@ -1305,6 +1327,14 @@ function buildControlsPanel(state, ui, config) {
     if (state.voiceOutputMode === 'server') {
       cancelSpeechSynthesis();
       cancelLiveCoachSpeech();
+    }
+    updateMeta();
+  }
+
+  function applyTtsProvider(value) {
+    state.ttsProvider = normalizeTtsProvider(value);
+    if (ui.ttsProviderSelect && ui.ttsProviderSelect.value !== state.ttsProvider) {
+      ui.ttsProviderSelect.value = state.ttsProvider;
     }
     updateMeta();
   }
@@ -1332,8 +1362,49 @@ function buildControlsPanel(state, ui, config) {
     return state.voiceMode === 'turn';
   }
 
-  applyVoiceMode();
+  function isInterviewNotFoundError(error) {
+    const message = String(error?.message || '').toLowerCase();
+    return message.includes('interview not found');
+  }
+
+  function handleExpiredInterview(error) {
+    if (!isInterviewNotFoundError(error)) {
+      return false;
+    }
+    state.sessionActive = false;
+    state.turnAwaitingAnswer = false;
+    state.turnReadyToSubmit = false;
+    state.turnCaptureLocked = false;
+    state.turnRequestActive = false;
+    state.turnHelpPending = false;
+    state.turnSpeaking = false;
+    state.interviewId = null;
+    stopSpeechRecognition();
+    updateTurnSubmitUI();
+    setPrimaryActionMode({ active: false, disabled: true });
+    updateStatusPill(statusPill, { label: 'Session expired', tone: 'warning' });
+    setStatusDetail('Session expired on the server. Generate questions to start a new session.');
+    setCaptionText('Captions idle.');
+    ui.updateSessionToolsState?.();
+    return true;
+  }
+
+  function canCaptureTurnSpeech() {
+    return Boolean(
+      isTurnMode()
+      && state.sessionActive
+      && state.turnAwaitingAnswer
+      && !state.turnSpeaking
+      && !state.turnHelpPending
+      && !state.turnRequestActive
+      && !state.turnCaptureLocked
+      && !state.isMuted
+    );
+  }
+
+  applyVoiceMode(config.voiceMode);
   applyVoiceOutputMode(state.voiceOutputMode);
+  applyTtsProvider(state.ttsProvider);
 
   function getSpeechRecognitionClass() {
     return window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1349,6 +1420,44 @@ function buildControlsPanel(state, ui, config) {
         startSpeechRecognition();
       }
     }, 250);
+  }
+
+  function clearSpeechRecognitionWatchdog() {
+    if (state.speechRecognitionWatchdogTimer) {
+      clearTimeout(state.speechRecognitionWatchdogTimer);
+      state.speechRecognitionWatchdogTimer = null;
+    }
+  }
+
+  function scheduleSpeechRecognitionWatchdog() {
+    if (state.speechRecognitionWatchdogTimer) {
+      return;
+    }
+    state.speechRecognitionWatchdogTimer = window.setTimeout(() => {
+      state.speechRecognitionWatchdogTimer = null;
+      if (!isTurnMode() || !state.sessionActive || state.isMuted || !state.speechRecognitionEnabled) {
+        return;
+      }
+      if (!state.turnAwaitingAnswer || state.turnSpeaking || state.turnRequestActive || state.turnHelpPending || state.turnCaptureLocked) {
+        scheduleSpeechRecognitionWatchdog();
+        return;
+      }
+
+      const now = Date.now();
+      const idleMs = now - (state.speechRecognitionLastResultAt || now);
+      if (!state.speechRecognitionActive || idleMs >= SPEECH_RECOGNITION_STALL_MS) {
+        if (state.speechRecognition && state.speechRecognitionActive) {
+          try {
+            state.speechRecognition.stop();
+          } catch (error) {
+            // Ignore recognition stop errors.
+          }
+          state.speechRecognitionActive = false;
+        }
+        startSpeechRecognition();
+      }
+      scheduleSpeechRecognitionWatchdog();
+    }, SPEECH_RECOGNITION_WATCHDOG_MS);
   }
 
   function resolveTurnCompletionMinMs() {
@@ -1517,10 +1626,15 @@ function buildControlsPanel(state, ui, config) {
             ? 'Interrupt the coach when she is speaking.'
             : 'Start a session to enable interrupt.';
       } else {
-        bargeInButton.disabled = false;
-        bargeInButton.setAttribute('aria-disabled', 'false');
+        const canInterrupt = state.sessionActive;
+        updateButtonLabel(bargeInButton, 'Interrupt');
+        bargeInButton.disabled = !canInterrupt;
+        bargeInButton.setAttribute('aria-disabled', String(!canInterrupt));
+        bargeInButton.setAttribute('aria-pressed', 'false');
         bargeInButton.classList.remove('ui-button--ready');
-        setBargeInState(state.bargeInEnabled);
+        bargeInButton.title = canInterrupt
+          ? 'Interrupt the coach response.'
+          : 'Start a session to enable interrupt.';
       }
     }
     if (!ui.submitTurnButton) {
@@ -1538,9 +1652,13 @@ function buildControlsPanel(state, ui, config) {
       return;
     }
     const hasAnswer = String(state.captionDraftText || state.captionFinalText || '').trim().length > 0;
-    const canInteract = state.turnAwaitingAnswer && !state.turnSpeaking;
-    const canSubmit = canInteract && hasAnswer;
-    const canHelp = canInteract && !state.turnHelpPending;
+    const canInteract = state.turnAwaitingAnswer
+      && !state.turnSpeaking
+      && !state.turnRequestActive
+      && !state.turnHelpPending
+      && !state.turnCaptureLocked;
+    const canSubmit = canInteract && !state.isMuted;
+    const canHelp = canInteract;
 
     ui.submitTurnButton.disabled = !canSubmit;
     ui.submitTurnButton.classList.toggle('ui-button--ready', canSubmit);
@@ -1548,8 +1666,16 @@ function buildControlsPanel(state, ui, config) {
       ? 'Submit your answer and move on.'
       : state.turnSpeaking
         ? 'Wait for the coach to finish speaking.'
+        : state.turnRequestActive
+          ? 'Waiting for coach response.'
+        : state.turnHelpPending
+          ? 'Help is in progress.'
+        : state.turnCaptureLocked
+          ? 'Answer capture is temporarily locked.'
+        : state.isMuted
+          ? 'Unmute to submit your answer.'
         : state.turnAwaitingAnswer
-          ? 'Start answering to enable Submit.'
+          ? 'Submit is available now, even before captions appear.'
           : 'Waiting for the next coach question.';
 
     if (ui.helpTurnButton) {
@@ -1559,6 +1685,10 @@ function buildControlsPanel(state, ui, config) {
         ? 'Get a resume-grounded hint for this question.'
         : state.turnSpeaking
           ? 'Wait for the coach to finish speaking.'
+          : state.turnRequestActive
+            ? 'Wait for the current coach response.'
+          : state.turnCaptureLocked
+            ? 'Help is temporarily locked.'
           : state.turnAwaitingAnswer
             ? 'Help is on the way.' 
             : 'Help becomes available after the coach asks a question.';
@@ -1584,10 +1714,12 @@ function buildControlsPanel(state, ui, config) {
         ui.setStatusDetail('Waiting for the next coach question.');
       } else if (state.turnHelpPending) {
         ui.setStatusDetail('Fetching help...');
+      } else if (state.turnRequestActive) {
+        ui.setStatusDetail('Coach response in progress...');
       } else if (!hasAnswer && state.turnHelpHintVisible) {
-        ui.setStatusDetail('Need a nudge? Use Request Help for a rubric-based tip.');
+        ui.setStatusDetail('Need a nudge? Use Request Help.');
       } else if (!hasAnswer) {
-        ui.setStatusDetail('Start answering to enable Submit. Help is available as soon as the coach finishes speaking.');
+        ui.setStatusDetail('You can submit now or keep talking. Help is available as soon as the coach finishes speaking.');
       } else {
         ui.setStatusDetail('Ready when you are. Request help or submit your answer.');
       }
@@ -1598,12 +1730,13 @@ function buildControlsPanel(state, ui, config) {
     if (!isTurnMode() || !state.sessionActive || !state.turnAwaitingAnswer) {
       return;
     }
-    const stripped = stripSubmitCommandSuffix(state.captionDraftText || state.captionFinalText || '');
-    const text = (stripped.text || '').trim();
-    if (!text) {
+    if (state.turnRequestActive || state.turnHelpPending || state.turnCaptureLocked) {
       return;
     }
-    sendClientEvent(state, 'turn_submit', { status: source });
+    const stripped = stripSubmitCommandSuffix(state.captionDraftText || state.captionFinalText || '');
+    const text = (stripped.text || '').trim();
+    const submittedText = text || TURN_EMPTY_SUBMIT_FALLBACK;
+    sendClientEvent(state, 'turn_submit', { status: text ? source : `${source}_empty` });
     updateStatusPill(statusPill, { label: 'Thinking', tone: 'info' });
     state.turnAwaitingAnswer = false;
     state.turnReadyToSubmit = false;
@@ -1615,7 +1748,7 @@ function buildControlsPanel(state, ui, config) {
     state.captionDraftText = '';
     setCaptionText('Captions idle.');
     updateTurnSubmitUI();
-    queueVoiceTurn(text);
+    queueVoiceTurn(submittedText);
   }
 
   function resetTurnCompletionTracking() {
@@ -1724,6 +1857,9 @@ function buildControlsPanel(state, ui, config) {
     recognition.maxAlternatives = 1;
 
     recognition.onresult = (event) => {
+      if (!canCaptureTurnSpeech()) {
+        return;
+      }
       let finalText = '';
       let interimText = '';
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
@@ -1739,6 +1875,7 @@ function buildControlsPanel(state, ui, config) {
         }
       }
       if (finalText) {
+        state.speechRecognitionLastResultAt = Date.now();
         const merged = mergeTranscriptText(state.captionFinalText || '', finalText);
         const helpStripped = stripHelpCommandSuffix(merged);
         if (helpStripped.command) {
@@ -1755,17 +1892,18 @@ function buildControlsPanel(state, ui, config) {
         if (submitStripped.command) {
           state.turnReadyToSubmit = true;
           updateTurnSubmitUI();
-          if ((submitStripped.text || '').trim().length > 0) {
-            submitTurnAnswer({ source: `voice_command:${normalizeTurnText(submitStripped.command).replace(/\s+/g, '_')}` });
-            return;
-          }
+          submitTurnAnswer({ source: `voice_command:${normalizeTurnText(submitStripped.command).replace(/\s+/g, '_')}` });
+          return;
         }
+        updateTurnSubmitUI();
         scheduleTurnCompletionCheck();
       }
       const combined = mergeTranscriptText(state.captionFinalText || '', interimText);
       if (combined) {
+        state.speechRecognitionLastResultAt = Date.now();
         state.captionDraftText = combined;
         setCaptionText(truncateCaption(combined));
+        updateTurnSubmitUI();
       }
     };
 
@@ -1792,6 +1930,9 @@ function buildControlsPanel(state, ui, config) {
     if (config.adapter === 'mock' && !isTurnMode()) {
       return;
     }
+    if (isTurnMode() && !canCaptureTurnSpeech()) {
+      return;
+    }
     const recognition = ensureSpeechRecognition();
     if (!recognition) {
       return;
@@ -1803,6 +1944,8 @@ function buildControlsPanel(state, ui, config) {
     try {
       recognition.start();
       state.speechRecognitionActive = true;
+      state.speechRecognitionLastResultAt = Date.now();
+      scheduleSpeechRecognitionWatchdog();
       if (ui.captionText?.textContent === 'Captions idle.') {
         setCaptionText('Captions listening...');
       }
@@ -1819,6 +1962,7 @@ function buildControlsPanel(state, ui, config) {
       clearTimeout(state.speechRecognitionRestartTimer);
       state.speechRecognitionRestartTimer = null;
     }
+    clearSpeechRecognitionWatchdog();
     if (state.speechRecognition && state.speechRecognitionActive) {
       try {
         state.speechRecognition.stop();
@@ -1827,6 +1971,7 @@ function buildControlsPanel(state, ui, config) {
       }
     }
     state.speechRecognitionActive = false;
+    state.speechRecognitionLastResultAt = 0;
     if (!preserveCaptions) {
       state.captionFinalText = '';
       state.captionDraftText = '';
@@ -1846,6 +1991,16 @@ function buildControlsPanel(state, ui, config) {
     window.speechSynthesis.cancel();
     state.turnSpeaking = false;
     updateTurnSubmitUI();
+  }
+
+  function beginTurnPlayback() {
+    state.turnPlaybackSeq += 1;
+    state.activeTurnPlaybackSeq = state.turnPlaybackSeq;
+    return state.activeTurnPlaybackSeq;
+  }
+
+  function isActiveTurnPlayback(playbackSeq) {
+    return playbackSeq === state.activeTurnPlaybackSeq;
   }
 
   async function primeAudioOnUserGesture() {
@@ -1942,6 +2097,7 @@ function buildControlsPanel(state, ui, config) {
     const { preserveCaptions = false } = options || {};
 
     return new Promise((resolve) => {
+      const playbackSeq = beginTurnPlayback();
       cancelSpeechSynthesis();
       state.turnSpeaking = true;
       updateTurnSubmitUI();
@@ -1955,33 +2111,65 @@ function buildControlsPanel(state, ui, config) {
       audio.setAttribute('playsinline', '');
       let started = false;
       let finished = false;
+      let playbackFailed = false;
+      let allowRecognitionResume = true;
+      let watchdogTimer = null;
 
       const finish = () => {
         if (finished) {
           return;
         }
         finished = true;
+        if (watchdogTimer) {
+          clearTimeout(watchdogTimer);
+          watchdogTimer = null;
+        }
         audio.pause();
         audio.src = '';
         URL.revokeObjectURL(url);
-        state.turnAudioStop = null;
-        state.turnSpeaking = false;
-        updateTurnSubmitUI();
-        if (state.sessionActive && !state.isMuted) {
-          startSpeechRecognition();
+        const isActive = isActiveTurnPlayback(playbackSeq);
+        if (isActive) {
+          state.turnAudioStop = null;
+          state.turnSpeaking = false;
+          updateTurnSubmitUI();
+          if (allowRecognitionResume && state.sessionActive && !state.isMuted) {
+            startSpeechRecognition();
+          }
         }
-        resolve(started);
+        resolve(started && !playbackFailed);
       };
 
+      audio.onplay = () => {
+        started = true;
+      };
       audio.onplaying = () => {
         started = true;
       };
       audio.onended = finish;
-      audio.onerror = finish;
-      audio.onabort = finish;
+      audio.onerror = () => {
+        playbackFailed = true;
+        allowRecognitionResume = false;
+        finish();
+      };
+      audio.onabort = () => {
+        playbackFailed = true;
+        allowRecognitionResume = false;
+        finish();
+      };
+      watchdogTimer = window.setTimeout(() => {
+        allowRecognitionResume = false;
+        sendClientEvent(state, 'turn_audio_watchdog', { status: 'playback_timeout' });
+        setCaptionText('Captions paused during long coach audio. Submit or request help when ready.');
+        finish();
+      }, TURN_PLAYBACK_WATCHDOG_MS);
       state.turnAudioStop = finish;
       audio.play()
+        .then(() => {
+          started = true;
+        })
         .catch(() => {
+          playbackFailed = true;
+          allowRecognitionResume = false;
           finish();
         });
     });
@@ -1997,6 +2185,7 @@ function buildControlsPanel(state, ui, config) {
     }
     const { restartRecognition = true, preserveCaptions = false } = options || {};
     return new Promise((resolve) => {
+      const playbackSeq = beginTurnPlayback();
       cancelSpeechSynthesis();
       state.turnSpeaking = true;
       updateTurnSubmitUI();
@@ -2007,22 +2196,72 @@ function buildControlsPanel(state, ui, config) {
       }
       const utterance = new SpeechSynthesisUtterance(reply);
       utterance.lang = state.voiceTtsLanguage || 'en-US';
-      utterance.onend = () => {
-        state.turnSpeaking = false;
-        updateTurnSubmitUI();
-        if (restartRecognition && state.sessionActive && !state.isMuted) {
-          startSpeechRecognition();
+      let started = false;
+      let finished = false;
+      let allowRecognitionResume = true;
+      const estimatedDurationMs = Math.max(
+        TURN_SPEECH_MIN_WATCHDOG_MS,
+        Math.min(TURN_SPEECH_MAX_WATCHDOG_MS, Math.round(reply.length * 130) + 4000)
+      );
+      let startWatchdog = null;
+      let endWatchdog = null;
+
+      const finish = () => {
+        if (finished) {
+          return;
         }
-        resolve();
+        finished = true;
+        if (startWatchdog) {
+          clearTimeout(startWatchdog);
+          startWatchdog = null;
+        }
+        if (endWatchdog) {
+          clearTimeout(endWatchdog);
+          endWatchdog = null;
+        }
+        if (isActiveTurnPlayback(playbackSeq)) {
+          state.turnSpeaking = false;
+          updateTurnSubmitUI();
+          if (allowRecognitionResume && restartRecognition && state.sessionActive && !state.isMuted) {
+            startSpeechRecognition();
+          }
+        }
+        resolve(started);
+      };
+
+      utterance.onstart = () => {
+        started = true;
+        if (startWatchdog) {
+          clearTimeout(startWatchdog);
+          startWatchdog = null;
+        }
+      };
+      utterance.onend = () => {
+        finish();
       };
       utterance.onerror = () => {
-        state.turnSpeaking = false;
-        updateTurnSubmitUI();
-        if (restartRecognition && state.sessionActive && !state.isMuted) {
-          startSpeechRecognition();
-        }
-        resolve();
+        finish();
       };
+      startWatchdog = window.setTimeout(() => {
+        allowRecognitionResume = false;
+        sendClientEvent(state, 'turn_speech_watchdog', { status: 'start_timeout' });
+        try {
+          window.speechSynthesis.cancel();
+        } catch (error) {
+          // Ignore cancellation errors.
+        }
+        finish();
+      }, TURN_SPEECH_START_WATCHDOG_MS);
+      endWatchdog = window.setTimeout(() => {
+        allowRecognitionResume = false;
+        sendClientEvent(state, 'turn_speech_watchdog', { status: 'end_timeout' });
+        try {
+          window.speechSynthesis.cancel();
+        } catch (error) {
+          // Ignore cancellation errors.
+        }
+        finish();
+      }, estimatedDurationMs);
       window.speechSynthesis.speak(utterance);
     });
   }
@@ -2031,6 +2270,7 @@ function buildControlsPanel(state, ui, config) {
     const reply = (text || '').trim();
     const outputMode = normalizeVoiceOutputMode(state.voiceOutputMode);
     let played = false;
+    cancelLiveCoachSpeech();
     const skipE2eTts = typeof window !== 'undefined' && window.__E2E__ && !window.__E2E_ALLOW_TTS;
     if (skipE2eTts && outputMode === 'browser') {
       return;
@@ -2119,8 +2359,8 @@ function buildControlsPanel(state, ui, config) {
     if (typeof window !== 'undefined' && window.__E2E__) {
       window.__e2eAudioChunks = (window.__e2eAudioChunks || 0) + 1;
     }
-    const adaptiveConfig = getAdaptiveConfig();
-    const sampleRate = payload?.sample_rate || adaptiveConfig.sampleRate;
+    const incomingRate = Number(payload?.sample_rate);
+    const sampleRate = Number.isFinite(incomingRate) && incomingRate > 0 ? incomingRate : 24000;
     if (!state.audioPlayback || state.audioPlaybackSampleRate !== sampleRate) {
       state.audioPlayback?.stop();
       state.audioPlayback = createAudioPlayback({ sampleRate });
@@ -2200,6 +2440,9 @@ function buildControlsPanel(state, ui, config) {
     if (!isTurnMode() || !state.sessionActive || !state.interviewId || state.turnSpeaking) {
       return;
     }
+    if (state.turnRequestActive || state.turnCaptureLocked) {
+      return;
+    }
     if (!state.turnAwaitingAnswer) {
       return;
     }
@@ -2211,20 +2454,33 @@ function buildControlsPanel(state, ui, config) {
       return;
     }
     const cleanedAnswer = (answer || state.captionDraftText || state.captionFinalText || '').trim();
+    state.turnCaptureLocked = true;
+    const shouldPauseCaptions = state.speechRecognitionActive;
+    if (shouldPauseCaptions) {
+      stopSpeechRecognition({ preserveCaptions: true });
+    }
+    setCaptionText('Captions paused while help is generated...');
     state.turnHelpPending = true;
     resetTurnHelpHint();
     setTurnRubricVisible(true);
     updateTurnSubmitUI();
     sendClientEvent(state, 'turn_help', { status: source });
     updateStatusPill(statusPill, { label: 'Helping', tone: 'info' });
+    state.turnResponseSeq += 1;
+    const responseSeq = state.turnResponseSeq;
+    state.activeTurnResponseSeq = responseSeq;
     try {
       const response = await sendVoiceHelp({
         interviewId: state.interviewId,
         question: cleanedQuestion,
         answer: cleanedAnswer || undefined,
         textModel: state.textModel,
-        ttsModel: state.ttsModel
+        ttsModel: state.ttsModel,
+        ttsProvider: state.ttsProvider
       });
+      if (!state.sessionActive || responseSeq !== state.activeTurnResponseSeq) {
+        return;
+      }
       if (response?.help) {
         appendTranscriptEntry(state, response.help);
         renderTranscript(ui.transcriptList, state.transcript);
@@ -2238,18 +2494,31 @@ function buildControlsPanel(state, ui, config) {
         });
       }
     } catch (error) {
+      if (handleExpiredInterview(error)) {
+        return;
+      }
       updateStatusPill(statusPill, { label: 'Help error', tone: 'danger' });
     } finally {
       state.turnHelpPending = false;
+      state.turnCaptureLocked = false;
       if (state.sessionActive && !state.turnSpeaking) {
         updateStatusPill(statusPill, { label: 'Listening', tone: 'info' });
+      }
+      if (state.sessionActive
+        && !state.turnSpeaking
+        && !state.turnRequestActive
+        && !state.speechRecognitionActive
+        && !state.isMuted
+      ) {
+        setCaptionText('Captions idle.');
+        startSpeechRecognition();
       }
       updateTurnSubmitUI();
     }
   }
 
   async function processVoiceTurnQueue() {
-    if (!state.sessionActive || state.turnRequestActive || state.turnSpeaking) {
+    if (!state.sessionActive || state.turnRequestActive || state.turnSpeaking || state.turnHelpPending) {
       return;
     }
     const nextTurn = state.turnQueue.shift();
@@ -2257,6 +2526,7 @@ function buildControlsPanel(state, ui, config) {
       return;
     }
     state.turnRequestActive = true;
+    state.turnCaptureLocked = true;
     const questionForFeedback = state.lastCoachQuestion;
     updateStatusPill(statusPill, { label: 'Thinking', tone: 'info' });
     appendTranscriptEntry(state, {
@@ -2267,12 +2537,19 @@ function buildControlsPanel(state, ui, config) {
     renderTranscript(ui.transcriptList, state.transcript);
     ui.updateSessionToolsState?.();
     try {
+      state.turnResponseSeq += 1;
+      const responseSeq = state.turnResponseSeq;
+      state.activeTurnResponseSeq = responseSeq;
       const response = await sendVoiceTurn({
         interviewId: state.interviewId,
         text: nextTurn,
         textModel: state.textModel,
-        ttsModel: state.ttsModel
+        ttsModel: state.ttsModel,
+        ttsProvider: state.ttsProvider
       });
+      if (!state.sessionActive || responseSeq !== state.activeTurnResponseSeq) {
+        return;
+      }
       appendTranscriptEntry(state, response.coach);
       renderTranscript(ui.transcriptList, state.transcript);
       ui.autoStartNextQuestion?.(response.coach.role);
@@ -2291,12 +2568,24 @@ function buildControlsPanel(state, ui, config) {
       });
       void requestCoachFeedback({ question: questionForFeedback, answer: nextTurn });
     } catch (error) {
+      if (handleExpiredInterview(error)) {
+        return;
+      }
       updateStatusPill(statusPill, { label: 'Turn error', tone: 'danger' });
       state.turnQueue = [];
     } finally {
       state.turnRequestActive = false;
+      state.turnCaptureLocked = false;
       if (state.sessionActive && !state.turnSpeaking) {
         updateStatusPill(statusPill, { label: 'Listening', tone: 'info' });
+      }
+      if (state.sessionActive
+        && !state.turnSpeaking
+        && !state.turnHelpPending
+        && !state.speechRecognitionActive
+        && !state.isMuted
+      ) {
+        startSpeechRecognition();
       }
       if (state.sessionActive) {
         void processVoiceTurnQueue();
@@ -2311,11 +2600,18 @@ function buildControlsPanel(state, ui, config) {
     updateStatusPill(statusPill, { label: 'Welcoming', tone: 'info' });
     state.turnAwaitingAnswer = false;
     try {
+      state.turnResponseSeq += 1;
+      const responseSeq = state.turnResponseSeq;
+      state.activeTurnResponseSeq = responseSeq;
       const response = await sendVoiceIntro({
         interviewId: state.interviewId,
         textModel: state.textModel,
-        ttsModel: state.ttsModel
+        ttsModel: state.ttsModel,
+        ttsProvider: state.ttsProvider
       });
+      if (!state.sessionActive || responseSeq !== state.activeTurnResponseSeq) {
+        return;
+      }
       appendTranscriptEntry(state, response.coach);
       renderTranscript(ui.transcriptList, state.transcript);
       ui.autoStartNextQuestion?.(response.coach.role);
@@ -2333,6 +2629,9 @@ function buildControlsPanel(state, ui, config) {
         audioMime: response.coach_audio_mime
       });
     } catch (error) {
+      if (handleExpiredInterview(error)) {
+        return;
+      }
       updateStatusPill(statusPill, { label: 'Intro error', tone: 'danger' });
     } finally {
       if (state.sessionActive && !state.turnSpeaking) {
@@ -2345,6 +2644,8 @@ function buildControlsPanel(state, ui, config) {
   }
 
   function resetSessionState() {
+    state.turnResponseSeq += 1;
+    state.activeTurnResponseSeq = state.turnResponseSeq;
     state.transcript = [];
     state.score = null;
     state.scorePending = false;
@@ -2365,6 +2666,7 @@ function buildControlsPanel(state, ui, config) {
     state.turnQueue = [];
     state.turnRequestActive = false;
     state.turnHelpPending = false;
+    state.turnCaptureLocked = false;
     state.turnSpeaking = false;
     resetTurnHelpHint();
     setTurnRubricVisible(false);
@@ -2458,7 +2760,11 @@ function buildControlsPanel(state, ui, config) {
     resetTurnCompletionTracking();
     state.turnQueue = [];
     state.turnRequestActive = false;
+    state.turnHelpPending = false;
+    state.turnCaptureLocked = false;
     state.turnSpeaking = false;
+    state.turnResponseSeq += 1;
+    state.activeTurnResponseSeq = state.turnResponseSeq;
 
     if (state.transport) {
       state.transport.stop();
@@ -2649,13 +2955,18 @@ function buildControlsPanel(state, ui, config) {
     }
 
     try {
-      state.activityDetector = createActivityDetector({
-        frameDurationMs: AUDIO_FRAME_INTERVAL_MS,
-        silenceThreshold: AUDIO_ACTIVITY_THRESHOLD,
-        silenceWindowMs: AUDIO_ACTIVITY_SILENCE_MS
-      });
       const adaptiveConfig = getAdaptiveConfig();
+      state.activityDetector = createActivityDetector({
+        frameDurationMs: adaptiveConfig.frameSize || AUDIO_FRAME_INTERVAL_MS,
+        silenceThreshold: AUDIO_ACTIVITY_THRESHOLD,
+        silenceWindowMs: AUDIO_ACTIVITY_SILENCE_MS,
+        startWindowMs: AUDIO_ACTIVITY_START_MS
+      });
       state.audioCapture = await startMicrophoneCapture({
+        frameDurationMs: adaptiveConfig.frameSize || AUDIO_FRAME_INTERVAL_MS,
+        speechThreshold: AUDIO_ACTIVITY_THRESHOLD,
+        speechStartMs: AUDIO_ACTIVITY_START_MS,
+        speechEndMs: AUDIO_ACTIVITY_SILENCE_MS,
         targetSampleRate: adaptiveConfig.sampleRate,
         onAudioFrame: (frame) => {
           if (state.isMuted) return;
@@ -2669,18 +2980,6 @@ function buildControlsPanel(state, ui, config) {
             return;
           }
           state.transport?.sendAudio(frame);
-        },
-        onSpeechStart: () => {
-          if (!state.bargeInEnabled) {
-            return;
-          }
-          if (state.audioPlayback) {
-            state.audioPlayback.stop();
-            state.audioPlayback = null;
-            state.audioPlaybackSampleRate = null;
-          }
-          state.transport?.bargeIn();
-          sendClientEvent(state, 'barge_in', { status: 'speech_start' });
         },
         onStatus: () => {
           updateStatusPill(statusPill, { label: 'Mic ready', tone: 'info' });
@@ -2708,7 +3007,11 @@ function buildControlsPanel(state, ui, config) {
     resetTurnCompletionTracking();
     state.turnQueue = [];
     state.turnRequestActive = false;
+    state.turnHelpPending = false;
+    state.turnCaptureLocked = false;
     state.turnSpeaking = false;
+    state.turnResponseSeq += 1;
+    state.activeTurnResponseSeq = state.turnResponseSeq;
     state.resultsTranscriptVisible = false;
     updateTurnSubmitUI();
     setPrimaryActionMode({ active: false, disabled: true });
@@ -2782,9 +3085,8 @@ function buildControlsPanel(state, ui, config) {
     }
   }
 
-  startButton.addEventListener('click', async () => {
+  async function startSession({ source = 'manual' } = {}) {
     if (state.sessionActive) {
-      await endSessionAndScore();
       return;
     }
     if (!state.interviewId) {
@@ -2837,7 +3139,7 @@ function buildControlsPanel(state, ui, config) {
         ui.updateSessionToolsState?.();
         return;
       }
-      updateStatusPill(statusPill, { label: 'Fallback', tone: 'warning' });
+      updateStatusPill(statusPill, { label: source === 'auto_generate' ? 'Auto fallback' : 'Fallback', tone: 'warning' });
       try {
         await startMockFallback();
       } catch (fallbackError) {
@@ -2847,12 +3149,81 @@ function buildControlsPanel(state, ui, config) {
         ui.updateSessionToolsState?.();
       }
     }
+  }
+
+  async function forceTtsRecovery({ source = 'manual' } = {}) {
+    if (state.forceTtsPending) {
+      return;
+    }
+    if (!state.interviewId) {
+      updateStatusPill(statusPill, { label: 'Missing setup', tone: 'warning' });
+      setStatusDetail('Add resume + job details to generate questions first.');
+      return;
+    }
+    if (state.voiceMode === 'turn' && state.sessionActive) {
+      applyVoiceOutputMode('server');
+      setStatusDetail('Already in turn mode. Responses use TTS when available.');
+      ui.updateSessionToolsState?.();
+      return;
+    }
+
+    state.forceTtsPending = true;
+    updateButtonLabel(forceTtsButton, 'Switching...');
+    forceTtsButton.disabled = true;
+    updateStatusPill(statusPill, { label: 'Switching', tone: 'warning' });
+    setStatusDetail('Switching to turn-based TTS recovery...');
+    sendClientEvent(state, 'force_tts_recovery', { status: source });
+
+    try {
+      await primeAudioOnUserGesture();
+      if (state.sessionActive) {
+        await endLiveSession({ label: 'Switching', tone: 'warning', allowRestart: true });
+      }
+
+      applyVoiceMode('turn');
+      applyVoiceOutputMode('server');
+      state.sessionActive = true;
+      state.sessionStarted = true;
+      state.turnAwaitingAnswer = false;
+      state.turnReadyToSubmit = false;
+      state.turnQueue = [];
+      state.turnRequestActive = false;
+      state.turnHelpPending = false;
+      state.turnCaptureLocked = false;
+      state.sessionId = `turn-${Date.now()}`;
+      state.liveMode = 'turn';
+      setPrimaryActionMode({ active: true, disabled: false });
+      updateTurnSubmitUI();
+      ui.updateSessionToolsState?.();
+      await startTurnIntro();
+    } catch (error) {
+      updateStatusPill(statusPill, { label: 'TTS error', tone: 'danger' });
+      setStatusDetail('Unable to switch to TTS. Try End Practice, then start again.');
+      setPrimaryActionMode({ active: false, disabled: !state.interviewId });
+    } finally {
+      state.forceTtsPending = false;
+      updateButtonLabel(forceTtsButton, 'Force TTS');
+      ui.updateSessionToolsState?.();
+    }
+  }
+
+  forceTtsButton.addEventListener('click', () => {
+    void forceTtsRecovery({ source: 'button' });
+  });
+
+  startButton.addEventListener('click', async () => {
+    if (state.sessionActive) {
+      await endSessionAndScore();
+      return;
+    }
+    await startSession({ source: 'button' });
   });
 
   const actionsRow = document.createElement('div');
   actionsRow.className = 'ui-controls__row ui-controls__row--actions';
   actionsRow.appendChild(startButton);
   actionsRow.appendChild(muteButton);
+  actionsRow.appendChild(forceTtsButton);
   actionsRow.appendChild(bargeInButton);
   actionsRow.appendChild(helpTurnButton);
   actionsRow.appendChild(submitTurnButton);
@@ -2879,13 +3250,11 @@ function buildControlsPanel(state, ui, config) {
   ui.statusDetail = statusDetail;
   ui.startButton = startButton;
   ui.muteButton = muteButton;
+  ui.forceTtsButton = forceTtsButton;
   ui.bargeInToggle = bargeInButton;
   ui.helpTurnButton = helpTurnButton;
   ui.submitTurnButton = submitTurnButton;
   ui.actionRow = actionsRow;
-  ui.turnRubric = turnRubric;
-  ui.turnRubricList = turnRubricList;
-  ui.rubricToggle = rubricToggle;
   ui.restartButtonMain = restartMainButton;
   ui.restartMainHelp = restartMainHelp;
   ui.exportPdfTop = exportPdfTop;
@@ -2897,33 +3266,17 @@ function buildControlsPanel(state, ui, config) {
   ui.applyModelOverrides = applyModelOverrides;
   ui.resetModelOverrides = resetModelOverrides;
   ui.applyVoiceOutputMode = applyVoiceOutputMode;
+  ui.applyTtsProvider = applyTtsProvider;
+  ui.primeAudioOnUserGesture = primeAudioOnUserGesture;
+  ui.startSession = startSession;
   ui.resetSessionState = resetSessionState;
   ui.updateTurnSubmitUI = updateTurnSubmitUI;
-  rubricToggle.addEventListener('click', () => {
-    setTurnRubricVisible(!state.turnRubricVisible);
-  });
-  document.addEventListener('click', (event) => {
-    if (!state.turnRubricVisible) {
-      return;
-    }
-    if (!rubricWrapper.contains(event.target)) {
-      setTurnRubricVisible(false);
-    }
-  });
-  document.addEventListener('keydown', (event) => {
-    if (!state.turnRubricVisible) {
-      return;
-    }
-    if (event.key === 'Escape') {
-      setTurnRubricVisible(false);
-    }
-  });
   updateTurnSubmitUI();
   ui.updateSetupCtas?.();
 
   const panel = createPanel({
     title: 'Session Controls',
-    subtitle: 'Turn-based coaching controls.',
+    subtitle: '',
     content,
     attrs: { 'data-testid': 'controls-panel' }
   });
@@ -2971,6 +3324,39 @@ function buildSessionToolsDrawer(state, ui, config) {
   heading.appendChild(subtitle);
   header.appendChild(heading);
   header.appendChild(closeButton);
+
+  const ttsSection = document.createElement('section');
+  ttsSection.className = 'ui-drawer__section';
+
+  const ttsProviderLabel = document.createElement('label');
+  ttsProviderLabel.className = 'ui-field__label';
+  ttsProviderLabel.textContent = 'TTS provider';
+  ttsProviderLabel.setAttribute('for', 'tts-provider-select');
+
+  const ttsProviderSelect = document.createElement('select');
+  ttsProviderSelect.className = 'ui-field__input select select-bordered';
+  ttsProviderSelect.id = 'tts-provider-select';
+  ttsProviderSelect.setAttribute('data-testid', 'tts-provider-select');
+
+  [
+    { value: 'openai', label: 'OpenAI (GPT-4o-mini-TTS)' },
+    { value: 'gemini', label: 'Gemini (Gemini TTS)' },
+    { value: 'auto', label: 'Auto (failover)' }
+  ].forEach((option) => {
+    const opt = document.createElement('option');
+    opt.value = option.value;
+    opt.textContent = option.label;
+    ttsProviderSelect.appendChild(opt);
+  });
+  ttsProviderSelect.value = String(state.ttsProvider || config.ttsProvider || 'openai').trim().toLowerCase();
+
+  const ttsProviderHelp = document.createElement('p');
+  ttsProviderHelp.className = 'ui-field__help ui-state-text';
+  ttsProviderHelp.textContent = 'OpenAI is the current default for turn-based TTS.';
+
+  ttsSection.appendChild(ttsProviderLabel);
+  ttsSection.appendChild(ttsProviderSelect);
+  ttsSection.appendChild(ttsProviderHelp);
 
   const sessionSection = document.createElement('section');
   sessionSection.className = 'ui-drawer__section';
@@ -3077,6 +3463,7 @@ function buildSessionToolsDrawer(state, ui, config) {
   exportSection.appendChild(exportHelp);
 
   drawer.appendChild(header);
+  drawer.appendChild(ttsSection);
   drawer.appendChild(sessionSection);
   drawer.appendChild(nameSection);
   drawer.appendChild(exportSection);
@@ -3177,6 +3564,8 @@ function buildSessionToolsDrawer(state, ui, config) {
   ui.sessionToolsDrawer = drawer;
   ui.sessionToolsBackdrop = backdrop;
   ui.sessionToolsClose = closeButton;
+  ui.ttsProviderSelect = ttsProviderSelect;
+  ui.ttsProviderHelp = ttsProviderHelp;
   ui.sessionSelect = sessionSelect;
   ui.sessionLoad = sessionLoad;
   ui.sessionHelp = sessionHelp;
@@ -3500,12 +3889,13 @@ export function buildVoiceLayout() {
     scorePending: false,
     scoreError: false,
     adapter: config.adapter,
-    voiceMode: 'turn',
+    voiceMode: config.voiceMode,
     voiceOutputMode: config.voiceOutputMode,
     userId: config.userId,
     liveModel: config.liveModel,
     textModel: config.textModel,
     ttsModel: config.ttsModel,
+    ttsProvider: config.ttsProvider,
     voiceTtsLanguage: config.voiceTtsLanguage,
     turnEndDelayMs: config.voiceTurnEndDelayMs,
     turnCompletionConfidence: config.voiceTurnCompletionConfidence,
@@ -3525,6 +3915,8 @@ export function buildVoiceLayout() {
     speechRecognitionEnabled: false,
     speechRecognitionActive: false,
     speechRecognitionRestartTimer: null,
+    speechRecognitionWatchdogTimer: null,
+    speechRecognitionLastResultAt: 0,
     turnEndTimer: null,
     captionFinalText: '',
     captionDraftText: '',
@@ -3534,7 +3926,6 @@ export function buildVoiceLayout() {
     sessionActive: false,
     sessionStarted: false,
     isMuted: false,
-    bargeInEnabled: true,
     sessionName: '',
     askedQuestionIndex: null,
     sessions: [],
@@ -3543,9 +3934,12 @@ export function buildVoiceLayout() {
     turnQueue: [],
     turnRequestActive: false,
     turnHelpPending: false,
+    turnCaptureLocked: false,
     audioPrimed: false,
     turnSpeaking: false,
     turnAudioStop: null,
+    turnPlaybackSeq: 0,
+    activeTurnPlaybackSeq: 0,
     turnAnswerStartedAt: null,
     turnCompletionLastCheckAt: 0,
     turnCompletionPending: false,
@@ -3553,6 +3947,9 @@ export function buildVoiceLayout() {
     turnHelpHintTimer: null,
     turnHelpHintVisible: false,
     turnRubricVisible: false,
+    turnResponseSeq: 0,
+    activeTurnResponseSeq: 0,
+    forceTtsPending: false,
     liveAudioSeen: false,
     liveCoachPendingText: '',
     liveCoachSpeakTimer: null,
@@ -3567,6 +3964,8 @@ export function buildVoiceLayout() {
     hideScore: false,
     sessionToolsOpen: false,
     questionHelpExamples: [],
+    generateStarted: false,
+    generatingQuestions: false,
     // Learning Mode state (teach-first coaching)
     showExampleFirst: getLearningModePreference(),
     learningModeActive: false,
@@ -3984,6 +4383,16 @@ export function buildVoiceLayout() {
   page.appendChild(controlsPanel);
   page.appendChild(layout);
 
+  function syncStickyOffsets() {
+    if (typeof window === 'undefined' || !ui.heroHeader) {
+      return;
+    }
+    const headerHeight = Math.max(0, Math.ceil(ui.heroHeader.getBoundingClientRect().height));
+    document.documentElement.style.setProperty('--ui-hero-header-height', `${headerHeight}px`);
+  }
+  ui.syncStickyOffsets = syncStickyOffsets;
+  syncStickyOffsets();
+
   function isElementBelowFold(element) {
     if (!element || element.hidden || typeof window === 'undefined') {
       return false;
@@ -4123,6 +4532,7 @@ export function buildVoiceLayout() {
     }
     overflowMenuRaf = window.requestAnimationFrame(() => {
       overflowMenuRaf = null;
+      syncStickyOffsets();
       updateOverflowMenu();
     });
   };
@@ -4307,6 +4717,14 @@ export function buildVoiceLayout() {
     const canRestart = hasInterview && state.sessionStarted && !state.sessionActive;
     const hasScore = Boolean(state.score);
     const showScore = (hasScore || state.scorePending) && !state.hideScore;
+    const showControlsPanel = Boolean(
+      state.generatingQuestions
+      || state.generateStarted
+      || state.sessionStarted
+      || hasInterview
+      || hasQuestions
+      || showScore
+    );
     const inResults = (hasScore || state.scorePending) && !state.sessionActive;
     const showResultsActions = hasScore && !state.sessionActive;
     const showActions = (state.sessionActive || hasQuestions) && !inResults;
@@ -4316,9 +4734,25 @@ export function buildVoiceLayout() {
     const questionValue = ui.customQuestionInput?.value.trim() || '';
     const selectedSession = ui.sessionSelect?.value || '';
     const exportFormat = ui.exportFormat?.value || 'pdf';
+    const currentTtsProvider = state.ttsProvider || 'openai';
 
     if (ui.sessionNameSave) {
       ui.sessionNameSave.disabled = !(hasInterview && nameValue.length > 0);
+    }
+    if (ui.ttsProviderSelect) {
+      ui.ttsProviderSelect.disabled = false;
+      if (ui.ttsProviderSelect.value !== currentTtsProvider) {
+        ui.ttsProviderSelect.value = currentTtsProvider;
+      }
+    }
+    if (ui.ttsProviderHelp) {
+      if (currentTtsProvider === 'gemini') {
+        ui.ttsProviderHelp.textContent = 'Using Gemini first, then OpenAI if Gemini TTS fails.';
+      } else if (currentTtsProvider === 'auto') {
+        ui.ttsProviderHelp.textContent = 'Auto picks OpenAI first when configured, then Gemini.';
+      } else {
+        ui.ttsProviderHelp.textContent = 'Using OpenAI (GPT-4o-mini-TTS) first, then Gemini fallback.';
+      }
     }
     if (ui.sessionLoad) {
       ui.sessionLoad.disabled = !selectedSession || state.sessionActive;
@@ -4363,13 +4797,19 @@ export function buildVoiceLayout() {
       ui.setupPanel.hidden = !showSetup;
     }
 
-    if (!hasQuestions) {
+    const shouldAutoCollapseHero = Boolean(
+      state.generatingQuestions
+      || state.generateStarted
+      || state.sessionStarted
+      || hasQuestions
+    );
+    if (!shouldAutoCollapseHero) {
       state.heroAutoCollapsed = false;
       if (ui.setHeroCollapsed) {
         ui.setHeroCollapsed(false);
       }
     }
-    if (hasQuestions && ui.setHeroCollapsed && !state.heroAutoCollapsed) {
+    if (shouldAutoCollapseHero && ui.setHeroCollapsed && !state.heroAutoCollapsed) {
       ui.setHeroCollapsed(true);
       state.heroAutoCollapsed = true;
     }
@@ -4394,7 +4834,7 @@ export function buildVoiceLayout() {
         ui.setStatusDetail?.('Coaching feedback ready.');
       } else if (hasQuestions) {
         updateStatusPill(ui.statusPill, { label: 'Ready', tone: 'info' });
-        ui.setStatusDetail?.('Questions ready. Press Begin Practice to start.');
+        ui.setStatusDetail?.('Questions ready. Starting practice automatically.');
       } else {
         updateStatusPill(ui.statusPill, { label: 'Setup', tone: 'neutral' });
         ui.setStatusDetail?.('Add resume + job details to generate questions.');
@@ -4438,7 +4878,7 @@ export function buildVoiceLayout() {
       ui.scoreProgress.classList.toggle('ui-radial-progress--active', scoreProgressActive);
     }
     if (ui.controlsPanel) {
-      ui.controlsPanel.hidden = false;
+      ui.controlsPanel.hidden = !showControlsPanel;
       ui.controlsPanel.classList.toggle('ui-controls--results', inResults);
     }
     if (ui.actionRow) {
@@ -4455,6 +4895,15 @@ export function buildVoiceLayout() {
     }
     if (ui.submitTurnButton) {
       ui.submitTurnButton.hidden = !showActiveControls;
+    }
+    if (ui.forceTtsButton) {
+      const showForceTts = showActions && hasInterview && state.voiceMode === 'live' && !showResultsActions;
+      ui.forceTtsButton.hidden = !showForceTts;
+      ui.forceTtsButton.disabled = state.forceTtsPending || !showForceTts;
+      updateButtonLabel(ui.forceTtsButton, state.forceTtsPending ? 'Switching...' : 'Force TTS');
+      ui.forceTtsButton.title = showForceTts
+        ? 'If live voice stalls, switch to turn-based TTS recovery.'
+        : '';
     }
     if (ui.toolsRow) {
       ui.toolsRow.hidden = !hasInterview || state.scorePending || showResultsActions;
@@ -4507,6 +4956,10 @@ export function buildVoiceLayout() {
   });
 
   ui.exportFormat?.addEventListener('change', updateSessionToolsState);
+  ui.ttsProviderSelect?.addEventListener('change', () => {
+    ui.applyTtsProvider?.(ui.ttsProviderSelect?.value);
+    updateSessionToolsState();
+  });
   ui.sessionNameInput?.addEventListener('input', updateSessionToolsState);
   ui.customQuestionInput?.addEventListener('input', updateSessionToolsState);
   ui.customQuestionPosition?.addEventListener('input', updateSessionToolsState);
