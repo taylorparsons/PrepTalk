@@ -10,6 +10,7 @@ from typing import Any
 from fastapi import WebSocket
 from starlette.websockets import WebSocketDisconnect
 
+from .access_control import resolve_websocket_access
 from .services import interview_service
 from .services.adapters import get_adapter
 from .services.gemini_live import GeminiLiveBridge
@@ -62,7 +63,7 @@ def _mock_audio_base64(duration_ms: int = 180, frequency: float = 440.0) -> str:
     return MOCK_AUDIO_BASE64
 
 class LiveWebSocketSession:
-    def __init__(self, websocket: WebSocket) -> None:
+    def __init__(self, websocket: WebSocket, access_user_id: str | None = None) -> None:
         self.websocket = websocket
         self.adapter = get_adapter()
         self.settings = load_settings()
@@ -70,7 +71,8 @@ class LiveWebSocketSession:
         self._stream_task: asyncio.Task | None = None
         self._gemini_bridge: GeminiLiveBridge | None = None
         self._active = True
-        self._user_id = self.settings.user_id
+        self._access_user_id = access_user_id
+        self._user_id = access_user_id or self.settings.user_id
         self._interview_id: str | None = None
         self._session_id: str | None = None
         self._session_started_at: float | None = None
@@ -157,7 +159,7 @@ class LiveWebSocketSession:
 
     async def _handle_start(self, payload: dict[str, Any]) -> None:
         interview_id = payload.get("interview_id")
-        user_id = payload.get("user_id") or self.settings.user_id
+        user_id = self._access_user_id or payload.get("user_id") or self.settings.user_id
         resume_requested = bool(payload.get("resume"))
         live_model = payload.get("live_model")
         self._user_id = user_id
@@ -387,5 +389,12 @@ class LiveWebSocketSession:
 
 
 async def live_audio_websocket(websocket: WebSocket) -> None:
-    session = LiveWebSocketSession(websocket)
+    settings = load_settings()
+    access = resolve_websocket_access(websocket, settings)
+    if not access.authorized:
+        await websocket.accept()
+        await websocket.send_json({"type": "error", "message": "A valid access token is required."})
+        await websocket.close(code=4401)
+        return
+    session = LiveWebSocketSession(websocket, access_user_id=access.user_id)
     await session.run()

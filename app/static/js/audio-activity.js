@@ -1,6 +1,7 @@
 const DEFAULT_FRAME_MS = 20;
 const DEFAULT_SILENCE_THRESHOLD = 0.02;
 const DEFAULT_SILENCE_WINDOW_MS = 400;
+const DEFAULT_START_WINDOW_MS = 120;
 
 function calculateRms(pcm16) {
   if (!pcm16 || pcm16.length === 0) return 0;
@@ -15,10 +16,12 @@ function calculateRms(pcm16) {
 export function createActivityDetector({
   frameDurationMs = DEFAULT_FRAME_MS,
   silenceThreshold = DEFAULT_SILENCE_THRESHOLD,
-  silenceWindowMs = DEFAULT_SILENCE_WINDOW_MS
+  silenceWindowMs = DEFAULT_SILENCE_WINDOW_MS,
+  startWindowMs = DEFAULT_START_WINDOW_MS
 } = {}) {
   let inSpeech = false;
   let silenceMs = 0;
+  let voicedMs = 0;
 
   function update(frame) {
     const rms = calculateRms(frame);
@@ -26,12 +29,19 @@ export function createActivityDetector({
 
     if (voiced) {
       silenceMs = 0;
-      if (!inSpeech) {
+      if (inSpeech) {
+        return null;
+      }
+      voicedMs += frameDurationMs;
+      if (voicedMs >= startWindowMs) {
         inSpeech = true;
+        voicedMs = 0;
         return 'start';
       }
       return null;
     }
+
+    voicedMs = 0;
 
     if (!inSpeech) {
       return null;
@@ -49,6 +59,7 @@ export function createActivityDetector({
   function reset() {
     inSpeech = false;
     silenceMs = 0;
+    voicedMs = 0;
   }
 
   function isActive() {

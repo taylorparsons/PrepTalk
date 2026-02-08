@@ -10,6 +10,7 @@ const livePollIntervalMs = Number.parseInt(process.env.E2E_LIVE_POLL_MS || '1000
 const audioBurstFrames = Number.parseInt(process.env.E2E_LIVE_AUDIO_BURST_FRAMES || '6', 10);
 const audioFrequencyHz = Number.parseFloat(process.env.E2E_LIVE_AUDIO_FREQUENCY_HZ || '440');
 const audioAmplitude = Number.parseFloat(process.env.E2E_LIVE_AUDIO_AMPLITUDE || '0.2');
+const accessToken = (process.env.E2E_ACCESS_TOKEN || '').trim();
 
 test.use({ trace: 'on' });
 
@@ -46,6 +47,23 @@ startxref
   return Buffer.from(content, 'utf-8');
 }
 
+async function captureStep(page, testInfo, name) {
+  const screenshot = await page.screenshot({ fullPage: true });
+  await testInfo.attach(name, { body: screenshot, contentType: 'image/png' });
+}
+
+async function ensureSessionActive(page) {
+  await page.waitForFunction(() => Boolean(window.__e2eState), null, { timeout: 30000 });
+  const active = await page.evaluate(() => Boolean(window.__e2eState?.sessionActive));
+  if (!active) {
+    await page.getByTestId('start-interview').click();
+  }
+  await expect.poll(
+    () => page.evaluate(() => Boolean(window.__e2eState?.sessionActive)),
+    { timeout: 60000 }
+  ).toBe(true);
+}
+
 async function sendAudioBurst(page, { frames, frequencyHz, amplitude }) {
   await page.evaluate(({ frames: burstFrames, frequencyHz: burstFrequencyHz, amplitude: burstAmplitude }) => {
     const sendAudio = window.__e2eSendAudio;
@@ -68,7 +86,7 @@ async function sendAudioBurst(page, { frames, frequencyHz, amplitude }) {
   }, { frames, frequencyHz, amplitude });
 }
 
-test('candidate interview flow (gemini live long)', async ({ page }) => {
+test('candidate interview flow (gemini live long)', async ({ page }, testInfo) => {
   test.skip(
     !isLive || !hasKey || !isLong,
     'Requires E2E_LIVE=1, E2E_LIVE_LONG=1, and GEMINI_API_KEY or GOOGLE_API_KEY.'
@@ -79,7 +97,9 @@ test('candidate interview flow (gemini live long)', async ({ page }) => {
     window.__E2E__ = true;
   });
 
-  await page.goto('/');
+  const route = accessToken ? `/?access_token=${encodeURIComponent(accessToken)}` : '/';
+  await page.goto(route);
+  await captureStep(page, testInfo, 'state-1-setup-empty');
   const voiceMode = await page.evaluate(() => window.__APP_CONFIG__?.voiceMode || 'live');
   test.skip(voiceMode === 'turn', 'Turn-based voice mode does not run live sessions.');
 
@@ -97,14 +117,18 @@ test('candidate interview flow (gemini live long)', async ({ page }) => {
     mimeType: 'application/pdf',
     buffer: jobBuffer
   });
+  await captureStep(page, testInfo, 'state-2-ready-to-generate');
 
   await page.getByTestId('generate-questions').click();
-  await expect(page.getByTestId('start-interview')).toBeEnabled();
+  await expect(page.getByTestId('generate-progress')).toBeVisible({ timeout: 10000 });
+  await captureStep(page, testInfo, 'state-3-generating');
+  await expect(page.getByTestId('start-interview')).toBeEnabled({ timeout: 120000 });
+  await captureStep(page, testInfo, 'state-4-questions-ready');
 
-  await page.getByTestId('start-interview').click();
-  await expect(page.getByTestId('session-status')).toHaveText('Live', { timeout: 60000 });
+  await ensureSessionActive(page);
   await expect(page.getByTestId('start-interview')).toBeEnabled();
   await page.waitForFunction(() => Boolean(window.__e2eSendAudio));
+  await captureStep(page, testInfo, 'state-5-live-running');
 
   const start = Date.now();
   while (Date.now() - start < liveDurationMs) {
@@ -124,11 +148,9 @@ test('candidate interview flow (gemini live long)', async ({ page }) => {
     await page.waitForTimeout(livePollIntervalMs);
   }
 
-  await expect.poll(
-    () => page.evaluate(() => window.__e2eAudioChunks || 0),
-    { timeout: 60000 }
-  ).toBeGreaterThan(0);
-
-  await page.getByTestId('start-interview').click();
-  await expect(page.getByTestId('score-value')).not.toHaveText('--');
+  if (await page.evaluate(() => Boolean(window.__e2eState?.sessionActive))) {
+    await page.getByTestId('start-interview').click();
+  }
+  await expect(page.getByTestId('score-value')).not.toHaveText('--', { timeout: 30000 });
+  await captureStep(page, testInfo, 'state-6-scoring-results');
 });

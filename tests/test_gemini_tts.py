@@ -1,4 +1,7 @@
 import base64
+import io
+import time
+import wave
 
 import pytest
 
@@ -39,6 +42,43 @@ def test_generate_tts_audio_with_fallbacks_requires_models():
             voice_name=None,
             language_code=None
         )
+
+
+def test_generate_tts_audio_with_fallbacks_hedges_primary_retry(monkeypatch):
+    calls: list[str] = []
+    primary_call_count = {"count": 0}
+
+    def fake_generate_tts_audio(*, model, **kwargs):
+        calls.append(model)
+        if model == "primary":
+            primary_call_count["count"] += 1
+            if primary_call_count["count"] == 1:
+                raise RuntimeError("500 INTERNAL")
+            time.sleep(0.08)
+            return b"primary-audio", "audio/wav"
+        if model == "fallback":
+            time.sleep(0.01)
+            return b"fallback-audio", "audio/wav"
+        raise RuntimeError("unexpected model")
+
+    monkeypatch.setattr(gemini_tts, "generate_tts_audio", fake_generate_tts_audio)
+
+    audio, mime, used_model = gemini_tts.generate_tts_audio_with_fallbacks(
+        api_key="key",
+        models=["primary", "fallback"],
+        text="hello",
+        voice_name=None,
+        language_code=None,
+        primary_retry_count=1,
+        retry_backoff_ms=0,
+        parallel_fallback_on_retry=True
+    )
+
+    assert used_model == "fallback"
+    assert audio == b"fallback-audio"
+    assert mime == "audio/wav"
+    assert "primary" in calls
+    assert "fallback" in calls
 
 
 def test_generate_tts_audio_logs_peas_eval(monkeypatch):
@@ -155,3 +195,82 @@ def test_generate_tts_audio_normalizes_pcm_to_wav(monkeypatch):
 
     assert mime == "audio/wav"
     assert audio.startswith(b"RIFF")
+
+
+def test_generate_tts_audio_concatenates_multipart_audio(monkeypatch):
+    def _wav_bytes(samples: bytes) -> bytes:
+        buffer = io.BytesIO()
+        with wave.open(buffer, "wb") as wav_file:
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)
+            wav_file.setframerate(24000)
+            wav_file.writeframes(samples)
+        return buffer.getvalue()
+
+    first_pcm = b"\x01\x00" * 20
+    second_pcm = b"\x02\x00" * 30
+    first_chunk = _wav_bytes(first_pcm)
+    second_chunk = _wav_bytes(second_pcm)
+
+    class _DummyLogger:
+        def info(self, *_args, **_kwargs):
+            return None
+
+        def exception(self, *_args, **_kwargs):
+            return None
+
+    class _FakeResponse:
+        def __init__(self, model):
+            self.model = model
+            self.candidates = [
+                {
+                    "content": {
+                        "parts": [
+                            {
+                                "inline_data": {
+                                    "data": base64.b64encode(first_chunk).decode("ascii"),
+                                    "mime_type": "audio/wav"
+                                }
+                            },
+                            {
+                                "inline_data": {
+                                    "data": base64.b64encode(second_chunk).decode("ascii"),
+                                    "mime_type": "audio/wav"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+
+    class _FakeModels:
+        def generate_content(self, model, contents, config=None):
+            return _FakeResponse(model)
+
+    class _FakeClient:
+        def __init__(self, **kwargs):
+            self.models = _FakeModels()
+
+    class _FakeGenAI:
+        def Client(self, **kwargs):
+            return _FakeClient(**kwargs)
+
+    monkeypatch.setattr(gemini_tts, "genai", _FakeGenAI())
+    monkeypatch.setattr(gemini_tts, "types", None)
+    monkeypatch.setattr(gemini_tts, "logger", _DummyLogger())
+
+    audio, mime = gemini_tts.generate_tts_audio(
+        api_key="key",
+        model="gemini-2.5-flash-preview-tts",
+        text="Hello",
+        voice_name=None,
+        language_code=None
+    )
+
+    assert mime == "audio/wav"
+    with wave.open(io.BytesIO(audio), "rb") as wav_file:
+        assert wav_file.getnchannels() == 1
+        assert wav_file.getsampwidth() == 2
+        assert wav_file.getframerate() == 24000
+        merged = wav_file.readframes(wav_file.getnframes())
+    assert merged == first_pcm + second_pcm

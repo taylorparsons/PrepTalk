@@ -1149,3 +1149,163 @@ Acceptance / test:
 - Fast-forward merge completes on `main`.
 - Pre-existing local `main` edits are restored after `git stash pop`.
 - RALPH artifacts and PRD are reconciled post-merge.
+
+## D-20260206-1438
+Date: 2026-02-06 14:38
+Inputs: CR-20260206-1432
+PRD: Security/Privacy hardening for shared deployments
+
+Decision:
+Add an application-level access token gate that protects `/`, `/api/*`, and `/ws/live` when `APP_ACCESS_TOKENS` is configured, and support token entries with optional user mapping (`token:user_id`). In the same change, redact resume PII before question generation/storage while preserving the first name, enabled by default and controllable via `APP_REDACT_RESUME_PII`.
+
+Rationale:
+The test endpoint is publicly reachable, so a lightweight gate is needed immediately without introducing full account auth. Mapping token→user stabilizes session ownership for shared tokens. Redacting resume PII reduces exposure risk in prompts, session cache, and transcript-adjacent UI while preserving useful personalization.
+
+Alternatives considered:
+- OAuth/identity-aware proxy only (rejected for now: heavier setup and slower iteration for test endpoint).
+- Per-request manual token entry in the client (rejected: poor UX and easy to misuse).
+- Full resume anonymization with no name retained (rejected: user asked to keep first name).
+
+Acceptance / test:
+- Without a valid token, `/api/*` returns 401 and `/` shows a token gate page.
+- With a valid token, a cookie is set and subsequent API/WS calls succeed.
+- When token is mapped to user ID, server-side user resolution prefers mapped user over client-provided `X-User-Id`.
+- Resume excerpts returned by `/api/interviews` redact phone/email/location/linkedin handle and keep first name in the header line.
+
+## D-20260206-1720
+Date: 2026-02-06 17:20
+Inputs: CR-20260206-1716, CR-20260206-1700
+PRD: Functional requirements; Next / backlog
+
+Decision:
+Treat the four Session Controls backlog items as implementation work now (auto-start after generation, delayed controls visibility, compact controls, sticky controls/menu), and deploy a single shared test token on Cloud Run (`APP_ACCESS_TOKENS=preptalk-test`) for immediate external validation.
+
+Rationale:
+The user asked for the backlog items plus token gating to be operational and tested end-to-end on localhost and Google test. A single shared token is the smallest working control with minimal UX friction.
+
+Alternatives considered:
+- Keep items as backlog-only docs updates (rejected: conflicts with explicit request to ship and test).
+- Use per-user mapped tokens only (rejected for this pass: more setup than needed for immediate testing).
+
+Acceptance / test:
+- Localhost: `/` is token-gated, `/?access_token=preptalk-test` works, `/api/logs/summary` enforces token.
+- Cloud Run test endpoint shows the same token behavior.
+- Question generation auto-starts the session and Session Controls layout/visibility behavior matches requested updates.
+
+## D-20260206-1753
+Date: 2026-02-06 17:53
+Inputs: CR-20260206-1751, CR-20260206-1700
+PRD: Functional requirements (audio reliability)
+
+Decision:
+Treat auto-start as a potential iOS audio-unlock regression and add a guard that primes audio immediately on the Generate click (user gesture) before async question-generation work, while keeping existing start-time priming as fallback.
+
+Rationale:
+Decision D-20260205-2012 relies on start-gesture priming for autoplay constraints. After D-20260206-1720 auto-start, the eventual `startSession` call may occur outside user activation due to async gaps, so priming only at auto-start can be unreliable on iOS.
+
+Alternatives considered:
+- Revert auto-start (rejected: conflicts with shipped UI requirement).
+- Force browser-only TTS (rejected: reduces quality and conflicts with server-audio preference decisions).
+
+Acceptance / test:
+- Generate click path triggers audio prime before network awaits.
+- Auto-start continues to function.
+- Existing audio regression suites pass.
+
+## D-20260206-1754
+Date: 2026-02-06 17:54
+Inputs: CR-20260206-1752
+PRD: Release/deployment non-functional requirements
+
+Decision:
+Require every release flow to include a clear rollback section with copy-paste commands that can immediately restore service traffic to the prior known-good revision.
+
+Rationale:
+Fast rollback is necessary to limit user impact when regressions escape verification, especially for audio-sensitive changes.
+
+Alternatives considered:
+- Keep rollback as ad-hoc operator knowledge (rejected: inconsistent and error-prone).
+- Document rollback outside the main deploy guide (rejected: reduces discoverability during incidents).
+
+Acceptance / test:
+- Deploy guide includes pre-release capture, rollback commands, and post-rollback validation checks.
+- Current service/revision examples are listed so operators can execute rollback without discovery delay.
+
+## D-20260206-1817
+Date: 2026-02-06 18:17
+Inputs: CR-20260206-1816
+PRD: Testing evidence / release verification
+
+Decision:
+Add a dedicated full-flow Playwright spec that executes the interview journey in both desktop and mobile viewports under the mock adapter, and publish a separate HTML report folder for that run.
+
+Rationale:
+The request is for end-to-end evidence across desktop and mobile, not a lightweight cloud smoke check. Mock mode provides deterministic flow validation and reproducible report artifacts.
+
+Alternatives considered:
+- Use existing cloud smoke spec only (rejected: too simple and not end-to-end).
+- Run live Gemini E2E as primary evidence (rejected: higher flake risk for viewport-focused validation).
+
+Acceptance / test:
+- Both desktop and mobile end-to-end tests pass in a single Playwright run.
+- HTML report is generated and opened locally with artifact paths shared.
+
+## D-20260206-1820
+Date: 2026-02-06 18:20
+Inputs: CR-20260206-1819
+PRD: Testing evidence / backlog validation
+
+Decision:
+Extend responsive E2E coverage with (1) a dedicated menu behavior spec, and (2) persona-driven desktop/mobile full-flow assertions that include positive and negative checks for the shipped backlog behaviors.
+
+Rationale:
+The user requested explicit menu coverage and stronger validation depth beyond a simple flow test.
+
+Alternatives considered:
+- Keep one monolithic test only (rejected: harder to isolate menu regressions).
+- Validate only positive path (rejected: user explicitly asked for positive and negative checks).
+
+Acceptance / test:
+- Menu spec validates hide/show toggles and closed/open negative states.
+- Responsive full-flow spec validates pre-generate hidden controls (negative), post-generate auto-start/visible controls (positive), sticky positioning checks, and persona answer/coach response path in desktop and mobile.
+
+## D-20260206-1851
+Date: 2026-02-06 18:51
+Inputs: CR-20260206-1840, CR-20260206-1841
+PRD: Testing evidence / release verification
+
+Decision:
+Interpret “do all of the work” as running every live Playwright E2E path maintained in this repo: turn live flow, live websocket flow, real-file live flow, long live stability flow, and long barge-in flow. Record proof in a dedicated evidence doc and stage the evidence artifacts (docs + test updates) in git.
+
+Rationale:
+The user asked for full completion without stopping and specifically requested staged evidence for review.
+
+Alternatives considered:
+- Run only one live smoke test (rejected: insufficient against explicit “all” request).
+- Stage raw Playwright report/video binaries (rejected: gitignored and unnecessary for repo history; stage durable evidence docs instead).
+
+Acceptance / test:
+- Each targeted live Playwright spec passes.
+- A consolidated HTML report directory exists and is opened.
+- Evidence commands/outcomes are documented in `docs/testing/...` and tracked in `docs/progress.txt`.
+- Relevant files are staged in git for user review.
+
+## D-20260206-2021
+Date: 2026-02-06 20:21
+Inputs: CR-20260206-2020
+PRD: FR-UI-002, testing evidence / release verification
+
+Decision:
+Remove the Session Controls rubric toggle/popover UI entirely for both desktop and mobile, reduce controls panel spacing/height further, and rerun the full Playwright matrix with refreshed HTML reports before staging.
+
+Rationale:
+The rubric popover consumed too much vertical space and introduced interaction overlap on narrow viewports. Eliminating it simplifies the controls surface and directly addresses the regression concern while preserving turn controls.
+
+Alternatives considered:
+- Keep rubric but collapse by default (rejected: still adds layout and interaction overhead).
+- Keep rubric in desktop only (rejected: inconsistent behavior and does not satisfy request).
+
+Acceptance / test:
+- Session Controls no longer render rubric toggle/popover in desktop or mobile flows.
+- Controls panel footprint is reduced versus prior spacing.
+- Playwright suites pass across non-live desktop/mobile/menu/token and all live variants with refreshed reports.

@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 import time
 
-from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import Response
 from .logging_config import get_logger, short_id
 from .schemas import (
@@ -39,9 +39,10 @@ from .schemas import (
 from .services import interview_service
 from .services.log_metrics import build_log_summary
 from .services.document_text import DocumentInput, fetch_url_text, is_supported_document
+from .access_control import require_api_access
 from .settings import load_settings
 
-router = APIRouter(prefix="/api")
+router = APIRouter(prefix="/api", dependencies=[Depends(require_api_access)])
 logger = get_logger()
 
 
@@ -56,6 +57,9 @@ def _is_supported(upload: UploadFile) -> bool:
 
 
 def _get_user_id(request: Request) -> str:
+    access_user_id = getattr(request.state, "access_user_id", None)
+    if access_user_id:
+        return access_user_id
     settings = load_settings()
     header_user_id = request.headers.get("X-User-Id")
     if header_user_id and header_user_id != "local":
@@ -75,6 +79,14 @@ def _safe_log_value(value: str | None, limit: int = 120) -> str:
         return "none"
     cleaned = re.sub(r"\s+", "_", value.strip())
     return cleaned[:limit]
+
+
+def _not_found_detail(exc: Exception, fallback: str = "Interview not found") -> str:
+    raw = str(exc or "").strip()
+    message = raw.strip("'\"") or fallback
+    if message.lower() == "interview not found":
+        return "Interview not found. This session may have expired after a deploy/restart. Generate questions to start a new session."
+    return message
 
 
 @router.post("/interviews", response_model=InterviewCreateResponse)
@@ -252,7 +264,8 @@ async def voice_turn(request: Request, payload: VoiceTurnRequest):
             payload.text,
             user_id,
             text_model=payload.text_model,
-            tts_model=payload.tts_model
+            tts_model=payload.tts_model,
+            tts_provider=payload.tts_provider
         )
     except KeyError as exc:
         logger.warning(
@@ -301,7 +314,8 @@ async def voice_intro(request: Request, payload: VoiceIntroRequest):
             payload.interview_id,
             user_id,
             text_model=payload.text_model,
-            tts_model=payload.tts_model
+            tts_model=payload.tts_model,
+            tts_provider=payload.tts_provider
         )
     except KeyError as exc:
         logger.warning(
@@ -404,7 +418,8 @@ async def voice_help(request: Request, payload: VoiceHelpRequest):
             payload.answer,
             user_id,
             text_model=payload.text_model,
-            tts_model=payload.tts_model
+            tts_model=payload.tts_model,
+            tts_provider=payload.tts_provider
         )
     except KeyError as exc:
         logger.warning(
@@ -413,7 +428,7 @@ async def voice_help(request: Request, payload: VoiceHelpRequest):
             log_interview_id,
             _duration_ms(start)
         )
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise HTTPException(status_code=404, detail=_not_found_detail(exc)) from exc
     except (RuntimeError, ValueError) as exc:
         logger.exception(
             "event=voice_help status=error user_id=%s interview_id=%s duration_ms=%s",

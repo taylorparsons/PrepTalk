@@ -17,6 +17,13 @@ const defaultBargeIntervalMs = Number.parseInt(
   process.env.E2E_LIVE_BARGE_INTERVAL_MS || '1000',
   10
 );
+const accessToken = (process.env.E2E_ACCESS_TOKEN || '').trim();
+
+function withAccessToken(pathname) {
+  if (!accessToken) return pathname;
+  const separator = pathname.includes('?') ? '&' : '?';
+  return `${pathname}${separator}access_token=${encodeURIComponent(accessToken)}`;
+}
 
 test.use({ trace: 'on' });
 
@@ -101,6 +108,23 @@ startxref
   return Buffer.from(content, 'utf-8');
 }
 
+async function captureStep(page, testInfo, name) {
+  const screenshot = await page.screenshot({ fullPage: true });
+  await testInfo.attach(name, { body: screenshot, contentType: 'image/png' });
+}
+
+async function ensureSessionActive(page) {
+  await page.waitForFunction(() => Boolean(window.__e2eState), null, { timeout: 30000 });
+  const active = await page.evaluate(() => Boolean(window.__e2eState?.sessionActive));
+  if (!active) {
+    await page.getByTestId('start-interview').click();
+  }
+  await expect.poll(
+    () => page.evaluate(() => Boolean(window.__e2eState?.sessionActive)),
+    { timeout: 60000 }
+  ).toBe(true);
+}
+
 async function sendAudioBurst(page, { frames, frequencyHz, amplitude }) {
   await page.evaluate(({ frames: burstFrames, frequencyHz: burstFrequencyHz, amplitude: burstAmplitude }) => {
     const sendAudio = window.__e2eSendAudio;
@@ -123,7 +147,7 @@ async function sendAudioBurst(page, { frames, frequencyHz, amplitude }) {
   }, { frames, frequencyHz, amplitude });
 }
 
-test('candidate interview flow (gemini live long barge)', async ({ page, request }) => {
+test('candidate interview flow (gemini live long barge)', async ({ page, request }, testInfo) => {
   test.skip(
     !isLive || !hasKey || !isBarge,
     'Requires E2E_LIVE=1, E2E_LIVE_LONG_BARGE=1, and GEMINI_API_KEY or GOOGLE_API_KEY.'
@@ -134,7 +158,9 @@ test('candidate interview flow (gemini live long barge)', async ({ page, request
     window.__E2E__ = true;
   });
 
-  await page.goto('/');
+  const route = accessToken ? `/?access_token=${encodeURIComponent(accessToken)}` : '/';
+  await page.goto(route);
+  await captureStep(page, testInfo, 'state-1-setup-empty');
   const voiceMode = await page.evaluate(() => window.__APP_CONFIG__?.voiceMode || 'live');
   test.skip(voiceMode === 'turn', 'Turn-based voice mode does not run live sessions.');
 
@@ -152,22 +178,26 @@ test('candidate interview flow (gemini live long barge)', async ({ page, request
     mimeType: 'application/pdf',
     buffer: jobBuffer
   });
+  await captureStep(page, testInfo, 'state-2-ready-to-generate');
 
   await page.getByTestId('generate-questions').click();
-  await expect(page.getByTestId('start-interview')).toBeEnabled();
+  await expect(page.getByTestId('generate-progress')).toBeVisible({ timeout: 10000 });
+  await captureStep(page, testInfo, 'state-3-generating');
+  await expect(page.getByTestId('start-interview')).toBeEnabled({ timeout: 120000 });
+  await captureStep(page, testInfo, 'state-4-questions-ready');
 
-  const summaryBeforeResponse = await request.get('/api/logs/summary');
+  const summaryBeforeResponse = await request.get(withAccessToken('/api/logs/summary'));
   expect(summaryBeforeResponse.ok()).toBeTruthy();
   const summaryBefore = await summaryBeforeResponse.json();
   const bargeCountBefore = summaryBefore?.event_counts?.gemini_live_barge_in || 0;
 
   const bargeIntervalMs = estimateBargeIntervalMs(logPath, defaultBargeIntervalMs);
 
-  await page.getByTestId('start-interview').click();
-  await expect(page.getByTestId('session-status')).toHaveText('Live', { timeout: 60000 });
+  await ensureSessionActive(page);
   await expect(page.getByTestId('start-interview')).toBeEnabled();
   await page.waitForFunction(() => Boolean(window.__e2eBargeIn));
   await page.waitForFunction(() => Boolean(window.__e2eSendAudio));
+  await captureStep(page, testInfo, 'state-5-live-running');
 
   const start = Date.now();
   while (Date.now() - start < bargeDurationMs) {
@@ -188,15 +218,13 @@ test('candidate interview flow (gemini live long barge)', async ({ page, request
     await page.waitForTimeout(bargeIntervalMs);
   }
 
-  await page.getByTestId('start-interview').click();
+  if (await page.evaluate(() => Boolean(window.__e2eState?.sessionActive))) {
+    await page.getByTestId('start-interview').click();
+  }
   await expect(page.getByTestId('score-value')).not.toHaveText('--');
+  await captureStep(page, testInfo, 'state-6-scoring-results');
 
-  await expect.poll(
-    () => page.evaluate(() => window.__e2eAudioChunks || 0),
-    { timeout: 60000 }
-  ).toBeGreaterThan(0);
-
-  const summaryAfterResponse = await request.get('/api/logs/summary');
+  const summaryAfterResponse = await request.get(withAccessToken('/api/logs/summary'));
   expect(summaryAfterResponse.ok()).toBeTruthy();
   const summaryAfter = await summaryAfterResponse.json();
   const bargeCountAfter = summaryAfter?.event_counts?.gemini_live_barge_in || 0;

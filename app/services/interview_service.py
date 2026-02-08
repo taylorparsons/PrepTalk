@@ -11,8 +11,10 @@ from .adapters import get_adapter
 from .document_text import DocumentInput, extract_document_text
 from .gemini_text import generate_coach_reply, generate_turn_feedback, generate_turn_help, evaluate_turn_completion
 from .gemini_tts import generate_tts_audio_with_fallbacks
+from .openai_tts import generate_openai_tts_audio
 from .live_context import build_live_system_prompt
 from .mock_data import MOCK_VOICE_REPLY, MOCK_VOICE_FEEDBACK, build_mock_tts_audio
+from .pii_redaction import redact_resume_pii
 from .store import store
 from .pdf_service import build_study_guide_pdf, build_study_guide_text as build_study_guide_text_output
 
@@ -28,9 +30,18 @@ def prepare_interview(
     user_id: str | None = None
 ) -> dict:
     adapter = get_adapter()
+    settings = load_settings()
     resume_text = extract_document_text(resume, max_chars=4000)
+    if settings.redact_resume_pii:
+        resume_text = redact_resume_pii(resume_text)
     job_text = extract_document_text(job, max_chars=4000)
-    questions, focus_areas = adapter.generate_questions(resume, job, role_title)
+    questions, focus_areas = adapter.generate_questions(
+        resume,
+        job,
+        role_title,
+        resume_text_override=resume_text,
+        job_text_override=job_text
+    )
     interview_id = str(uuid.uuid4())
 
     record = store.create(
@@ -166,7 +177,10 @@ def _generate_tts_with_wait(
         "text": text,
         "voice_name": settings.voice_tts_voice or None,
         "language_code": settings.voice_tts_language or None,
-        "timeout_ms": getattr(settings, "voice_tts_timeout_ms", None)
+        "timeout_ms": getattr(settings, "voice_tts_timeout_ms", None),
+        "primary_retry_count": max(int(getattr(settings, "voice_tts_retry_count", 1) or 0), 0),
+        "retry_backoff_ms": max(int(getattr(settings, "voice_tts_retry_backoff_ms", 250) or 0), 0),
+        "parallel_fallback_on_retry": bool(getattr(settings, "voice_tts_parallel_fallback_on_retry", True))
     }
     wait_ms = max(int(getattr(settings, "voice_tts_wait_ms", 0) or 0), 0)
     timeout_ms = max(int(getattr(settings, "voice_tts_timeout_ms", 0) or 0), 0)
@@ -216,11 +230,233 @@ def _generate_tts_with_wait(
             return None, None
 
 
+def _generate_openai_tts_with_wait(
+    *,
+    event_name: str,
+    interview_id: str,
+    user_id: str | None,
+    text: str,
+    settings
+) -> tuple[bytes | None, str | None]:
+    api_key = getattr(settings, "openai_api_key", None)
+    if not api_key:
+        return None, None
+
+    kwargs = {
+        "api_key": api_key,
+        "model": getattr(settings, "openai_tts_model", "gpt-4o-mini-tts"),
+        "text": text,
+        "voice": getattr(settings, "openai_tts_voice", "alloy"),
+        "audio_format": getattr(settings, "openai_tts_format", "wav"),
+        "timeout_ms": getattr(settings, "openai_tts_timeout_ms", None),
+    }
+    wait_ms = max(int(getattr(settings, "voice_tts_wait_ms", 0) or 0), 0)
+    timeout_ms = max(int(getattr(settings, "openai_tts_timeout_ms", 0) or 0), 0)
+
+    if wait_ms <= 0:
+        return generate_openai_tts_audio(**kwargs)
+
+    future = _TTS_EXECUTOR.submit(generate_openai_tts_audio, **kwargs)
+    try:
+        return future.result(timeout=wait_ms / 1000)
+    except FutureTimeout:
+        remaining_ms = timeout_ms - wait_ms
+        if remaining_ms <= 0:
+            future.cancel()
+            logger.warning(
+                "event=%s status=openai_timeout interview_id=%s user_id=%s wait_ms=%s timeout_ms=%s",
+                event_name,
+                short_id(interview_id),
+                short_id(user_id),
+                wait_ms,
+                timeout_ms
+            )
+            return None, None
+        logger.warning(
+            "event=%s status=openai_slow interview_id=%s user_id=%s wait_ms=%s timeout_ms=%s",
+            event_name,
+            short_id(interview_id),
+            short_id(user_id),
+            wait_ms,
+            timeout_ms
+        )
+        try:
+            return future.result(timeout=remaining_ms / 1000)
+        except FutureTimeout:
+            future.cancel()
+            logger.warning(
+                "event=%s status=openai_timeout interview_id=%s user_id=%s wait_ms=%s timeout_ms=%s",
+                event_name,
+                short_id(interview_id),
+                short_id(user_id),
+                wait_ms,
+                timeout_ms
+            )
+            return None, None
+
+
+def _normalize_tts_provider(value: str | None, settings) -> str:
+    cleaned = (value or "").strip().lower()
+    if cleaned in {"openai", "gemini", "auto"}:
+        return cleaned
+    return (getattr(settings, "voice_tts_provider", "openai") or "openai").strip().lower()
+
+
+def _resolve_tts_provider_order(provider: str, adapter, settings) -> tuple[str, ...]:
+    if adapter.name != "gemini":
+        return ("mock",)
+
+    if provider == "openai":
+        return ("openai", "gemini")
+    if provider == "gemini":
+        return ("gemini", "openai")
+
+    # Auto mode: prefer OpenAI when configured, otherwise use Gemini first.
+    if getattr(settings, "openai_api_key", None):
+        return ("openai", "gemini")
+    return ("gemini", "openai")
+
+
+def _generate_tts_with_provider_fallback(
+    *,
+    event_name: str,
+    interview_id: str,
+    user_id: str | None,
+    adapter,
+    settings,
+    text: str,
+    tts_model_override: str | None,
+    tts_provider_override: str | None = None
+) -> tuple[bytes | None, str | None]:
+    provider = _normalize_tts_provider(tts_provider_override, settings)
+    provider_order = _resolve_tts_provider_order(provider, adapter, settings)
+
+    for selected in provider_order:
+        if selected == "mock":
+            return build_mock_tts_audio()
+
+        if selected == "openai":
+            try:
+                audio_bytes, audio_mime = _generate_openai_tts_with_wait(
+                    event_name=event_name,
+                    interview_id=interview_id,
+                    user_id=user_id,
+                    text=text,
+                    settings=settings
+                )
+                if audio_bytes:
+                    return audio_bytes, audio_mime
+                logger.warning(
+                    "event=%s status=openai_empty interview_id=%s user_id=%s provider=%s",
+                    event_name,
+                    short_id(interview_id),
+                    short_id(user_id),
+                    provider
+                )
+            except Exception:
+                logger.exception(
+                    "event=%s status=openai_error interview_id=%s user_id=%s provider=%s",
+                    event_name,
+                    short_id(interview_id),
+                    short_id(user_id),
+                    provider
+                )
+            continue
+
+        if selected == "gemini":
+            api_key = getattr(adapter, "api_key", None)
+            if not api_key:
+                logger.warning(
+                    "event=%s status=gemini_missing_key interview_id=%s user_id=%s provider=%s",
+                    event_name,
+                    short_id(interview_id),
+                    short_id(user_id),
+                    provider
+                )
+                continue
+            models = list(getattr(settings, "voice_tts_models", ())) or [settings.voice_tts_model]
+            if tts_model_override:
+                models = [tts_model_override, *[model for model in models if model != tts_model_override]]
+            try:
+                audio_bytes, audio_mime = _generate_tts_with_wait(
+                    event_name=event_name,
+                    interview_id=interview_id,
+                    user_id=user_id,
+                    api_key=api_key,
+                    models=models,
+                    text=text,
+                    settings=settings
+                )
+                if audio_bytes:
+                    return audio_bytes, audio_mime
+                logger.warning(
+                    "event=%s status=gemini_empty interview_id=%s user_id=%s provider=%s",
+                    event_name,
+                    short_id(interview_id),
+                    short_id(user_id),
+                    provider
+                )
+            except Exception:
+                logger.exception(
+                    "event=%s status=gemini_error interview_id=%s user_id=%s provider=%s",
+                    event_name,
+                    short_id(interview_id),
+                    short_id(user_id),
+                    provider
+                )
+
+    return None, None
+
+
+def _prepare_tts_text(text: str, settings, *, min_sentence_ratio: float = 0.6) -> tuple[str, bool]:
+    cleaned = (text or "").strip()
+    if not cleaned:
+        return "", False
+
+    max_chars = max(int(getattr(settings, "voice_tts_max_chars", 1800) or 0), 0)
+    if max_chars <= 0 or len(cleaned) <= max_chars:
+        return cleaned, False
+
+    truncated = cleaned[:max_chars].rstrip()
+    sentence_end = max(truncated.rfind("."), truncated.rfind("!"), truncated.rfind("?"))
+    if sentence_end >= int(max_chars * min_sentence_ratio):
+        truncated = truncated[:sentence_end + 1].rstrip()
+    if not truncated.endswith((".", "!", "?")):
+        truncated = f"{truncated}..."
+    return truncated, True
+
+
+def _ensure_tts_footer(
+    text: str,
+    *,
+    footer: str,
+    max_chars: int
+) -> tuple[str, bool]:
+    cleaned = (text or "").strip()
+    footer_clean = (footer or "").strip()
+    if not cleaned or not footer_clean:
+        return cleaned, False
+    if footer_clean in cleaned:
+        return cleaned, False
+
+    available = max(max_chars - len(footer_clean) - 1, 0)
+    if available <= 0:
+        return footer_clean, True
+
+    body = cleaned[:available].rstrip()
+    if not body:
+        return footer_clean, True
+    if not body.endswith((".", "!", "?", "...")):
+        body = f"{body}..."
+    return f"{body}\n{footer_clean}", True
+
+
 def run_voice_intro(
     interview_id: str,
     user_id: str | None = None,
     text_model: str | None = None,
-    tts_model: str | None = None
+    tts_model: str | None = None,
+    tts_provider: str | None = None
 ) -> dict:
     record = store.get(interview_id, user_id)
     if not record:
@@ -256,23 +492,25 @@ def run_voice_intro(
     settings = getattr(adapter, "settings", None) or load_settings()
     if settings.voice_tts_enabled and settings.voice_output_mode != "browser":
         try:
-            if adapter.name == "gemini":
-                if not getattr(adapter, "api_key", None):
-                    raise RuntimeError("GEMINI_API_KEY or GOOGLE_API_KEY is required for Gemini TTS.")
-                models = list(getattr(settings, "voice_tts_models", ())) or [settings.voice_tts_model]
-                if tts_model_override:
-                    models = [tts_model_override, *[model for model in models if model != tts_model_override]]
-                audio_bytes, audio_mime = _generate_tts_with_wait(
-                    event_name="voice_intro_tts",
-                    interview_id=interview_id,
-                    user_id=user_id,
-                    api_key=adapter.api_key,
-                    models=models,
-                    text=coach_cleaned,
-                    settings=settings
+            tts_text, was_truncated = _prepare_tts_text(coach_cleaned, settings)
+            if was_truncated:
+                logger.warning(
+                    "event=voice_intro_tts status=truncated interview_id=%s user_id=%s chars_in=%s chars_out=%s",
+                    short_id(interview_id),
+                    short_id(user_id),
+                    len(coach_cleaned),
+                    len(tts_text)
                 )
-            else:
-                audio_bytes, audio_mime = build_mock_tts_audio()
+            audio_bytes, audio_mime = _generate_tts_with_provider_fallback(
+                event_name="voice_intro_tts",
+                interview_id=interview_id,
+                user_id=user_id,
+                adapter=adapter,
+                settings=settings,
+                text=tts_text,
+                tts_model_override=tts_model_override,
+                tts_provider_override=tts_provider
+            )
             if audio_bytes:
                 audio_payload = base64.b64encode(audio_bytes).decode("ascii")
         except Exception:
@@ -295,7 +533,8 @@ def run_voice_turn(
     text: str,
     user_id: str | None = None,
     text_model: str | None = None,
-    tts_model: str | None = None
+    tts_model: str | None = None,
+    tts_provider: str | None = None
 ) -> dict:
     record = store.get(interview_id, user_id)
     if not record:
@@ -342,23 +581,25 @@ def run_voice_turn(
     settings = getattr(adapter, "settings", None) or load_settings()
     if settings.voice_tts_enabled and settings.voice_output_mode != "browser":
         try:
-            if adapter.name == "gemini":
-                if not getattr(adapter, "api_key", None):
-                    raise RuntimeError("GEMINI_API_KEY or GOOGLE_API_KEY is required for Gemini TTS.")
-                models = list(getattr(settings, "voice_tts_models", ())) or [settings.voice_tts_model]
-                if tts_model_override:
-                    models = [tts_model_override, *[model for model in models if model != tts_model_override]]
-                audio_bytes, audio_mime = _generate_tts_with_wait(
-                    event_name="voice_tts",
-                    interview_id=interview_id,
-                    user_id=user_id,
-                    api_key=adapter.api_key,
-                    models=models,
-                    text=coach_cleaned,
-                    settings=settings
+            tts_text, was_truncated = _prepare_tts_text(coach_cleaned, settings)
+            if was_truncated:
+                logger.warning(
+                    "event=voice_tts status=truncated interview_id=%s user_id=%s chars_in=%s chars_out=%s",
+                    short_id(interview_id),
+                    short_id(user_id),
+                    len(coach_cleaned),
+                    len(tts_text)
                 )
-            else:
-                audio_bytes, audio_mime = build_mock_tts_audio()
+            audio_bytes, audio_mime = _generate_tts_with_provider_fallback(
+                event_name="voice_tts",
+                interview_id=interview_id,
+                user_id=user_id,
+                adapter=adapter,
+                settings=settings,
+                text=tts_text,
+                tts_model_override=tts_model_override,
+                tts_provider_override=tts_provider
+            )
             if audio_bytes:
                 audio_payload = base64.b64encode(audio_bytes).decode("ascii")
         except Exception:
@@ -432,7 +673,8 @@ def run_voice_help(
     answer_text: str | None = None,
     user_id: str | None = None,
     text_model: str | None = None,
-    tts_model: str | None = None
+    tts_model: str | None = None,
+    tts_provider: str | None = None
 ) -> dict:
     record = store.get(interview_id, user_id)
     if not record:
@@ -481,23 +723,41 @@ def run_voice_help(
     settings = getattr(adapter, "settings", None) or load_settings()
     if settings.voice_tts_enabled and settings.voice_output_mode != "browser":
         try:
-            if adapter.name == "gemini":
-                if not getattr(adapter, "api_key", None):
-                    raise RuntimeError("GEMINI_API_KEY or GOOGLE_API_KEY is required for Gemini TTS.")
-                models = list(getattr(settings, "voice_tts_models", ())) or [settings.voice_tts_model]
-                if tts_model_override:
-                    models = [tts_model_override, *[model for model in models if model != tts_model_override]]
-                audio_bytes, audio_mime = _generate_tts_with_wait(
-                    event_name="voice_help_tts",
-                    interview_id=interview_id,
-                    user_id=user_id,
-                    api_key=adapter.api_key,
-                    models=models,
-                    text=help_cleaned,
-                    settings=settings
+            tts_text, was_truncated = _prepare_tts_text(help_cleaned, settings)
+            footer = "Answer in your own words."
+            footer_added = False
+            if help_cleaned.endswith(footer):
+                max_chars = max(int(getattr(settings, "voice_tts_max_chars", 1800) or 0), 0)
+                if max_chars > 0:
+                    tts_text, footer_added = _ensure_tts_footer(
+                        tts_text,
+                        footer=footer,
+                        max_chars=max_chars
+                    )
+            if was_truncated:
+                logger.warning(
+                    "event=voice_help_tts status=truncated interview_id=%s user_id=%s chars_in=%s chars_out=%s",
+                    short_id(interview_id),
+                    short_id(user_id),
+                    len(help_cleaned),
+                    len(tts_text)
                 )
-            else:
-                audio_bytes, audio_mime = build_mock_tts_audio()
+            if footer_added:
+                logger.info(
+                    "event=voice_help_tts status=footer_restored interview_id=%s user_id=%s",
+                    short_id(interview_id),
+                    short_id(user_id)
+                )
+            audio_bytes, audio_mime = _generate_tts_with_provider_fallback(
+                event_name="voice_help_tts",
+                interview_id=interview_id,
+                user_id=user_id,
+                adapter=adapter,
+                settings=settings,
+                text=tts_text,
+                tts_model_override=tts_model_override,
+                tts_provider_override=tts_provider
+            )
             if audio_bytes:
                 audio_payload = base64.b64encode(audio_bytes).decode("ascii")
         except Exception:

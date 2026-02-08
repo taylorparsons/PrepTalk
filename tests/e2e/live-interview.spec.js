@@ -8,6 +8,7 @@ const liveDurationMs = Number.parseInt(process.env.E2E_LIVE_DURATION_MS || '4500
 const livePollIntervalMs = Number.parseInt(process.env.E2E_LIVE_POLL_MS || '1000', 10);
 const resumePath = process.env.E2E_RESUME_PATH;
 const jobPath = process.env.E2E_JOB_PATH;
+const accessToken = (process.env.E2E_ACCESS_TOKEN || '').trim();
 
 function buildPdfBuffer(label) {
   const content = `%PDF-1.4
@@ -42,11 +43,34 @@ startxref
   return Buffer.from(content, 'utf-8');
 }
 
-test('candidate interview flow (gemini live)', async ({ page }) => {
+async function captureStep(page, testInfo, name) {
+  const screenshot = await page.screenshot({ fullPage: true });
+  await testInfo.attach(name, { body: screenshot, contentType: 'image/png' });
+}
+
+async function ensureSessionActive(page) {
+  await page.waitForFunction(() => Boolean(window.__e2eState), null, { timeout: 30000 });
+  const active = await page.evaluate(() => Boolean(window.__e2eState?.sessionActive));
+  if (!active) {
+    await page.getByTestId('start-interview').click();
+  }
+  await expect.poll(
+    () => page.evaluate(() => Boolean(window.__e2eState?.sessionActive)),
+    { timeout: 60000 }
+  ).toBe(true);
+}
+
+test('candidate interview flow (gemini live)', async ({ page }, testInfo) => {
   test.skip(!isLive || !hasKey, 'Requires E2E_LIVE=1 and GEMINI_API_KEY or GOOGLE_API_KEY.');
   test.setTimeout(Math.max(120000, liveDurationMs + 60000));
 
-  await page.goto('/');
+  await page.addInitScript(() => {
+    window.__E2E__ = true;
+  });
+
+  const route = accessToken ? `/?access_token=${encodeURIComponent(accessToken)}` : '/';
+  await page.goto(route);
+  await captureStep(page, testInfo, 'state-1-setup-empty');
   const voiceMode = await page.evaluate(() => window.__APP_CONFIG__?.voiceMode || 'live');
   test.skip(voiceMode === 'turn', 'Turn-based voice mode does not run live sessions.');
 
@@ -72,18 +96,26 @@ test('candidate interview flow (gemini live)', async ({ page }) => {
       buffer: jobBuffer
     });
   }
+  await captureStep(page, testInfo, 'state-2-ready-to-generate');
 
   await page.getByTestId('generate-questions').click();
+  await expect(page.getByTestId('generate-progress')).toBeVisible({ timeout: 10000 });
+  await captureStep(page, testInfo, 'state-3-generating');
   await expect(page.getByTestId('start-interview')).toBeEnabled({ timeout: 120000 });
+  await captureStep(page, testInfo, 'state-4-questions-ready');
 
-  await page.getByTestId('start-interview').click();
-  await expect(page.getByTestId('session-status')).toHaveText('Live', { timeout: 60000 });
+  await ensureSessionActive(page);
   await expect(page.getByTestId('start-interview')).toBeEnabled();
+  await captureStep(page, testInfo, 'state-5-live-running');
 
   const start = Date.now();
   while (Date.now() - start < liveDurationMs) {
     const status = (await page.getByTestId('session-status').innerText()).trim();
+    const active = await page.evaluate(() => Boolean(window.__e2eState?.sessionActive));
     const stopEnabled = await page.getByTestId('start-interview').isEnabled();
+    if (!active) {
+      throw new Error(`Live session ended early (status: ${status}).`);
+    }
     if (!stopEnabled) {
       throw new Error(`Stop button disabled during live run (status: ${status}).`);
     }
@@ -93,6 +125,9 @@ test('candidate interview flow (gemini live)', async ({ page }) => {
     await page.waitForTimeout(livePollIntervalMs);
   }
 
-  await page.getByTestId('start-interview').click();
+  if (await page.evaluate(() => Boolean(window.__e2eState?.sessionActive))) {
+    await page.getByTestId('start-interview').click();
+  }
   await expect(page.getByTestId('score-value')).not.toHaveText('--');
+  await captureStep(page, testInfo, 'state-6-scoring-results');
 });

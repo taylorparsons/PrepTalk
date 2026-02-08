@@ -32,3 +32,54 @@ def test_health_returns_ok():
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+def test_health_post_returns_ok():
+    client = TestClient(app)
+    response = client.post("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+def test_health_head_returns_ok():
+    client = TestClient(app)
+    response = client.head("/health")
+
+    assert response.status_code == 200
+
+
+def test_favicon_route_returns_no_content():
+    client = TestClient(app)
+    response = client.get("/favicon.ico")
+
+    assert response.status_code == 204
+
+
+def test_root_does_not_reference_legacy_dist_css():
+    client = TestClient(app)
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "/static/css/dist.css" not in response.text
+
+
+def test_root_requires_access_token_when_configured(monkeypatch):
+    monkeypatch.setenv("APP_ACCESS_TOKENS", "token-1")
+    client = TestClient(app)
+
+    response = client.get("/")
+
+    assert response.status_code == 401
+    assert "Access Required" in response.text
+
+
+def test_root_accepts_query_access_token_and_sets_cookies(monkeypatch):
+    monkeypatch.setenv("APP_ACCESS_TOKENS", "token-1:user-123")
+    client = TestClient(app)
+
+    response = client.get("/?access_token=token-1")
+
+    assert response.status_code == 200
+    assert response.cookies.get("preptalk_access_token") == "token-1"
+    assert response.cookies.get("preptalk_user_id") == "user-123"

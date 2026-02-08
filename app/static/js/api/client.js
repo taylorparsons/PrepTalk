@@ -69,7 +69,7 @@ export async function startLiveSession({ interviewId }) {
   return handleResponse(response);
 }
 
-export async function sendVoiceTurn({ interviewId, text, textModel, ttsModel }) {
+export async function sendVoiceTurn({ interviewId, text, textModel, ttsModel, ttsProvider }) {
   const response = await fetch(`${getApiBase()}/voice/turn`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
@@ -77,21 +77,23 @@ export async function sendVoiceTurn({ interviewId, text, textModel, ttsModel }) 
       interview_id: interviewId,
       text,
       text_model: textModel,
-      tts_model: ttsModel
+      tts_model: ttsModel,
+      tts_provider: ttsProvider
     })
   });
 
   return handleResponse(response);
 }
 
-export async function sendVoiceIntro({ interviewId, textModel, ttsModel }) {
+export async function sendVoiceIntro({ interviewId, textModel, ttsModel, ttsProvider }) {
   const response = await fetch(`${getApiBase()}/voice/intro`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
     body: JSON.stringify({
       interview_id: interviewId,
       text_model: textModel,
-      tts_model: ttsModel
+      tts_model: ttsModel,
+      tts_provider: ttsProvider
     })
   });
 
@@ -113,7 +115,7 @@ export async function sendVoiceFeedback({ interviewId, question, answer, textMod
   return handleResponse(response);
 }
 
-export async function sendVoiceHelp({ interviewId, question, answer, textModel, ttsModel }) {
+export async function sendVoiceHelp({ interviewId, question, answer, textModel, ttsModel, ttsProvider }) {
   const response = await fetch(`${getApiBase()}/voice/help`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
@@ -122,7 +124,8 @@ export async function sendVoiceHelp({ interviewId, question, answer, textModel, 
       question,
       answer,
       text_model: textModel,
-      tts_model: ttsModel
+      tts_model: ttsModel,
+      tts_provider: ttsProvider
     })
   });
 
