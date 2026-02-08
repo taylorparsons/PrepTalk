@@ -20,6 +20,6 @@
     "jsdom": "^26.1.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.19",
-    "vitest": "^3.2.3"
+    "vitest": "^4.0.18"
   }
 }
