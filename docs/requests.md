@@ -89,7 +89,7 @@ Date: 2026-01-29 12:35
 Source: chat
 
 Request (verbatim):
-$ralph make sure my inputs here are considered user input and are tracked  look here [LOCAL_USER]/.codex/skills/ralph
+$ralph make sure my inputs here are considered user input and are tracked  look here [LOCAL_CODEX_PATH]/skills/ralph
 
 Notes:
 - Track this instruction as a user request in the RALPH log.
@@ -99,7 +99,7 @@ Date: 2026-01-29 12:55
 Source: chat
 
 Request (verbatim):
-make sure you are also using the skill peas use $create-plan to build out peas [LOCAL_USER]/.codex/skills/peas/SKILL.md
+make sure you are also using the skill peas use $create-plan to build out peas [LOCAL_CODEX_PATH]/skills/peas/SKILL.md
 
 Notes:
 - Update PEAS in AGENTS + PRD/specs; scope to Gemini text/voice calls; include full-suite tests and log-based PEAS eval signals.
@@ -226,8 +226,8 @@ Source: chat
 
 Request (verbatim):
 no do not edit .env 
-I want the end live test to use a real resume and job description the one I mention did not E2E_RESUME_PATH="[LOCAL_USER]/Documents/taylor_resumes/expedia_principle_ai_builder/Taylor_Parsons_Expedia_Principal_PM_AI_Builder_Resume.docx"
-E2E_JOB_PATH="[LOCAL_USER]/Documents/taylor_resumes/expedia_principle_ai_builder/Principal Product Manager, AI Builder Experiences in Seattle, Washington _ Expedia Group _ Careers.pdf"
+I want the end live test to use a real resume and job description the one I mention did not E2E_RESUME_PATH="[LOCAL_RESUME_PATH]/Taylor_Parsons_Expedia_Principal_PM_AI_Builder_Resume.docx"
+E2E_JOB_PATH="[LOCAL_JOB_PATH]/Principal Product Manager, AI Builder Experiences in Seattle, Washington _ Expedia Group _ Careers.pdf"
 
 Notes:
 - Do not modify `.env`.
