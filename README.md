@@ -152,3 +152,7 @@ PLAYWRIGHT_INSTALL=1 ./run.sh e2e
 - Public repo: https://github.com/taylorparsons/PrepTalk
 - Gemini integration write-up: `docs/hackathon-submission.md`
 - 3-minute demo video: TODO (see `docs/hackathon-submission.md`)
+
+## License
+
+All rights reserved. Source available for viewing and evaluation only. See `LICENSE` for details.
