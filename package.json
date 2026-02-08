@@ -13,7 +13,7 @@
     "css:watch": "tailwindcss -i ./app/static/css/tailwind.css -o ./app/static/css/dist.css --watch"
   },
   "devDependencies": {
-    "@playwright/test": "^1.55.0",
+    "@playwright/test": "^1.58.2",
     "@testing-library/dom": "^10.4.0",
     "autoprefixer": "^10.4.24",
     "daisyui": "^5.5.17",
