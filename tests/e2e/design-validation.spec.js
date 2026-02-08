@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { withAccessToken } from './helpers/route.js';
 
 test.describe('PrepTalk Design Validation', () => {
   test('validates color palette and design system', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(withAccessToken('/'));
     await page.waitForLoadState('networkidle');
 
     // Screenshot for visual audit
@@ -48,7 +49,7 @@ test.describe('PrepTalk Design Validation', () => {
   });
 
   test('validates accessibility requirements', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(withAccessToken('/'));
     await page.waitForLoadState('networkidle');
 
     // Check app shell exists
@@ -71,7 +72,7 @@ test.describe('PrepTalk Design Validation', () => {
   });
 
   test('validates form field accessibility', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(withAccessToken('/'));
     await page.waitForLoadState('networkidle');
 
     // Count inputs with proper accessibility attributes

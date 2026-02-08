@@ -29,7 +29,9 @@ class InterviewAdapter:
         self,
         resume: DocumentInput,
         job: DocumentInput,
-        role_title: str | None
+        role_title: str | None,
+        resume_text_override: str | None = None,
+        job_text_override: str | None = None
     ) -> tuple[list[str], list[str]]:
         raise NotImplementedError
 
@@ -47,7 +49,9 @@ class MockInterviewAdapter(InterviewAdapter):
         self,
         resume: DocumentInput,
         job: DocumentInput,
-        role_title: str | None
+        role_title: str | None,
+        resume_text_override: str | None = None,
+        job_text_override: str | None = None
     ) -> tuple[list[str], list[str]]:
         return list(MOCK_QUESTIONS), list(MOCK_FOCUS_AREAS)
 
@@ -80,11 +84,13 @@ class GeminiInterviewAdapter(InterviewAdapter):
         self,
         resume: DocumentInput,
         job: DocumentInput,
-        role_title: str | None
+        role_title: str | None,
+        resume_text_override: str | None = None,
+        job_text_override: str | None = None
     ) -> tuple[list[str], list[str]]:
         self._ensure_configured()
-        resume_text = extract_document_text(resume)
-        job_text = extract_document_text(job)
+        resume_text = resume_text_override if resume_text_override is not None else extract_document_text(resume)
+        job_text = job_text_override if job_text_override is not None else extract_document_text(job)
         return generate_interview_questions(
             api_key=self.api_key,
             model=self.settings.interview_text_model,

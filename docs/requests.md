@@ -1258,3 +1258,137 @@ Request (verbatim):
 
 Notes:
 - Use stash/merge/unstash flow to preserve uncommitted local `main` work while merging `ios-tts-audio-unlock`.
+
+## CR-20260206-1432
+Date: 2026-02-06 14:32
+Source: chat
+
+Request (verbatim):
+yes add this to this change
+aslo add the token change
+
+Notes:
+- Add token-based access control suitable for a shared public test deployment, including optional token-to-user mapping and session continuity.
+- Add resume PII redaction while keeping the first name visible.
+
+## CR-20260206-1700
+Date: 2026-02-06 17:00
+Source: chat
+
+Request (verbatim):
+make a note on some backlog items 
+1. when I generate questions and they are ready auto start the application and have the coach introduce herself
+2. The session controls are shown before the candidate setup has been done, this should be shown after the generate questions has started
+3. The session controls needs to be take up less room and be more condensed on both the desk top and mobile web. 
+4. The session controls should be anchored to the top as well as he menu so that you can control the session with the text in front of you
+
+Notes:
+- Backlog request for Session Controls behavior and layout.
+- Add auto-start + coach intro after questions are ready.
+- Defer Session Controls visibility until generation has started.
+- Condense Session Controls footprint on desktop and mobile.
+- Keep Session Controls and menu anchored at top while reading/answering.
+
+## CR-20260206-1716
+Date: 2026-02-06 17:16
+Source: chat
+
+Request (verbatim):
+I need the token added with the backlog items, simplest working token and all of it tested on localhost by you and then on google test by you.  are you update to it, how long will it all take?
+
+Notes:
+- Ship the Session Controls backlog items from CR-20260206-1700, not only document them.
+- Configure a single shared access token for test deployment.
+- Verify locally and on Cloud Run test endpoint with evidence.
+
+## CR-20260206-1751
+Date: 2026-02-06 17:51
+Source: chat
+
+Request (verbatim):
+must work is the audio look at the $ralph decisions call out any regressions, you can deploy to a test end point but only when you are sure
+do you need me to set up the variable for the token let me know now
+
+Notes:
+- Prioritize audio reliability over additional scope.
+- Audit decisions for regressions and call them out explicitly.
+- Deploy only after verification confidence is high.
+
+## CR-20260206-1752
+Date: 2026-02-06 17:52
+Source: chat
+
+Request (verbatim):
+all releases need to have have a clear roll back
+
+Notes:
+- Require an explicit rollback procedure for release/deploy operations.
+
+## CR-20260206-1755
+Date: 2026-02-06 17:55
+Source: chat
+
+Request (verbatim):
+keep status here for each stage for percages done
+
+Notes:
+- Provide explicit stage-by-stage progress with percentage complete updates in chat.
+
+## CR-20260206-1816
+Date: 2026-02-06 18:16
+Source: chat
+
+Request (verbatim):
+the playwrite is pretty simple show it end to end both desk top and mobile view
+
+Notes:
+- Run full end-to-end Playwright coverage instead of lightweight smoke only.
+- Include both desktop and mobile viewport execution.
+
+## CR-20260206-1819
+Date: 2026-02-06 18:19
+Source: chat
+
+Request (verbatim):
+create one for the menu, are you done with all of the backlog items for each one a simple validation of negative and possitive and full end to end both mobile and web with the coach voice and the interviewer answering, you can create a new test persona who can answer the questions and navigate the app
+
+Notes:
+- Add dedicated menu test coverage.
+- Add positive/negative validations aligned to backlog item behavior.
+- Ensure full end-to-end flow runs in desktop and mobile with persona-style candidate answers.
+
+## CR-20260206-1841
+Date: 2026-02-06 18:41
+Source: chat
+
+Request (verbatim):
+I have to step away when you are paused next you should be done ready for me to review your great work
+
+Notes:
+- Complete work autonomously while user is away.
+- Return with review-ready staged evidence.
+
+## CR-20260206-1840
+Date: 2026-02-06 18:40
+Source: chat
+
+Request (verbatim):
+I should here the playwright when e2e live do all of the work let me know when done do not spot untill all are done and staged with evidence
+
+Notes:
+- Run full live Playwright E2E coverage.
+- Do not stop early; complete all runs and stage evidence.
+
+## CR-20260206-2020
+Date: 2026-02-06 20:20
+Source: chat
+
+Request (verbatim):
+try to make the sesssion conrol smaller in height, drop the Rubic on both desktop and mobile
+do all of this run the full suit of playright againt with preports ready and stage with full roll back ready
+
+Notes:
+- Remove the Session Controls rubric toggle/popover from desktop and mobile.
+- Further reduce Session Controls panel vertical footprint.
+- Re-run full Playwright matrix and publish report artifacts.
+- Keep changes staged with rollback-ready release documentation.

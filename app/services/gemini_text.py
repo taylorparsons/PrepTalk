@@ -13,6 +13,7 @@ except ImportError:
 
 
 logger = get_logger()
+_SCORING_ROLES = {"candidate"}
 
 
 def _is_model_unsupported(exc: Exception) -> bool:
@@ -341,19 +342,33 @@ def score_interview_transcript(
 ) -> dict:
     focus = ", ".join(focus_areas or []) or "clarity, confidence, relevance"
     title = role_title or "the target role"
-    lines = []
+    candidate_lines = []
     for entry in transcript:
-        role = entry.get("role", "")
-        text = entry.get("text", "")
-        lines.append(f"{role}: {text}")
-    transcript_text = "\n".join(lines) if lines else "No transcript provided."
+        role = str(entry.get("role", "")).strip().lower()
+        text = str(entry.get("text", "")).strip()
+        if role in _SCORING_ROLES and text:
+            candidate_lines.append(f"candidate: {text}")
+
+    if not candidate_lines:
+        return {
+            "overall_score": 0,
+            "summary": "No candidate response was captured yet, so no answer quality score is available.",
+            "strengths": [],
+            "improvements": [
+                "Submit an answer before requesting a score.",
+                "Use a concise STAR-style response tied to role impact."
+            ],
+            "transcript": list(transcript)
+        }
+
+    transcript_text = "\n".join(candidate_lines)
 
     prompt = f"""You are an interview coach. Score the candidate interview on a 0-100 scale and provide concise feedback. Return JSON only.
 
 Role title: {title}
 Focus areas: {focus}
 
-Transcript:
+Candidate transcript:
 {transcript_text}
 
 Return JSON with keys overall_score (0-100), summary (string), strengths (array), improvements (array)."""

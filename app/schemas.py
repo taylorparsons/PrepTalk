@@ -42,6 +42,7 @@ class VoiceTurnRequest(BaseModel):
     text: str = Field(min_length=1)
     text_model: str | None = None
     tts_model: str | None = None
+    tts_provider: str | None = None
 
 
 class VoiceTurnResponse(BaseModel):
@@ -56,6 +57,7 @@ class VoiceIntroRequest(BaseModel):
     interview_id: str
     text_model: str | None = None
     tts_model: str | None = None
+    tts_provider: str | None = None
 
 
 class VoiceIntroResponse(BaseModel):
@@ -83,6 +85,7 @@ class VoiceHelpRequest(BaseModel):
     answer: str | None = None
     text_model: str | None = None
     tts_model: str | None = None
+    tts_provider: str | None = None
 
 
 class VoiceHelpResponse(BaseModel):

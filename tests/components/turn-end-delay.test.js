@@ -156,6 +156,7 @@ describe('turn end delay', () => {
     await flushAsync();
 
     state.turnAwaitingAnswer = false;
+    window.__e2eUi?.updateTurnSubmitUI?.();
     const recognition = window.__lastRecognition;
     expect(recognition).toBeDefined();
     const result = { 0: { transcript: 'Hello' }, isFinal: true, length: 1 };
@@ -240,5 +241,58 @@ describe('turn end delay', () => {
     await flushAsync();
 
     expect(sendVoiceHelp).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores speech recognition input while help is pending', async () => {
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const state = window.__e2eState;
+    state.interviewId = 'interview-1';
+
+    const startButton = document.querySelector('[data-testid="start-interview"]');
+    startButton.disabled = false;
+    startButton.click();
+    await flushAsync();
+
+    const recognition = window.__lastRecognition;
+    expect(recognition).toBeDefined();
+    state.turnHelpPending = true;
+
+    const noisyResult = { 0: { transcript: 'random background noise and gibberish' }, isFinal: true, length: 1 };
+    recognition.onresult({ resultIndex: 0, results: [noisyResult] });
+
+    expect(state.captionFinalText).toBe('');
+    expect(state.captionDraftText).toBe('');
+    expect(sendVoiceTurnCompletion).not.toHaveBeenCalled();
+    const captionText = document.querySelector('.ui-caption__text');
+    expect(captionText?.textContent).toBe('Captions listening...');
+  });
+
+  it('forces live recovery into turn mode TTS when requested', async () => {
+    window.__APP_CONFIG__.voiceMode = 'live';
+    window.__APP_CONFIG__.voiceOutputMode = 'auto';
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const state = window.__e2eState;
+    const ui = window.__e2eUi;
+    state.interviewId = 'interview-live-1';
+    state.questions = ['Tell me about your experience.'];
+    state.sessionActive = false;
+    ui.updateSessionToolsState();
+
+    const forceTts = document.querySelector('[data-testid="force-tts-recovery"]');
+    expect(forceTts).not.toBeNull();
+    expect(forceTts?.hidden).toBe(false);
+    expect(forceTts?.disabled).toBe(false);
+
+    forceTts.click();
+    await flushAsync();
+
+    expect(sendVoiceIntro).toHaveBeenCalledTimes(1);
+    expect(state.voiceMode).toBe('turn');
+    expect(state.voiceOutputMode).toBe('server');
+    expect(state.sessionActive).toBe(true);
   });
 });

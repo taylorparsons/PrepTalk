@@ -31,6 +31,32 @@ describe('voice layout', () => {
     expect(layout.querySelector('[data-testid="restart-interview-main"]')).toBeTruthy();
   });
 
+  it('places TTS provider control at the top of Extras drawer', () => {
+    window.__E2E__ = true;
+    window.__APP_CONFIG__ = { ttsProvider: 'openai' };
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const drawer = layout.querySelector('[data-testid="session-tools-drawer"]');
+    expect(drawer).toBeTruthy();
+
+    const sections = drawer.querySelectorAll('.ui-drawer__section');
+    expect(sections.length).toBeGreaterThan(0);
+    expect(sections[0].textContent).toContain('TTS provider');
+
+    const providerSelect = drawer.querySelector('[data-testid="tts-provider-select"]');
+    expect(providerSelect).toBeTruthy();
+    expect(providerSelect.value).toBe('openai');
+
+    providerSelect.value = 'gemini';
+    providerSelect.dispatchEvent(new Event('change'));
+    expect(window.__e2eState.ttsProvider).toBe('gemini');
+
+    delete window.__E2E__;
+    delete window.__e2eState;
+    delete window.__e2eUi;
+  });
+
   it('makes the interview questions panel vertically resizable', () => {
     const layout = buildVoiceLayout();
     document.body.appendChild(layout);
@@ -99,6 +125,71 @@ describe('voice layout', () => {
     expect(state.turnSpeaking).toBe(false);
     expect(interrupt.disabled).toBe(true);
     expect(submit.disabled).toBe(false);
+
+    delete window.__E2E__;
+    delete window.__e2eState;
+    delete window.__e2eUi;
+  });
+
+  it('only interrupts live mode when Interrupt is pressed', () => {
+    window.__E2E__ = true;
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const state = window.__e2eState;
+    const ui = window.__e2eUi;
+    const interrupt = layout.querySelector('[data-testid="barge-in-toggle"]');
+
+    let bargeCount = 0;
+    state.transport = {
+      bargeIn: () => {
+        bargeCount += 1;
+      }
+    };
+    state.audioPlayback = {
+      stop: () => {}
+    };
+    state.voiceMode = 'live';
+    state.sessionActive = true;
+    ui.updateSessionToolsState();
+    ui.updateTurnSubmitUI();
+
+    expect(interrupt).toBeTruthy();
+    expect(interrupt.disabled).toBe(false);
+
+    layout.click();
+    expect(bargeCount).toBe(0);
+
+    interrupt.click();
+    expect(bargeCount).toBe(1);
+
+    delete window.__E2E__;
+    delete window.__e2eState;
+    delete window.__e2eUi;
+  });
+
+  it('shows Force TTS recovery only for live sessions with interview context', () => {
+    window.__E2E__ = true;
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const state = window.__e2eState;
+    const ui = window.__e2eUi;
+    const forceTts = layout.querySelector('[data-testid="force-tts-recovery"]');
+
+    expect(forceTts).toBeTruthy();
+    expect(forceTts.hidden).toBe(true);
+
+    state.interviewId = 'interview-live-1';
+    state.questions = ['Tell me about yourself'];
+    state.voiceMode = 'live';
+    ui.updateSessionToolsState();
+    expect(forceTts.hidden).toBe(false);
+    expect(forceTts.disabled).toBe(false);
+
+    state.voiceMode = 'turn';
+    ui.updateSessionToolsState();
+    expect(forceTts.hidden).toBe(true);
 
     delete window.__E2E__;
     delete window.__e2eState;
@@ -237,6 +328,7 @@ describe('voice layout', () => {
     const state = window.__e2eState;
     const ui = window.__e2eUi;
 
+    expect(ui.controlsPanel.hidden).toBe(true);
     expect(ui.transcriptPanel.hidden).toBe(true);
     expect(ui.scorePanel.hidden).toBe(true);
     expect(ui.generateProgress.hidden).toBe(true);
@@ -251,6 +343,10 @@ describe('voice layout', () => {
     expect(ui.generateProgress.hidden).toBe(true);
     expect(ui.generateProgress.classList.contains('ui-radial-progress--active')).toBe(false);
 
+    state.generateStarted = true;
+    ui.updateSessionToolsState();
+    expect(ui.controlsPanel.hidden).toBe(false);
+
     state.sessionActive = true;
     ui.updateSessionToolsState();
     expect(ui.transcriptPanel.hidden).toBe(false);
@@ -260,6 +356,39 @@ describe('voice layout', () => {
     expect(ui.scorePanel.hidden).toBe(false);
     expect(ui.scoreProgress.hidden).toBe(false);
     expect(ui.scoreProgress.classList.contains('ui-radial-progress--active')).toBe(true);
+
+    delete window.__E2E__;
+    delete window.__e2eState;
+    delete window.__e2eUi;
+  });
+
+  it('primes audio on generate click before auto-start flow', async () => {
+    window.__E2E__ = true;
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const state = window.__e2eState;
+    const ui = window.__e2eUi;
+    const generate = layout.querySelector('[data-testid="generate-questions"]');
+
+    expect(state.audioPrimed).toBe(false);
+    expect(generate.disabled).toBe(true);
+
+    Object.defineProperty(ui.resumeInput, 'files', {
+      value: [{ name: 'resume.pdf' }],
+      configurable: true
+    });
+    Object.defineProperty(ui.jobInput, 'files', {
+      value: [{ name: 'job.pdf' }],
+      configurable: true
+    });
+    ui.resumeInput.dispatchEvent(new Event('change'));
+    ui.jobInput.dispatchEvent(new Event('change'));
+    expect(generate.disabled).toBe(false);
+
+    generate.click();
+    await Promise.resolve();
+    expect(state.audioPrimed).toBe(true);
 
     delete window.__E2E__;
     delete window.__e2eState;

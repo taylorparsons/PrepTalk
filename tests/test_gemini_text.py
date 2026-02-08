@@ -69,7 +69,7 @@ def test_score_uses_primary_model_when_supported(monkeypatch):
     result = gemini_text.score_interview_transcript(
         api_key="test",
         model="gemini-2.5-flash",
-        transcript=[{"role": "coach", "text": "Hello", "timestamp": "00:00"}],
+        transcript=[{"role": "candidate", "text": "Hello", "timestamp": "00:00"}],
         role_title=None,
         focus_areas=None
     )
@@ -77,6 +77,65 @@ def test_score_uses_primary_model_when_supported(monkeypatch):
     assert result["overall_score"] == 90
     assert result["summary"] == "Good"
     assert calls == ["gemini-2.5-flash"]
+
+
+def test_score_ignores_non_candidate_turns(monkeypatch):
+    captured = {"prompt": ""}
+
+    def fake_call_gemini(api_key, model, prompt):
+        captured["prompt"] = prompt
+        return '{"overall_score": 87, "summary": "Good", "strengths": ["A"], "improvements": ["B"]}'
+
+    monkeypatch.setattr(gemini_text, "_call_gemini", fake_call_gemini)
+
+    transcript = [
+        {"role": "coach", "text": "Use STAR.", "timestamp": "00:00"},
+        {"role": "coach_feedback", "text": "Try this answer draft.", "timestamp": "00:01"},
+        {"role": "candidate", "text": "I led migration work.", "timestamp": "00:02"},
+        {"role": "candidate", "text": "It reduced incidents by 30%.", "timestamp": "00:03"}
+    ]
+    result = gemini_text.score_interview_transcript(
+        api_key="test",
+        model="gemini-2.5-flash",
+        transcript=transcript,
+        role_title="PM",
+        focus_areas=["Impact"]
+    )
+
+    assert result["overall_score"] == 87
+    assert result["transcript"] == transcript
+    assert "\ncoach:" not in captured["prompt"]
+    assert "\ncoach_feedback:" not in captured["prompt"]
+    assert "candidate: I led migration work." in captured["prompt"]
+    assert "candidate: It reduced incidents by 30%." in captured["prompt"]
+
+
+def test_score_returns_zero_without_candidate_response(monkeypatch):
+    called = {"value": False}
+
+    def fake_call_gemini(*args, **kwargs):
+        called["value"] = True
+        return "{}"
+
+    monkeypatch.setattr(gemini_text, "_call_gemini", fake_call_gemini)
+
+    transcript = [
+        {"role": "coach", "text": "Tell me about yourself.", "timestamp": "00:00"},
+        {"role": "coach_feedback", "text": "Here is an answer example.", "timestamp": "00:01"}
+    ]
+    result = gemini_text.score_interview_transcript(
+        api_key="test",
+        model="gemini-2.5-flash",
+        transcript=transcript,
+        role_title="PM",
+        focus_areas=["Impact"]
+    )
+
+    assert called["value"] is False
+    assert result["overall_score"] == 0
+    assert "No candidate response was captured yet" in result["summary"]
+    assert result["strengths"] == []
+    assert result["transcript"] == transcript
 
 
 def test_generate_questions_coerces_question_objects_to_text(monkeypatch):
