@@ -21,7 +21,7 @@ Script modes (`./run.sh`):
 
 Adapter modes (set in `.env`):
 - `INTERVIEW_ADAPTER=mock`: mock questions, transcript, scoring
-- `INTERVIEW_ADAPTER=gemini`: Gemini text + turn-based TTS coaching (requires `GEMINI_API_KEY`)
+- `INTERVIEW_ADAPTER=gemini`: Gemini text + turn-based TTS coaching (requires `GEMINI_API_KEY`; supports OpenAI or Gemini TTS providers)
 
 ## Environment
 
@@ -34,10 +34,16 @@ Adapter modes (set in `.env`):
 - `GEMINI_TEXT_MODEL`: override text model for turn-based coaching (default `gemini-2.5-flash`)
 - `VOICE_MODE`: `turn` only on `main` (live streaming is disabled)
 - `VOICE_TTS_ENABLED`: enable server TTS for turn mode (default `1` when `INTERVIEW_ADAPTER=gemini`, else `0`)
+- `VOICE_TTS_PROVIDER`: turn-mode TTS provider order (`openai`, `gemini`, or `auto`; default `openai`)
 - `GEMINI_TTS_MODEL`: turn-mode TTS model (default `gemini-2.5-flash-native-audio-preview-12-2025`)
 - `GEMINI_TTS_MODEL_FALLBACKS`: comma-separated fallback TTS models (default `gemini-2.5-pro-preview-tts`)
 - `GEMINI_TTS_VOICE`: voice selection for turn TTS (default `Kore`)
 - `GEMINI_TTS_LANGUAGE`: language code for turn TTS (default `en-US`)
+- `OPENAI_API_KEY`: OpenAI API key for OpenAI TTS (`VOICE_TTS_PROVIDER=openai` or `auto`)
+- `OPENAI_TTS_MODEL`: OpenAI TTS model (default `gpt-4o-mini-tts`)
+- `OPENAI_TTS_VOICE`: OpenAI voice (default `alloy`)
+- `OPENAI_TTS_FORMAT`: OpenAI audio format (default `wav`)
+- `OPENAI_TTS_TIMEOUT_MS`: OpenAI TTS timeout override (default `VOICE_TTS_TIMEOUT_MS`)
 - `VOICE_TTS_TIMEOUT_MS`: per-TTS request timeout (default `20000`)
 - `VOICE_TTS_WAIT_MS`: max wait before returning text-only (default `2500`)
 - `VOICE_TURN_END_DELAY_MS`: minimum answer time before enabling submit / checking if the candidate is done (default `10000`)
@@ -56,19 +62,24 @@ Adapter modes (set in `.env`):
 - `E2E_BASE_URL`: override Playwright base URL (default `http://localhost:8000`)
 - `E2E_LIVE`: set to `1` to run the optional live Gemini Playwright test
 
-Example `.env` for turn mode with browser TTS:
+Example `.env` for turn mode with server TTS (OpenAI first, Gemini fallback):
 ```bash
 GEMINI_API_KEY=your-key
+OPENAI_API_KEY=your-openai-key
 INTERVIEW_ADAPTER=gemini
 GEMINI_INTERVIEW_TEXT_MODEL=gemini-3-pro-preview
 GEMINI_TEXT_MODEL=gemini-2.5-flash
 VOICE_MODE=turn
 VOICE_TTS_ENABLED=1
+VOICE_TTS_PROVIDER=openai
 VOICE_TTS_TIMEOUT_MS=20000
 VOICE_TTS_WAIT_MS=2500
 VOICE_TURN_END_DELAY_MS=10000
 VOICE_TURN_COMPLETION_CONFIDENCE=0.9
 VOICE_TURN_COMPLETION_COOLDOWN_MS=0
+OPENAI_TTS_MODEL=gpt-4o-mini-tts
+OPENAI_TTS_VOICE=alloy
+OPENAI_TTS_FORMAT=wav
 GEMINI_TTS_MODEL=gemini-2.5-flash-native-audio-preview-12-2025
 GEMINI_TTS_MODEL_FALLBACKS=gemini-2.5-pro-preview-tts
 GEMINI_TTS_VOICE=Kore
@@ -79,6 +90,11 @@ PORT=8000
 ```
 
 Turn mode flow: the UI enables **Submit Answer** as soon as the coach finishes speaking and there is draft text. Completion checks still run in the background to assess whether the response looks attempted or complete.
+
+Provider fallback behavior:
+- `VOICE_TTS_PROVIDER=openai`: OpenAI first, Gemini fallback
+- `VOICE_TTS_PROVIDER=gemini`: Gemini first, OpenAI fallback
+- `VOICE_TTS_PROVIDER=auto`: OpenAI first when `OPENAI_API_KEY` is set, otherwise Gemini first
 
 ## AI Studio setup
 
