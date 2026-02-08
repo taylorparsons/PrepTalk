@@ -1,6 +1,7 @@
 # PrepTalk
 
 Voice-first interview practice app for the Gemini hackathon.
+> License: All rights reserved. Source available for viewing and evaluation only.
 
 ## Quickstart
 

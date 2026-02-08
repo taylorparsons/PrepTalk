@@ -5,6 +5,12 @@ dist/
 .vite/
 .env
 .env.bac
+.env.*
+*.key
+*.pem
+id_rsa
+service_account*.json
+credentials.json
 .venv/
 __pycache__/
 *.pyc
