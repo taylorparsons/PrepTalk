@@ -11,6 +11,56 @@ Voice-first interview practice app for the Gemini hackathon.
 
 Developer guide: `DEVELOPER_GUIDE.md`
 
+## 5-Minute Local Setup
+
+### Prerequisites
+
+- Python 3.11+
+- Node.js 20+ and npm
+
+### Option A: Fastest local run (mock mode, no API keys)
+
+```bash
+cat > .env <<'EOF'
+INTERVIEW_ADAPTER=mock
+VOICE_MODE=turn
+PORT=8000
+EOF
+
+./run.sh install
+./run.sh ui
+```
+
+### Option B: Full voice run (Gemini text + OpenAI TTS with Gemini fallback)
+
+```bash
+cat > .env <<'EOF'
+INTERVIEW_ADAPTER=gemini
+GEMINI_API_KEY=your-gemini-key
+OPENAI_API_KEY=your-openai-key
+VOICE_MODE=turn
+VOICE_TTS_ENABLED=1
+VOICE_TTS_PROVIDER=openai
+OPENAI_TTS_MODEL=gpt-4o-mini-tts
+GEMINI_TTS_MODEL=gemini-2.5-flash-native-audio-preview-12-2025
+GEMINI_TTS_MODEL_FALLBACKS=gemini-2.5-pro-preview-tts
+PORT=8000
+EOF
+
+./run.sh install
+./run.sh ui
+```
+
+### Verify it is running
+
+```bash
+curl -sS http://127.0.0.1:8000/health
+```
+
+Then open:
+- App: `http://127.0.0.1:8000`
+- API docs: `http://127.0.0.1:8000/docs`
+
 ## Run Modes
 
 Script modes (`./run.sh`):
