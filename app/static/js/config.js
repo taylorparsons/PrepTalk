@@ -44,6 +44,7 @@ export function getAppConfig() {
       voiceTurnEndDelayMs: 10000,
       voiceTurnCompletionConfidence: 0.9,
       voiceTurnCompletionCooldownMs: 0,
+      telemetryConsentRequired: false,
       userId: 'local'
     };
   }
@@ -109,6 +110,7 @@ export function getAppConfig() {
     voiceTurnCompletionCooldownMs: Number.isFinite(config.voiceTurnCompletionCooldownMs)
       ? config.voiceTurnCompletionCooldownMs
       : 0,
+    telemetryConsentRequired: parseBoolean(config.telemetryConsentRequired),
     userId: effectiveUserId || 'local'
   };
 }

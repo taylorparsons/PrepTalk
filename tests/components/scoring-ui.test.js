@@ -10,6 +10,7 @@ vi.mock('../../app/static/js/api/client.js', () => ({
   getLogSummary: vi.fn().mockResolvedValue({}),
   listSessions: vi.fn(),
   logClientEvent: vi.fn(),
+  logJourneyEvent: vi.fn().mockResolvedValue({ status: 'ok' }),
   restartInterview: vi.fn(),
   scoreInterview: vi.fn(),
   sendVoiceFeedback: vi.fn(),

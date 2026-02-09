@@ -100,6 +100,16 @@ describe('voice layout', () => {
     delete window.__e2eUi;
   });
 
+  it('shows an analytics privacy disclosure in candidate setup', () => {
+    const layout = buildVoiceLayout();
+    document.body.appendChild(layout);
+
+    const disclosure = layout.querySelector('[data-testid="analytics-disclosure"]');
+    expect(disclosure).toBeTruthy();
+    expect(disclosure.textContent.toLowerCase()).toContain('privacy notice');
+    expect(disclosure.textContent.toLowerCase()).toContain('anonymized journey events');
+  });
+
   it('interrupts coach speech in turn mode without errors', () => {
     window.__E2E__ = true;
     const layout = buildVoiceLayout();

@@ -1309,3 +1309,122 @@ Acceptance / test:
 - Session Controls no longer render rubric toggle/popover in desktop or mobile flows.
 - Controls panel footprint is reduced versus prior spacing.
 - Playwright suites pass across non-live desktop/mobile/menu/token and all live variants with refreshed reports.
+
+## D-20260209-0848
+Date: 2026-02-09 08:48
+Inputs: CR-20260209-0846
+PRD: Functional requirements (telemetry/analytics)
+
+Decision:
+Implement journey KPI tracking by extending the existing `/api/telemetry` path (no new endpoint), adding explicit UI journey events, and optionally forwarding those events to GA4 Measurement Protocol when `GA4_MEASUREMENT_ID` and `GA4_API_SECRET` are configured.
+
+Rationale:
+Reusing the existing telemetry path minimizes delivery risk and deployment surface. Optional GA4 forwarding supports dashboarding/funnel analysis in Google while preserving local/log-based analytics by default.
+
+Alternatives considered:
+- Add a separate analytics service and endpoint (rejected: unnecessary complexity and rollout risk).
+- Client-only GA tags without server logging (rejected: weaker backend observability and less robust traceability).
+
+Acceptance / test:
+- UI emits journey events for setup, session start, speaking/submission, scoring, and export.
+- Backend accepts enriched telemetry payload fields and logs `event=journey_kpi`.
+- API tests and UI tests pass with the enriched schema.
+
+## D-20260209-0929
+Date: 2026-02-09 09:29
+Inputs: CR-20260209-0920
+PRD: Functional requirements (telemetry/analytics)
+
+Decision:
+Prioritize Cloud Run journey KPI export to BigQuery using a Cloud Logging sink and dataset in `us-west1`, and defer Dialogflow CX export wiring until a CX agent is in active use.
+
+Rationale:
+The user selected BigQuery as the immediate data source. Exporting existing journey logs provides immediate SQL analytics without requiring CX migration or additional runtime changes.
+
+Alternatives considered:
+- Block on Dialogflow CX-first setup (rejected: slower path to KPI visibility).
+- Keep logs only in Cloud Logging (rejected: weaker SQL reporting/funnel analysis).
+
+Acceptance / test:
+- BigQuery dataset exists for analytics.
+- Logging sink exists and has dataset writer permissions.
+- Journey KPI rows are queryable in BigQuery.
+
+## D-20260209-1116
+Date: 2026-02-09 11:16
+Inputs: CR-20260209-1116
+PRD: FR-APP-013 (resume redaction)
+
+Decision:
+Change resume redaction scope to preserve location information while continuing to redact name suffix after first token, phone, email, and LinkedIn handle. Also support name redaction when PDF extraction merges name and contact fields onto one line.
+
+Rationale:
+The user explicitly requested that location not be redacted. The inline name/contact edge case was leaking full names in production excerpts and requires a prefix-name matcher rather than line-level gating.
+
+Alternatives considered:
+- Keep location redaction for maximum privacy (rejected: conflicts with explicit user requirement).
+- Disable all redaction (rejected: would expose phone/email/LinkedIn and prior privacy guarantees).
+
+Acceptance / test:
+- Location text such as `Seattle, WA` and `Seattle, Washington` remains unchanged in redacted output.
+- Phone/email/LinkedIn remain redacted.
+- Header names redact to `<first token> [redacted]` even when name + contact are on one line.
+- `pytest -q tests/test_pii_redaction.py tests/test_api_interviews.py` passes.
+
+## D-20260209-1206
+Date: 2026-02-09 12:06
+Inputs: CR-20260209-1206
+PRD: FR-APP-014 (journey KPI telemetry rollout status)
+
+Decision:
+Mark production GA4 telemetry wiring (`T-013`) and live KPI funnel validation (`T-009`) as complete based on fresh production log evidence and BigQuery counts, while keeping Dialogflow CX export and GA4 user-data acknowledgement/privacy disclosure as explicit NEXT items.
+
+Rationale:
+The user asked to update status and continue execution. Current evidence shows production `ga4_forward status=sent` and queryable journey funnel milestones, so those tasks are complete. CX adoption and GA4 policy acknowledgement remain external rollout steps and should stay open.
+
+Alternatives considered:
+- Keep T-009/T-013 open until a separate dashboard is built (rejected: completion criteria were log/query evidence, which is now satisfied).
+- Mark T-012 done without explicit acknowledgement/privacy-language evidence (rejected: would be unverifiable).
+
+Acceptance / test:
+- Production logs include `event=ga4_forward status=sent` for journey events on `preptalk-west`.
+- BigQuery query returns non-zero counts for `journey_app_open`, `journey_resume_loaded`, `journey_job_loaded`, `journey_session_started`, `journey_score_generated`, and `journey_export_completed`.
+
+## D-20260209-1210
+Date: 2026-02-09 12:10
+Inputs: CR-20260209-1206
+PRD: FR-APP-014 (telemetry rollout privacy checklist)
+
+Decision:
+Implement end-user analytics disclosure text directly in the Candidate Setup UI and keep GA4 User Data Collection Acknowledgement as a separate manual rollout step (`T-012`) because it must be completed in GA Admin by a property owner.
+
+Rationale:
+This keeps the code-side privacy disclosure shippable and testable today while preserving an explicit manual gate for GA policy compliance.
+
+Alternatives considered:
+- Leave disclosure documentation-only with no in-app copy (rejected: weaker end-user visibility).
+- Mark T-012 done after code changes alone (rejected: GA Admin acknowledgement is an external required action).
+
+Acceptance / test:
+- Candidate Setup renders analytics/privacy disclosure copy (`data-testid=\"analytics-disclosure\"`).
+- Component tests assert disclosure presence.
+- `docs/analytics-kpi.md` lists both in-app disclosure and GA Admin acknowledgement as rollout prerequisites.
+
+## D-20260209-1221
+Date: 2026-02-09 12:21
+Inputs: CR-20260209-1221
+PRD: FR-APP-014 (GA4 rollout checklist)
+
+Decision:
+Mark `T-012` complete based on direct user confirmation that GA4 User Data Collection Acknowledgement was already completed, and keep screenshot capture as an optional evidence hardening step.
+
+Rationale:
+The acknowledgement is a manual GA Admin control that cannot be read programmatically from this environment; the authoritative source is the property owner’s statement.
+
+Alternatives considered:
+- Keep T-012 open until screenshot is provided (rejected: user has already confirmed completion and requested continued progress).
+- Mark T-012 complete without recording provenance (rejected: weak audit trail).
+
+Acceptance / test:
+- Task list shows `T-012` as done with user-confirmed completion note.
+- Progress log records that completion is based on user attestation.

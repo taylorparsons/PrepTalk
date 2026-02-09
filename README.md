@@ -107,6 +107,8 @@ Adapter modes (set in `.env`):
 - `SESSION_STORE_DIR`: session storage directory (default `app/session_store`)
 - `APP_USER_ID`: default user id for session storage (default `local`)
 - `LOG_DIR`: directory for archived logs (default `logs`)
+- `GA4_MEASUREMENT_ID`: optional Google Analytics 4 measurement id (enables server-side telemetry forwarding)
+- `GA4_API_SECRET`: optional GA4 Measurement Protocol API secret (must be set with `GA4_MEASUREMENT_ID`)
 - `PORT`: backend server port (default `8000`)
 - `UI_PORT`: static UI port when no backend is present (default `5173`)
 - `RELOAD`: set to `0` to disable uvicorn reload in `./run.sh ui`
@@ -147,6 +149,32 @@ Provider fallback behavior:
 - `VOICE_TTS_PROVIDER=gemini`: Gemini first, OpenAI fallback
 - `VOICE_TTS_PROVIDER=auto`: OpenAI first when `OPENAI_API_KEY` is set, otherwise Gemini first
 
+## Journey KPI telemetry
+
+PrepTalk emits client-side journey events to `POST /api/telemetry` and logs `event=journey_kpi` in `logs/app.log`.
+
+Tracked funnel events:
+- `journey_app_open`
+- `journey_resume_loaded`
+- `journey_job_loaded`
+- `journey_questions_requested`
+- `journey_questions_generated`
+- `journey_session_started`
+- `journey_candidate_spoke`
+- `journey_answer_submitted`
+- `journey_help_requested`
+- `journey_score_generated`
+- `journey_export_requested`
+- `journey_export_completed`
+
+Enable GA4 forwarding (optional):
+```bash
+GA4_MEASUREMENT_ID=G-XXXXXXXXXX
+GA4_API_SECRET=your_measurement_protocol_secret
+```
+
+When enabled, telemetry events are forwarded server-side to GA4 using Measurement Protocol.
+
 ## AI Studio setup
 
 See `docs/ai-studio-setup.md` for AI Studio project/key setup and shared endpoint notes.
@@ -154,6 +182,10 @@ See `docs/ai-studio-setup.md` for AI Studio project/key setup and shared endpoin
 ## Cloud Run deployment (optional)
 
 See `docs/cloud-run-deploy.md` for Cloud Run deployment steps and update options.
+
+## Analytics setup
+
+See `docs/analytics-kpi.md` for KPI event mapping and GA4 setup.
 
 ## FastAPI URLs
 

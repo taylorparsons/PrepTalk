@@ -2,11 +2,11 @@
 
 Status: Done
 Created: 2026-02-06 14:40
-Inputs: CR-20260206-1432
-Decisions: D-20260206-1438
+Inputs: CR-20260206-1432, CR-20260209-1116
+Decisions: D-20260206-1438, D-20260209-1116
 
 ## Summary
-Protect public test deployments with token access control and reduce resume PII exposure by redacting sensitive fields before interview generation/storage while keeping first-name personalization.
+Protect public test deployments with token access control and reduce resume PII exposure by redacting sensitive fields before interview generation/storage while keeping first-name personalization and preserving location text.
 
 ## User Stories & Acceptance
 
@@ -32,8 +32,8 @@ Narrative:
 - As the app owner, I want sensitive resume fields redacted before model calls while preserving first-name personalization.
 
 Acceptance scenarios:
-1. Given resume text with phone/email/location/linkedin handle, When interview prep runs, Then returned/stored resume excerpt redacts those fields. (Verifies: FR-005)
-2. Given a resume name header line, When redaction runs, Then the first token remains and remaining name tokens are redacted. (Verifies: FR-006)
+1. Given resume text with phone/email/linkedin handle, When interview prep runs, Then returned/stored resume excerpt redacts those fields while preserving location text. (Verifies: FR-005)
+2. Given a resume name header line (including inline name+contact extraction), When redaction runs, Then the first token remains and remaining name tokens are redacted. (Verifies: FR-006)
 
 ## Requirements
 
@@ -42,11 +42,12 @@ Functional requirements:
 - FR-002: API routes under `/api` must enforce the same access token and return 401 on missing/invalid token. (Sources: CR-20260206-1432; D-20260206-1438)
 - FR-003: `/ws/live` must enforce the same access token at connect time. (Sources: CR-20260206-1432; D-20260206-1438)
 - FR-004: Token entries may optionally map to server user IDs using `token:user_id`; mapped ID takes precedence for server-side user resolution. (Sources: CR-20260206-1432; D-20260206-1438)
-- FR-005: Resume PII redaction must run before interview question generation and persistence, covering email/phone/location/linkedin handle/address-like fields. (Sources: CR-20260206-1432; D-20260206-1438)
-- FR-006: Resume name redaction must preserve the first name token in the header line while redacting the remainder. (Sources: CR-20260206-1432; D-20260206-1438)
+- FR-005: Resume PII redaction must run before interview question generation and persistence, covering email/phone/linkedin handle while preserving location information. (Sources: CR-20260206-1432, CR-20260209-1116; D-20260206-1438, D-20260209-1116)
+- FR-006: Resume name redaction must preserve the first name token in the header line while redacting the remainder, including inline header/contact extraction cases. (Sources: CR-20260206-1432, CR-20260209-1116; D-20260206-1438, D-20260209-1116)
 
 ## Edge cases
 - Access control disabled (`APP_ACCESS_TOKENS` unset) keeps current open behavior. (Verifies: FR-001, FR-002, FR-003)
 - Invalid token in query/header/cookie returns auth failure without using fallback IDs. (Verifies: FR-001, FR-002, FR-003)
 - Token without mapped user ID continues existing user-id cookie/header behavior. (Verifies: FR-004)
+- Location values in resumes remain visible in excerpts and model input text. (Verifies: FR-005)
 - Redaction toggle can be disabled via `APP_REDACT_RESUME_PII=0`. (Verifies: FR-005, FR-006)

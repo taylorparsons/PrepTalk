@@ -39,6 +39,10 @@ class AppSettings:
     live_resume_enabled: bool
     access_tokens: tuple[str, ...]
     redact_resume_pii: bool
+    ga4_measurement_id: str | None
+    ga4_api_secret: str | None
+    ga4_enabled: bool
+    telemetry_consent_required: bool
 
 
 def _env_flag(name: str, default: str = "0") -> bool:
@@ -135,6 +139,8 @@ def load_settings() -> AppSettings:
     voice_turn_end_delay_ms = _env_int("VOICE_TURN_END_DELAY_MS", 10000)
     voice_turn_completion_confidence = _env_float("VOICE_TURN_COMPLETION_CONFIDENCE", 0.9)
     voice_turn_completion_cooldown_ms = _env_int("VOICE_TURN_COMPLETION_COOLDOWN_MS", 0)
+    ga4_measurement_id = (os.getenv("GA4_MEASUREMENT_ID") or "").strip() or None
+    ga4_api_secret = (os.getenv("GA4_API_SECRET") or "").strip() or None
     return AppSettings(
         adapter=adapter,
         live_model=live_model,
@@ -167,5 +173,9 @@ def load_settings() -> AppSettings:
         user_id=os.getenv("APP_USER_ID", "local"),
         live_resume_enabled=_env_flag("GEMINI_LIVE_RESUME", "1"),
         access_tokens=tuple(_env_list("APP_ACCESS_TOKENS")),
-        redact_resume_pii=_env_flag("APP_REDACT_RESUME_PII", "1")
+        redact_resume_pii=_env_flag("APP_REDACT_RESUME_PII", "1"),
+        ga4_measurement_id=ga4_measurement_id,
+        ga4_api_secret=ga4_api_secret,
+        ga4_enabled=bool(ga4_measurement_id and ga4_api_secret),
+        telemetry_consent_required=_env_flag("APP_TELEMETRY_REQUIRE_CONSENT", "0")
     )

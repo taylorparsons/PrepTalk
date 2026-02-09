@@ -10,6 +10,121 @@ function getUserId() {
   return config.userId || 'local';
 }
 
+const ANON_ID_STORAGE_KEY = 'preptalk_telemetry_anonymous_id';
+const FIRST_SEEN_STORAGE_KEY = 'preptalk_telemetry_first_seen_at';
+const TELEMETRY_CONSENT_STORAGE_KEY = 'preptalk_telemetry_consent';
+
+function safeGetStorage(key) {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    return window.localStorage.getItem(key);
+  } catch (error) {
+    return null;
+  }
+}
+
+function safeSetStorage(key, value) {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    window.localStorage.setItem(key, value);
+  } catch (error) {
+    // Ignore storage errors in privacy-restricted contexts.
+  }
+}
+
+function safeRemoveStorage(key) {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    window.localStorage.removeItem(key);
+  } catch (error) {
+    // Ignore storage errors in privacy-restricted contexts.
+  }
+}
+
+function normalizeTelemetryConsent(value) {
+  const cleaned = String(value || '').trim().toLowerCase();
+  if (cleaned === 'granted' || cleaned === 'accepted' || cleaned === 'yes' || cleaned === 'true' || cleaned === '1') {
+    return 'granted';
+  }
+  if (cleaned === 'denied' || cleaned === 'declined' || cleaned === 'no' || cleaned === 'false' || cleaned === '0') {
+    return 'denied';
+  }
+  return 'unknown';
+}
+
+function isTelemetryConsentRequired() {
+  const config = getAppConfig();
+  return config.telemetryConsentRequired === true;
+}
+
+export function getTelemetryConsentState() {
+  if (!isTelemetryConsentRequired()) {
+    return 'granted';
+  }
+  const stored = safeGetStorage(TELEMETRY_CONSENT_STORAGE_KEY);
+  return normalizeTelemetryConsent(stored);
+}
+
+export function setTelemetryConsentState(value) {
+  const normalized = normalizeTelemetryConsent(value);
+  if (normalized === 'unknown') {
+    safeRemoveStorage(TELEMETRY_CONSENT_STORAGE_KEY);
+    return 'unknown';
+  }
+  safeSetStorage(TELEMETRY_CONSENT_STORAGE_KEY, normalized);
+  return normalized;
+}
+
+export function canSendTelemetry() {
+  if (!isTelemetryConsentRequired()) {
+    return true;
+  }
+  return getTelemetryConsentState() === 'granted';
+}
+
+function createAnonymousId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  const seed = Math.random().toString(36).slice(2, 10);
+  return `anon-${Date.now()}-${seed}`;
+}
+
+function getTelemetryIdentity() {
+  let anonymousId = safeGetStorage(ANON_ID_STORAGE_KEY);
+  if (!anonymousId) {
+    anonymousId = createAnonymousId();
+    safeSetStorage(ANON_ID_STORAGE_KEY, anonymousId);
+  }
+  let newUser = false;
+  const firstSeen = safeGetStorage(FIRST_SEEN_STORAGE_KEY);
+  if (!firstSeen) {
+    newUser = true;
+    safeSetStorage(FIRST_SEEN_STORAGE_KEY, new Date().toISOString());
+  }
+  return { anonymousId, newUser };
+}
+
+function sanitizeProperties(properties) {
+  if (!properties || typeof properties !== 'object') {
+    return undefined;
+  }
+  const output = {};
+  Object.entries(properties).forEach(([key, value]) => {
+    if (!key) return;
+    if (value === null || value === undefined) return;
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      output[key] = value;
+      return;
+    }
+    output[key] = String(value);
+  });
+  if (Object.keys(output).length === 0) {
+    return undefined;
+  }
+  return output;
+}
+
 async function handleResponse(response) {
   if (response.ok) {
     return response.json();
@@ -213,10 +328,26 @@ export async function getInterviewSummary({ interviewId }) {
   return handleResponse(response);
 }
 
-export async function logClientEvent({ event, interviewId, sessionId, state, detail } = {}) {
+export async function logClientEvent({
+  event,
+  interviewId,
+  sessionId,
+  state,
+  detail,
+  category,
+  step,
+  value,
+  properties,
+  anonymousId,
+  newUser
+} = {}) {
   if (!event) {
     throw new Error('event is required');
   }
+  if (!canSendTelemetry()) {
+    return { status: 'skipped', reason: 'consent_not_granted' };
+  }
+  const normalizedProperties = sanitizeProperties(properties);
   const response = await fetch(`${getApiBase()}/telemetry`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
@@ -225,11 +356,43 @@ export async function logClientEvent({ event, interviewId, sessionId, state, det
       interview_id: interviewId,
       session_id: sessionId,
       state,
-      detail
+      detail,
+      category,
+      step,
+      value,
+      properties: normalizedProperties,
+      anonymous_id: anonymousId,
+      new_user: typeof newUser === 'boolean' ? newUser : undefined
     })
   });
 
   return handleResponse(response);
+}
+
+export async function logJourneyEvent({
+  event,
+  interviewId,
+  sessionId,
+  state,
+  detail,
+  step,
+  value,
+  properties
+} = {}) {
+  const identity = getTelemetryIdentity();
+  return logClientEvent({
+    event,
+    interviewId,
+    sessionId,
+    state,
+    detail,
+    category: 'journey',
+    step: step || event,
+    value,
+    properties,
+    anonymousId: identity.anonymousId,
+    newUser: identity.newUser
+  });
 }
 
 export async function getLogSummary() {

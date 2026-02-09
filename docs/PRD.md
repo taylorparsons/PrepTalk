@@ -1,7 +1,7 @@
 # PRD: PrepTalk
 
 Status: Active
-Updated: 2026-02-06 20:20
+Updated: 2026-02-09 11:16
 Inputs: CR-20260128-1409
 Decisions: D-20260128-1410
 
@@ -39,8 +39,9 @@ Voice-first interview practice app for the Gemini hackathon. (Sources: CR-202601
 - FR-APP-010: Turn mode supports Interrupt to cancel coach speech and re-enable interaction without errors. (Sources: CR-20260205-2138; D-20260205-2138) Implemented in: app/static/js/ui.js, app/static/js/transport.js, app/services/gemini_live.py
 - FR-APP-011: Turn-mode coaching audio is iOS-hardened: frontend treats server playback as successful only on real `playing`, primes audio on Generate/Start user gestures for auto-start reliability, backend normalizes PCM/L16 audio to WAV for browser playback, and TTS wait handling allows slow responses to complete within timeout budget before returning without audio. (Sources: CR-20260205-1701, CR-20260205-1959, CR-20260206-1751; D-20260205-1702, D-20260205-2012, D-20260206-1753) Implemented in: app/static/js/ui.js, app/services/gemini_tts.py, app/services/interview_service.py
 - FR-APP-012: Public deployments can be token-gated via `APP_ACCESS_TOKENS` across `/`, `/api/*`, and `/ws/live`, with optional `token:user_id` mapping and cookie reuse after initial entry. (Sources: CR-20260206-1432, CR-20260206-1716; D-20260206-1438, D-20260206-1720) Implemented in: app/access_control.py, app/main.py, app/api.py, app/ws.py, app/templates/access-token.html
-- FR-APP-013: Resume text is privacy-redacted before interview generation/storage (email/phone/location/linkedin/address), preserving the first name token in the header line. (Sources: CR-20260206-1432; D-20260206-1438) Implemented in: app/services/pii_redaction.py, app/services/interview_service.py
+- FR-APP-013: Resume text is privacy-redacted before interview generation/storage for name (first token retained), phone, email, and LinkedIn handle, while preserving location information. (Sources: CR-20260206-1432, CR-20260209-1116; D-20260206-1438, D-20260209-1116) Implemented in: app/services/pii_redaction.py, app/services/interview_service.py
 - FR-UI-002: After question generation, the session auto-starts with coach intro; Session Controls are hidden before generation, then shown in compact sticky form with top-anchored header/menu on desktop and mobile, without a rubric toggle/popover in the controls panel. (Sources: CR-20260206-1700, CR-20260206-1716, CR-20260206-2020; D-20260206-1720, D-20260206-2021) Implemented in: app/static/js/ui.js, app/static/css/components.css, docs/specs/20260206-session-controls-autostart/spec.md
+- FR-APP-014: The app captures user-journey KPI telemetry across setup, session, scoring, and export using `/api/telemetry`, including structured journey logs (`event=journey_kpi`), BigQuery export via Cloud Logging sink, optional GA4 forwarding when configured, and a Candidate Setup disclosure that anonymized telemetry is collected for product analytics. (Sources: CR-20260209-0846, CR-20260209-0920, CR-20260209-1206; D-20260209-0848, D-20260209-0929, D-20260209-1210) Implemented in: app/static/js/ui.js, app/static/js/api/client.js, app/api.py, app/schemas.py, app/services/ga4_telemetry.py, app/static/css/components.css, docs/specs/20260209-kpi-journey-telemetry/spec.md, docs/analytics-kpi.md
 
 ## Non-functional requirements (shipped)
 - NFR-APP-001: The repo supports local development via `./run.sh` scripts (install, run UI, unit tests, e2e). (Sources: CR-20260128-1409; D-20260128-1410)

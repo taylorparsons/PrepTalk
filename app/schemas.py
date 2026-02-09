@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -217,6 +219,12 @@ class ClientEventRequest(BaseModel):
     session_id: str | None = None
     state: str | None = None
     detail: str | None = None
+    category: str | None = None
+    step: str | None = None
+    value: float | None = None
+    properties: dict[str, Any] | None = None
+    anonymous_id: str | None = None
+    new_user: bool | None = None
 
 
 class ClientEventResponse(BaseModel):

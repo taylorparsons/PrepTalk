@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 
 from fastapi import HTTPException, Request
 from fastapi import status as http_status
@@ -19,6 +20,7 @@ class AccessResolution:
     required: bool
     authorized: bool
     token: str | None
+    token_id: str | None
     user_id: str | None
     source: str | None
     reason: str | None
@@ -46,6 +48,14 @@ def _parse_token_pairs(settings: AppSettings) -> dict[str, str | None]:
     return pairs
 
 
+def _derive_token_id(token: str | None) -> str | None:
+    normalized = _normalize_token(token)
+    if not normalized:
+        return None
+    digest = hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:10]
+    return f"tok_{digest}"
+
+
 def is_access_control_enabled(settings: AppSettings) -> bool:
     return bool(_parse_token_pairs(settings))
 
@@ -57,6 +67,7 @@ def _resolve_from_value(token_value: str | None, settings: AppSettings, source: 
             required=False,
             authorized=True,
             token=None,
+            token_id=None,
             user_id=None,
             source=None,
             reason="not_required",
@@ -68,6 +79,7 @@ def _resolve_from_value(token_value: str | None, settings: AppSettings, source: 
             required=True,
             authorized=False,
             token=None,
+            token_id=None,
             user_id=None,
             source=source,
             reason="missing",
@@ -78,6 +90,7 @@ def _resolve_from_value(token_value: str | None, settings: AppSettings, source: 
             required=True,
             authorized=False,
             token=token,
+            token_id=_derive_token_id(token),
             user_id=None,
             source=source,
             reason="invalid",
@@ -87,6 +100,7 @@ def _resolve_from_value(token_value: str | None, settings: AppSettings, source: 
         required=True,
         authorized=True,
         token=token,
+        token_id=_derive_token_id(token),
         user_id=token_map[token],
         source=source,
         reason="ok",
@@ -131,4 +145,5 @@ def require_api_access(request: Request) -> AccessResolution:
         )
     request.state.access_user_id = access.user_id
     request.state.access_token = access.token
+    request.state.access_token_id = access.token_id
     return access

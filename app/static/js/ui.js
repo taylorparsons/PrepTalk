@@ -13,6 +13,7 @@ import {
   getInterviewSummary,
   listSessions,
   logClientEvent,
+  logJourneyEvent,
   restartInterview,
   scoreInterview,
   sendVoiceHelp,
@@ -59,6 +60,8 @@ const TURN_HELP_HINT_DELAY_MS = 12000;
 const TURN_EMPTY_SUBMIT_FALLBACK = 'No spoken answer provided. Please continue.';
 const SPEECH_RECOGNITION_WATCHDOG_MS = 6000;
 const SPEECH_RECOGNITION_STALL_MS = 12000;
+const SPEECH_RECOGNITION_RESTART_MS = 250;
+const SPEECH_RECOGNITION_NO_SPEECH_COOLDOWN_MS = 5000;
 const TURN_PLAYBACK_WATCHDOG_MS = 300000;
 const TURN_SPEECH_START_WATCHDOG_MS = 2500;
 const TURN_SPEECH_MIN_WATCHDOG_MS = 8000;
@@ -367,6 +370,102 @@ function sendClientEvent(state, event, { detail, status } = {}) {
     sessionId: state.sessionId,
     state: status,
     detail
+  });
+  if (result && typeof result.catch === 'function') {
+    result.catch(() => {
+      // Best-effort telemetry; ignore failures.
+    });
+  }
+}
+
+function normalizeJourneyVoiceMode(value) {
+  const cleaned = String(value || '').trim().toLowerCase();
+  if (cleaned === 'live' || cleaned === 'turn') {
+    return cleaned;
+  }
+  return 'turn';
+}
+
+function normalizeJourneyVoiceOutputMode(value) {
+  const cleaned = String(value || '').trim().toLowerCase();
+  if (cleaned === 'browser' || cleaned === 'server' || cleaned === 'auto') {
+    return cleaned;
+  }
+  return 'auto';
+}
+
+function normalizeJourneyTtsProvider(value) {
+  const cleaned = String(value || '').trim().toLowerCase();
+  if (cleaned === 'openai' || cleaned === 'gemini' || cleaned === 'auto') {
+    return cleaned;
+  }
+  return 'openai';
+}
+
+function deriveVoiceAgent(state) {
+  if (!state) return null;
+  const mode = normalizeJourneyVoiceMode(state.voiceMode);
+  if (mode === 'live') {
+    return 'gemini_live';
+  }
+  const provider = normalizeJourneyTtsProvider(state.ttsProvider);
+  if (provider === 'auto') {
+    return 'auto_tts';
+  }
+  return `${provider}_tts`;
+}
+
+function buildJourneyTelemetryProperties(state, properties) {
+  const context = {};
+  if (state?.adapter) {
+    context.adapter = String(state.adapter).trim();
+  }
+  if (state?.voiceMode) {
+    context.voice_mode = normalizeJourneyVoiceMode(state.voiceMode);
+  }
+  if (state?.voiceOutputMode) {
+    context.voice_output_mode = normalizeJourneyVoiceOutputMode(state.voiceOutputMode);
+  }
+  if (state?.ttsProvider) {
+    context.tts_provider = normalizeJourneyTtsProvider(state.ttsProvider);
+  }
+  if (state?.textModel) {
+    context.text_model = String(state.textModel).trim();
+  }
+  if (state?.ttsModel) {
+    context.tts_model = String(state.ttsModel).trim();
+  }
+  if (state?.liveModel) {
+    context.live_model = String(state.liveModel).trim();
+  }
+  const voiceAgent = deriveVoiceAgent(state);
+  if (voiceAgent) {
+    context.voice_agent = voiceAgent;
+  }
+  const eventProperties = properties && typeof properties === 'object' ? properties : {};
+  return { ...context, ...eventProperties };
+}
+
+function sendJourneyEvent(
+  state,
+  event,
+  {
+    detail,
+    status,
+    step,
+    value,
+    properties
+  } = {}
+) {
+  const result = logJourneyEvent({
+    event,
+    interviewId: state?.interviewId || null,
+    sessionId: state?.sessionId || null,
+    state: status,
+    detail,
+    step,
+    value,
+    properties: buildJourneyTelemetryProperties(state, properties)
   });
   if (result && typeof result.catch === 'function') {
     result.catch(() => {
@@ -870,6 +969,11 @@ function buildSetupPanel(state, ui) {
   status.className = 'ui-field__help ui-state-text';
   status.textContent = 'Waiting for documents.';
 
+  const analyticsDisclosure = document.createElement('p');
+  analyticsDisclosure.className = 'ui-privacy-note';
+  analyticsDisclosure.setAttribute('data-testid', 'analytics-disclosure');
+  analyticsDisclosure.textContent = 'Privacy notice: PrepTalk records anonymized journey events (setup, session, score, export) for product analytics. Upload only documents you are authorized to process.';
+
   const setupHint = document.createElement('div');
   setupHint.className = 'ui-cta-hint ui-state-text alert alert-warning';
   setupHint.setAttribute('data-testid', 'setup-hint');
@@ -968,9 +1072,59 @@ function buildSetupPanel(state, ui) {
     updateSetupHint();
   }
 
-  resumeField.input.addEventListener('change', updateGenerateState);
-  jobField.input.addEventListener('change', updateGenerateState);
+  resumeField.input.addEventListener('change', () => {
+    const hasResume = resumeField.input.files.length > 0;
+    if (hasResume) {
+      const resumeFile = resumeField.input.files[0];
+      sendJourneyEvent(state, 'journey_resume_loaded', {
+        step: 'resume_loaded',
+        status: 'ready',
+        properties: {
+          source: 'file',
+          file_type: resumeFile?.type || 'unknown',
+          file_size_bytes: resumeFile?.size || 0
+        }
+      });
+    }
+    updateGenerateState();
+  });
+  jobField.input.addEventListener('change', () => {
+    const hasJobFile = jobField.input.files.length > 0;
+    if (hasJobFile) {
+      const jobFile = jobField.input.files[0];
+      sendJourneyEvent(state, 'journey_job_loaded', {
+        step: 'job_loaded',
+        status: 'ready',
+        properties: {
+          source: 'file',
+          file_type: jobFile?.type || 'unknown',
+          file_size_bytes: jobFile?.size || 0
+        }
+      });
+    }
+    updateGenerateState();
+  });
   jobUrlField.input.addEventListener('input', updateGenerateState);
+  jobUrlField.input.addEventListener('change', () => {
+    const jobUrl = String(jobUrlField.input.value || '').trim();
+    if (!jobUrl) {
+      return;
+    }
+    sendJourneyEvent(state, 'journey_job_loaded', {
+      step: 'job_loaded',
+      status: 'ready',
+      properties: {
+        source: 'url',
+        host: (() => {
+          try {
+            return new URL(jobUrl).host || 'unknown';
+          } catch (error) {
+            return 'invalid';
+          }
+        })()
+      }
+    });
+  });
 
   generateButton.addEventListener('click', async () => {
     if (generateButton.disabled) return;
@@ -1020,6 +1174,15 @@ function buildSetupPanel(state, ui) {
 
     try {
       const jobUrl = String(jobUrlField.input.value || '').trim();
+      sendJourneyEvent(state, 'journey_questions_requested', {
+        step: 'questions_requested',
+        status: 'pending',
+        properties: {
+          has_resume_file: resumeField.input.files.length > 0,
+          has_job_file: jobField.input.files.length > 0,
+          has_job_url: Boolean(jobUrl)
+        }
+      });
       const result = await createInterview({
         resumeFile: resumeField.input.files[0],
         jobFile: jobField.input.files[0] || null,
@@ -1036,6 +1199,16 @@ function buildSetupPanel(state, ui) {
       state.sessionName = '';
       state.askedQuestionIndex = result.asked_question_index ?? null;
       state.sessionStarted = false;
+      sendJourneyEvent(state, 'journey_questions_generated', {
+        step: 'questions_generated',
+        status: 'complete',
+        value: state.questions.length,
+        properties: {
+          question_count: state.questions.length,
+          used_job_url: Boolean(jobUrl),
+          job_url_warning: Boolean(result.job_url_warning)
+        }
+      });
       renderQuestions(
         ui.questionList,
         state.questions,
@@ -1069,6 +1242,11 @@ function buildSetupPanel(state, ui) {
         await ui.startSession({ source: 'auto_generate' });
       }
     } catch (error) {
+      sendJourneyEvent(state, 'journey_questions_generated', {
+        step: 'questions_generated',
+        status: 'error',
+        detail: error?.message || 'Unable to generate questions.'
+      });
       status.className = 'ui-field__error ui-state-text';
       status.textContent = error.message || 'Unable to generate questions.';
     } finally {
@@ -1092,6 +1270,7 @@ function buildSetupPanel(state, ui) {
   content.appendChild(generateRow);
   content.appendChild(setupHint);
   content.appendChild(status);
+  content.appendChild(analyticsDisclosure);
 
   ui.resumeInput = resumeField.input;
   ui.jobInput = jobField.input;
@@ -1410,16 +1589,17 @@ function buildControlsPanel(state, ui, config) {
     return window.SpeechRecognition || window.webkitSpeechRecognition;
   }
 
-  function scheduleSpeechRecognitionRestart() {
+  function scheduleSpeechRecognitionRestart(delayMs = SPEECH_RECOGNITION_RESTART_MS) {
     if (state.speechRecognitionRestartTimer) {
       return;
     }
+    const delay = Math.max(Number(delayMs) || SPEECH_RECOGNITION_RESTART_MS, SPEECH_RECOGNITION_RESTART_MS);
     state.speechRecognitionRestartTimer = window.setTimeout(() => {
       state.speechRecognitionRestartTimer = null;
-      if (state.speechRecognitionEnabled) {
+      if (state.speechRecognitionEnabled && canCaptureTurnSpeech()) {
         startSpeechRecognition();
       }
-    }, 250);
+    }, delay);
   }
 
   function clearSpeechRecognitionWatchdog() {
@@ -1737,6 +1917,15 @@ function buildControlsPanel(state, ui, config) {
     const text = (stripped.text || '').trim();
     const submittedText = text || TURN_EMPTY_SUBMIT_FALLBACK;
     sendClientEvent(state, 'turn_submit', { status: text ? source : `${source}_empty` });
+    sendJourneyEvent(state, 'journey_answer_submitted', {
+      step: 'answer_submitted',
+      status: text ? source : `${source}_empty`,
+      value: submittedText.length,
+      properties: {
+        mode: state.voiceMode,
+        has_spoken_text: Boolean(text)
+      }
+    });
     updateStatusPill(statusPill, { label: 'Thinking', tone: 'info' });
     state.turnAwaitingAnswer = false;
     state.turnReadyToSubmit = false;
@@ -1911,14 +2100,26 @@ function buildControlsPanel(state, ui, config) {
       if (!state.speechRecognitionEnabled) {
         return;
       }
-      const reason = event?.error ? ` (${event.error})` : '';
+      const errorCode = String(event?.error || '').trim().toLowerCase();
+      if (errorCode === 'no-speech') {
+        state.speechRecognitionNoSpeechUntil = Date.now() + SPEECH_RECOGNITION_NO_SPEECH_COOLDOWN_MS;
+        setCaptionText('Captions listening...');
+        return;
+      }
+      const reason = errorCode ? ` (${errorCode})` : '';
       setCaptionText(`Captions error${reason}.`);
     };
 
     recognition.onend = () => {
       state.speechRecognitionActive = false;
       if (state.speechRecognitionEnabled) {
-        scheduleSpeechRecognitionRestart();
+        const now = Date.now();
+        const cooldownUntil = Number(state.speechRecognitionNoSpeechUntil) || 0;
+        if (cooldownUntil > now) {
+          scheduleSpeechRecognitionRestart(cooldownUntil - now);
+        } else {
+          scheduleSpeechRecognitionRestart();
+        }
       }
     };
 
@@ -1944,6 +2145,7 @@ function buildControlsPanel(state, ui, config) {
     try {
       recognition.start();
       state.speechRecognitionActive = true;
+      state.speechRecognitionNoSpeechUntil = 0;
       state.speechRecognitionLastResultAt = Date.now();
       scheduleSpeechRecognitionWatchdog();
       if (ui.captionText?.textContent === 'Captions idle.') {
@@ -1971,6 +2173,7 @@ function buildControlsPanel(state, ui, config) {
       }
     }
     state.speechRecognitionActive = false;
+    state.speechRecognitionNoSpeechUntil = 0;
     state.speechRecognitionLastResultAt = 0;
     if (!preserveCaptions) {
       state.captionFinalText = '';
@@ -2333,6 +2536,16 @@ function buildControlsPanel(state, ui, config) {
       text: payload.text,
       timestamp: payload.timestamp
     });
+    if (payload.role === 'candidate' && result?.entry && !result.merged) {
+      sendJourneyEvent(state, 'journey_candidate_spoke', {
+        step: 'candidate_spoke',
+        status: state.voiceMode,
+        value: result.entry.text.length,
+        properties: {
+          mode: state.voiceMode
+        }
+      });
+    }
     renderTranscript(ui.transcriptList, state.transcript);
     ui.autoStartNextQuestion?.(payload.role);
     ui.updateSessionToolsState?.();
@@ -2465,6 +2678,14 @@ function buildControlsPanel(state, ui, config) {
     setTurnRubricVisible(true);
     updateTurnSubmitUI();
     sendClientEvent(state, 'turn_help', { status: source });
+    sendJourneyEvent(state, 'journey_help_requested', {
+      step: 'help_requested',
+      status: source,
+      properties: {
+        mode: state.voiceMode,
+        has_partial_answer: Boolean(cleanedAnswer)
+      }
+    });
     updateStatusPill(statusPill, { label: 'Helping', tone: 'info' });
     state.turnResponseSeq += 1;
     const responseSeq = state.turnResponseSeq;
@@ -3058,12 +3279,26 @@ function buildControlsPanel(state, ui, config) {
       });
       state.scorePending = false;
       state.score = score;
+      const overallScore = Number.parseFloat(String(score?.overall_score ?? ''));
+      sendJourneyEvent(state, 'journey_score_generated', {
+        step: 'score_generated',
+        status: 'complete',
+        value: Number.isFinite(overallScore) ? overallScore : undefined,
+        properties: {
+          transcript_entries: Array.isArray(state.transcript) ? state.transcript.length : 0
+        }
+      });
       renderScore(ui, score);
       updateStatusPill(statusPill, { label: 'Complete', tone: 'success' });
       setStatusDetail('Coaching feedback ready.');
       ui.scorePanel?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
       ui.scorePanel?.focus?.({ preventScroll: true });
     } catch (error) {
+      sendJourneyEvent(state, 'journey_score_generated', {
+        step: 'score_generated',
+        status: 'error',
+        detail: error?.message || 'Scoring failed'
+      });
       updateStatusPill(statusPill, { label: 'Score Error', tone: 'danger' });
       setStatusDetail('Scoring failed. You can restart or export the transcript.');
       state.scoreError = true;
@@ -3108,6 +3343,13 @@ function buildControlsPanel(state, ui, config) {
     state.scoreError = false;
     setPrimaryActionMode({ active: true, disabled: false });
     updateTurnSubmitUI();
+    sendJourneyEvent(state, 'journey_session_started', {
+      step: 'session_started',
+      status: source,
+      properties: {
+        mode: state.voiceMode
+      }
+    });
 
     if (turnMode) {
       state.sessionId = `turn-${Date.now()}`;
@@ -5038,6 +5280,11 @@ export function buildVoiceLayout() {
 
   async function downloadStudyGuideFile(format, { onSuccess, onError } = {}) {
     if (!state.interviewId) return;
+    sendJourneyEvent(state, 'journey_export_requested', {
+      step: 'export_requested',
+      status: 'pending',
+      properties: { format }
+    });
     try {
       const blob = await downloadStudyGuide({ interviewId: state.interviewId, format });
       const url = URL.createObjectURL(blob);
@@ -5048,10 +5295,22 @@ export function buildVoiceLayout() {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
+      sendJourneyEvent(state, 'journey_export_completed', {
+        step: 'export_completed',
+        status: 'complete',
+        value: blob?.size,
+        properties: { format }
+      });
       if (typeof onSuccess === 'function') {
         onSuccess();
       }
     } catch (error) {
+      sendJourneyEvent(state, 'journey_export_completed', {
+        step: 'export_completed',
+        status: 'error',
+        detail: error?.message || 'Export failed',
+        properties: { format }
+      });
       if (typeof onError === 'function') {
         onError(error);
       }
@@ -5164,6 +5423,15 @@ export function buildVoiceLayout() {
   });
 
   updateSessionToolsState();
+  sendJourneyEvent(state, 'journey_app_open', {
+    step: 'app_open',
+    status: 'loaded',
+    properties: {
+      adapter: state.adapter,
+      voice_mode: state.voiceMode,
+      tts_provider: state.ttsProvider
+    }
+  });
   return page;
 }
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 import time
+from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import Response
@@ -39,6 +40,7 @@ from .schemas import (
 from .services import interview_service
 from .services.log_metrics import build_log_summary
 from .services.document_text import DocumentInput, fetch_url_text, is_supported_document
+from .services.ga4_telemetry import send_ga4_event
 from .access_control import require_api_access
 from .settings import load_settings
 
@@ -79,6 +81,20 @@ def _safe_log_value(value: str | None, limit: int = 120) -> str:
         return "none"
     cleaned = re.sub(r"\s+", "_", value.strip())
     return cleaned[:limit]
+
+
+def _safe_numeric_log_value(value: float | None) -> str:
+    if value is None:
+        return "none"
+    return str(value)
+
+
+def _coerce_telemetry_param(value: Any):
+    if value is None:
+        return None
+    if isinstance(value, (str, bool, int, float)):
+        return value
+    return str(value)
 
 
 def _not_found_detail(exc: Exception, fallback: str = "Interview not found") -> str:
@@ -722,16 +738,88 @@ async def get_log_summary() -> LogSummaryResponse:
 
 @router.post("/telemetry", response_model=ClientEventResponse)
 async def log_client_event(request: Request, payload: ClientEventRequest):
+    settings = load_settings()
     user_id = _get_user_id(request)
+    access_token_id = getattr(request.state, "access_token_id", None)
+    properties = payload.properties or {}
     logger.info(
-        "event=client_event status=received user_id=%s interview_id=%s session_id=%s event_type=%s state=%s detail=%s",
+        (
+            "event=client_event status=received user_id=%s interview_id=%s session_id=%s "
+            "event_type=%s category=%s step=%s state=%s detail=%s value=%s "
+            "anonymous_id=%s new_user=%s access_token_id=%s properties=%s"
+        ),
         short_id(user_id),
         short_id(payload.interview_id),
         short_id(payload.session_id),
         _safe_log_value(payload.event),
+        _safe_log_value(payload.category),
+        _safe_log_value(payload.step),
         _safe_log_value(payload.state),
-        _safe_log_value(payload.detail)
+        _safe_log_value(payload.detail),
+        _safe_numeric_log_value(payload.value),
+        _safe_log_value(payload.anonymous_id),
+        _safe_log_value(str(payload.new_user) if payload.new_user is not None else None),
+        _safe_log_value(access_token_id),
+        _safe_log_value(str(len(properties)))
     )
+    if payload.category == "journey":
+        def _journey_property(name: str) -> str:
+            value = properties.get(name)
+            if value is None:
+                return "none"
+            return _safe_log_value(str(value))
+
+        logger.info(
+            (
+                "event=journey_kpi status=received user_id=%s interview_id=%s session_id=%s "
+                "event_type=%s step=%s state=%s value=%s new_user=%s "
+                "access_token_id=%s "
+                "adapter=%s voice_mode=%s voice_output_mode=%s voice_agent=%s "
+                "tts_provider=%s text_model=%s tts_model=%s live_model=%s"
+            ),
+            short_id(user_id),
+            short_id(payload.interview_id),
+            short_id(payload.session_id),
+            _safe_log_value(payload.event),
+            _safe_log_value(payload.step),
+            _safe_log_value(payload.state),
+            _safe_numeric_log_value(payload.value),
+            _safe_log_value(str(payload.new_user) if payload.new_user is not None else None),
+            _safe_log_value(access_token_id),
+            _journey_property("adapter"),
+            _journey_property("voice_mode"),
+            _journey_property("voice_output_mode"),
+            _journey_property("voice_agent"),
+            _journey_property("tts_provider"),
+            _journey_property("text_model"),
+            _journey_property("tts_model"),
+            _journey_property("live_model")
+        )
+
+    if settings.ga4_enabled and payload.anonymous_id:
+        ga4_params = {
+            "category": payload.category,
+            "step": payload.step,
+            "state": payload.state,
+            "detail": payload.detail,
+            "interview_id": payload.interview_id,
+            "session_id": payload.session_id,
+            "access_token_id": access_token_id,
+            "new_user": payload.new_user,
+            "value": payload.value
+        }
+        for key, value in properties.items():
+            coerced = _coerce_telemetry_param(value)
+            if coerced is not None:
+                ga4_params[f"prop_{key}"] = coerced
+        await send_ga4_event(
+            measurement_id=settings.ga4_measurement_id or "",
+            api_secret=settings.ga4_api_secret or "",
+            client_id=payload.anonymous_id,
+            user_id=user_id if user_id and user_id != "local" else None,
+            event_name=payload.event,
+            params=ga4_params
+        )
     return {"status": "ok"}
 
 

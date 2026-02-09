@@ -3008,3 +3008,143 @@ NOTES
 - Commands run: `open playwright-report-*/index.html` -> report indexes opened locally.
 - Decisions: Remove rubric controls entirely for smaller, less fragile UI on mobile/desktop; retain coaching help path for rubric guidance.
 - Risks / open questions: Live runs still show frequent reconnect/fallback churn (`gemini-3-flash-preview` -> `gemini-2.5-flash-native-audio-preview-12-2025`) even when tests pass.
+
+---
+
+Session: 2026-02-09 08:50
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260209-kpi-journey-telemetry
+Input: CR-20260209-0846
+Decisions: D-20260209-0848
+Spec: docs/specs/20260209-kpi-journey-telemetry/spec.md
+Tasks: docs/specs/20260209-kpi-journey-telemetry/tasks.md
+Goal: Wire KPI journey telemetry end-to-end for setup -> voice session -> score -> export and make it queryable.
+
+DONE
+- [2026-02-09 08:50] Created traceability packet for KPI instrumentation (CR/D/spec/tasks/PRD linkage). (Skills: ralph)
+
+IN PROGRESS
+- T-001: Implement and verify telemetry schema + UI journey events + optional GA4 forwarding. (Skills: ralph)
+
+NEXT
+- T-005: Run regression checks (API + UI) for telemetry changes and finalize spec/task status.
+- T-006: Reconcile progress notes with verification evidence and commands.
+
+NOTES
+- Working files include `app/api.py`, `app/schemas.py`, `app/settings.py`, `app/static/js/api/client.js`, `app/static/js/ui.js`, and docs updates.
+- Verification commands pending for this session.
+
+---
+
+Session: 2026-02-09 08:52
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260209-kpi-journey-telemetry
+Input: CR-20260209-0846
+Decisions: D-20260209-0848
+Spec: docs/specs/20260209-kpi-journey-telemetry/spec.md
+Tasks: docs/specs/20260209-kpi-journey-telemetry/tasks.md
+Goal: Complete KPI journey telemetry wiring and verification evidence.
+
+DONE
+- [2026-02-09 08:52] Implemented telemetry schema + UI journey event hooks + optional GA4 forwarding + docs. (Skills: ralph)
+- [2026-02-09 08:52] Verified backend/API and UI regression suites for telemetry changes. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- Optional: enable `GA4_MEASUREMENT_ID` and `GA4_API_SECRET` in deployed env to populate GA4 funnels.
+
+NOTES
+- Commands run: `./.venv/bin/python -m pytest tests/test_log_api.py tests/test_log_metrics.py -q` -> 5 passed.
+- Commands run: `npm run test -- tests/components/voice-layout.test.js tests/components/session-tools.test.js` -> 24 passed.
+- Implemented evidence paths: `app/static/js/ui.js`, `app/static/js/api/client.js`, `app/api.py`, `app/services/ga4_telemetry.py`, `docs/analytics-kpi.md`.
+- Update (2026-02-09 08:57): Added today-priority NEXT items T-007..T-010 in `docs/specs/20260209-kpi-journey-telemetry/tasks.md` for Dialogflow CX + BigQuery + GA4 deployment readiness.
+- [2026-02-09 09:29] T-007: Created BigQuery dataset `preptalk_analytics`, created logging sink `preptalk-journey-kpi-sink`, granted sink writer access, and validated journey KPI rows query in BigQuery. (Skills: ralph)
+- [2026-02-09 09:30] T-010: Expanded `docs/analytics-kpi.md` with BigQuery setup and SQL funnel queries. (Skills: ralph)
+- Commands run: `gcloud services enable bigquery.googleapis.com` -> enabled.
+- Commands run: `bq mk --dataset gen-lang-client-0573849892:preptalk_analytics` -> created.
+- Commands run: `gcloud logging sinks create preptalk-journey-kpi-sink ...` -> created.
+- Commands run: `bq update --source ... preptalk_analytics` -> sink writer granted.
+- Commands run: `curl .../api/telemetry` (test) -> 200 with `preptalk-test` token.
+- Commands run: `bq query ... COUNT(*) WHERE textPayload LIKE "%event=journey_kpi%"` -> 1 row.
+- Note: `T-008` blocked pending GA4 values (`GA4_MEASUREMENT_ID`, `GA4_API_SECRET`).
+- Update (2026-02-09 09:36): Added T-012 to KPI telemetry NEXT list for GA4 User Data Collection Acknowledgement + privacy disclosure confirmation.
+- [2026-02-09 10:15] Verified GA4 forwarding on test: POST `/api/telemetry` produced `event=ga4_forward status=sent` in `preptalk-west-test` logs. (Skills: ralph)
+- Commands run: `curl -X POST https://preptalk-west-test-961394368413.us-west1.run.app/api/telemetry ...` -> `{\"status\":\"ok\"}`.
+- Commands run: `gcloud logging read ... textPayload:"event=ga4_forward" ...` -> `event=ga4_forward status=sent event_type=journey_export_completed`.
+- Note: Prod service `preptalk-west` still missing `GA4_MEASUREMENT_ID`/`GA4_API_SECRET`.
+
+---
+
+Session: 2026-02-09 11:16
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph
+Feature: 20260206-access-token-redaction
+Input: CR-20260209-1116
+Decisions: D-20260209-1116
+Spec: docs/specs/20260206-access-token-redaction/spec.md
+Tasks: docs/specs/20260206-access-token-redaction/tasks.md
+Goal: Preserve location information in redaction output, fix inline header/contact name leakage, and keep RALPH traceability current.
+
+DONE
+- [2026-02-09 11:16] T-005: Updated redaction policy to keep location text while retaining phone/email/linkedin redaction. (Skills: ralph)
+- [2026-02-09 11:16] T-006: Fixed inline name+contact header redaction and added regression coverage. (Skills: ralph)
+- [2026-02-09 11:16] Synced traceability docs (`requests`, `decisions`, `PRD`, feature `spec/tasks`) for this scope change. (Skills: ralph)
+- [2026-02-09 11:16] Deployed and verified on test and production Cloud Run endpoints. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- (none)
+
+NOTES
+- Commands run: `pytest -q tests/test_pii_redaction.py tests/test_api_interviews.py` -> 22 passed.
+- Commands run: `python3 - <<'PY' ... redact_resume_pii(...)` inline sample check -> `D. [redacted] Sea$le, WA | [redacted] | [redacted]@gmail.com | linkedin.com/in/[redacted]`.
+- Test deploy: `gcloud run deploy preptalk-west-test --source . ...` -> revision `preptalk-west-test-00032-dz4` (100%).
+- Prod deploy: `gcloud run deploy preptalk-west --source . ...` -> revision `preptalk-west-00038-mtr` (100%).
+- API validation (test): POST `/api/interviews` with inline name+contact resume -> `resume_excerpt` shows `D. [redacted] Sea$le, WA | [redacted] | [redacted]@gmail.com | linkedin.com/in/[redacted]`.
+- API validation (prod): POST `/api/interviews` with same sample -> identical redaction behavior confirmed.
+- Rollback baselines before this release: test `preptalk-west-test-00031-g5n`, prod `preptalk-west-00037-wzg`.
+
+---
+
+Session: 2026-02-09 12:06
+Agent: Codex CLI
+Model: GPT-5
+Skills: ralph, verification-before-completion
+Feature: 20260209-kpi-journey-telemetry
+Input: CR-20260209-1206, CR-20260209-1221
+Decisions: D-20260209-0848, D-20260209-0929, D-20260209-1206, D-20260209-1210, D-20260209-1221
+Spec: docs/specs/20260209-kpi-journey-telemetry/spec.md
+Tasks: docs/specs/20260209-kpi-journey-telemetry/tasks.md
+Goal: Reconcile KPI telemetry task status with fresh production evidence and continue today’s rollout checklist.
+
+DONE
+- [2026-02-09 12:06] T-009: Validated live KPI funnel milestones with BigQuery counts across app open, setup-loaded milestones, session start, score generated, and export completed. (Skills: ralph, verification-before-completion)
+- [2026-02-09 12:06] T-013: Fixed production GA4 measurement env formatting and verified `event=ga4_forward status=sent` on `preptalk-west`. (Skills: ralph, verification-before-completion)
+- [2026-02-09 12:10] T-014: Added end-user analytics/privacy disclosure in Candidate Setup and documented GA4 rollout prerequisites. (Skills: ralph)
+- [2026-02-09 12:21] T-012: Marked GA4 User Data Collection Acknowledgement complete based on user confirmation. (Skills: ralph)
+- [2026-02-09 12:06] Synced RALPH traceability docs (`requests`, `decisions`, KPI `tasks`) to reflect current production state. (Skills: ralph)
+
+IN PROGRESS
+- (none)
+
+NEXT
+- T-015 (optional): Archive screenshot evidence for GA4 acknowledgement in `docs/evidence/ga4-user-data-ack.png`. (Skills: ralph)
+- T-011: If Dialogflow CX is adopted, map/export CX interaction logs into the same BigQuery dataset and document table mapping. (Skills: ralph)
+
+NOTES
+- Commands run: `bq query ... FROM preptalk_analytics.run_googleapis_com_stderr ... event=journey_kpi ...` -> non-zero counts: `journey_app_open=5`, `journey_resume_loaded=5`, `journey_job_loaded=4`, `journey_session_started=10`, `journey_score_generated=6`, `journey_export_completed=4`.
+- Commands run: `gcloud logging read ... service_name=\"preptalk-west\" ... \"event=ga4_forward status=sent\" ...` -> sent events observed for `journey_app_open`, `journey_resume_loaded`, `journey_job_loaded`, `journey_session_started`, `journey_answer_submitted`, `journey_score_generated`, `journey_export_requested`, `journey_export_completed`.
+- Commands run: `gcloud run services update preptalk-west ... --update-env-vars=GA4_MEASUREMENT_ID=G-79VB21CZWF` -> deployed revision `preptalk-west-00040-dps` at 100% traffic.
+- Commands run: `npm run test -- tests/components/voice-layout.test.js` -> 20 passed.
+- Implemented disclosure paths: `app/static/js/ui.js`, `app/static/css/components.css`, `docs/analytics-kpi.md`.
+- Added GA4 acknowledgement evidence checklist scaffold: `docs/evidence/ga4-user-data-ack.md`.
+- User attestation: GA4 User Data Collection Acknowledgement was already completed before this update.

@@ -110,6 +110,7 @@ def read_root(request: Request):
         "voiceTurnEndDelayMs": settings.voice_turn_end_delay_ms,
         "voiceTurnCompletionConfidence": settings.voice_turn_completion_confidence,
         "voiceTurnCompletionCooldownMs": settings.voice_turn_completion_cooldown_ms,
+        "telemetryConsentRequired": settings.telemetry_consent_required,
         "userId": user_id
     }
     response = templates.TemplateResponse(

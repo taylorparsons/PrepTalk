@@ -517,6 +517,17 @@ body.app-body {
   font-size: 12px;
 }
 
+.ui-privacy-note {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-color-border);
+  background: var(--ui-color-birch);
+  color: var(--ui-color-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .ui-cta-hint {
   font-size: 13px;
 }

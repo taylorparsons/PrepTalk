@@ -1392,3 +1392,57 @@ Notes:
 - Further reduce Session Controls panel vertical footprint.
 - Re-run full Playwright matrix and publish report artifacts.
 - Keep changes staged with rollback-ready release documentation.
+
+## CR-20260209-0846
+Date: 2026-02-09 08:46
+Source: chat
+
+Request (verbatim):
+I want it wired but I have a few other metrics to track the KPI for the user journey where they loaded their resume and job info, spoke witht he voice agent, answered questions, got a score and exported their conversation.
+
+Notes:
+- Wire user-journey KPI telemetry end-to-end.
+- Track key funnel milestones from setup through export.
+
+## CR-20260209-0920
+Date: 2026-02-09 09:20
+Source: chat
+
+Request (verbatim):
+1. big query
+
+Notes:
+- User selected BigQuery as the data source direction for analytics/reporting.
+
+## CR-20260209-1116
+Date: 2026-02-09 11:16
+Source: chat
+
+Request (verbatim):
+make sure this is being tracked by $ralph
+do not redact location information
+
+Notes:
+- Keep RALPH traceability updated for this redaction behavior change.
+- Preserve location text in resume excerpts while keeping other requested redactions.
+
+## CR-20260209-1206
+Date: 2026-02-09 12:06
+Source: chat
+
+Request (verbatim):
+yes update and keep going
+
+Notes:
+- Update KPI telemetry tracking artifacts to reflect current production state.
+- Continue executing remaining same-day telemetry tasks where feasible.
+
+## CR-20260209-1221
+Date: 2026-02-09 12:21
+Source: chat
+
+Request (verbatim):
+I acknowledged it earlier
+
+Notes:
+- User confirmed GA4 User Data Collection Acknowledgement was already completed.
