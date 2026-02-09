@@ -54,9 +54,9 @@ Decision: `D-20260206-1851`
 ## Cloud Endpoint Smoke (Google Test URL)
 - Target: `https://preptalk-west-test-cz47ti6tbq-uw.a.run.app`
 - `GET /` without token -> `401`
-- `GET /?access_token=preptalk-test` -> `200`
+- `GET /?access_token=test-token-example` -> `200`
 - `GET /api/logs/summary` without token -> `401`
-- `GET /api/logs/summary` with `X-Access-Token: preptalk-test` -> `200`
+- `GET /api/logs/summary` with `X-Access-Token: test-token-example` -> `200`
 
 ## Re-run Evidence (2026-02-06 20:20)
 - Scope extension from `CR-20260206-2020`: remove Session Controls rubric UI, further compact controls, rerun full Playwright matrix, and refresh reports.

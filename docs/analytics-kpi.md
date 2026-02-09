@@ -72,7 +72,7 @@ Run a smoke event (test service):
 ```bash
 curl -sS -X POST 'https://preptalk-west-test-961394368413.us-west1.run.app/api/telemetry' \
   -H 'Content-Type: application/json' \
-  -H 'X-Access-Token: preptalk-test' \
+  -H 'X-Access-Token: test-token-example' \
   -H 'X-User-Id: analytics-smoke' \
   --data '{"event":"journey_score_generated","category":"journey","step":"score_generated","state":"complete","anonymous_id":"manual-kpi-smoke","new_user":false,"value":88}'
 ```

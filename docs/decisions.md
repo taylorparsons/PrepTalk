@@ -1178,7 +1178,7 @@ Inputs: CR-20260206-1716, CR-20260206-1700
 PRD: Functional requirements; Next / backlog
 
 Decision:
-Treat the four Session Controls backlog items as implementation work now (auto-start after generation, delayed controls visibility, compact controls, sticky controls/menu), and deploy a single shared test token on Cloud Run (`APP_ACCESS_TOKENS=preptalk-test`) for immediate external validation.
+Treat the four Session Controls backlog items as implementation work now (auto-start after generation, delayed controls visibility, compact controls, sticky controls/menu), and deploy a single shared test token on Cloud Run (`APP_ACCESS_TOKENS=test-token-example`) for immediate external validation.
 
 Rationale:
 The user asked for the backlog items plus token gating to be operational and tested end-to-end on localhost and Google test. A single shared token is the smallest working control with minimal UX friction.
@@ -1188,7 +1188,7 @@ Alternatives considered:
 - Use per-user mapped tokens only (rejected for this pass: more setup than needed for immediate testing).
 
 Acceptance / test:
-- Localhost: `/` is token-gated, `/?access_token=preptalk-test` works, `/api/logs/summary` enforces token.
+- Localhost: `/` is token-gated, `/?access_token=test-token-example` works, `/api/logs/summary` enforces token.
 - Cloud Run test endpoint shows the same token behavior.
 - Question generation auto-starts the session and Session Controls layout/visibility behavior matches requested updates.
 

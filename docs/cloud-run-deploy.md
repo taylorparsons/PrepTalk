@@ -54,7 +54,7 @@ BASE_URL=$(gcloud run services describe "$SERVICE" \
 
 curl -sS "$BASE_URL/health"
 curl -sS -o /dev/null -w '%{http_code}\n' "$BASE_URL/"
-curl -sS -H 'X-Access-Token: preptalk-test' -o /dev/null -w '%{http_code}\n' "$BASE_URL/api/logs/summary"
+curl -sS -H 'X-Access-Token: test-token-example' -o /dev/null -w '%{http_code}\n' "$BASE_URL/api/logs/summary"
 ```
 - Expect `/health` JSON with `status=ok`.
 - Expect `/` to return `401` when token gate is enabled.
@@ -119,7 +119,7 @@ Test service (separate endpoint for experiments):
 - Service: `preptalk-west-test`
 - URL: `https://preptalk-west-test-cz47ti6tbq-uw.a.run.app`
 - Revision: `preptalk-west-test-00022-ddx`
-- Shared test token: `preptalk-test`
+- Shared test token: `test-token-example`
 - Known-good rollback target (previous revision): `preptalk-west-test-00021-kwv`
 
 Exact rollback command for current test release:

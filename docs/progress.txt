@@ -2860,7 +2860,7 @@ Goal: Ship Session Controls backlog behavior + simple token gate, then verify lo
 DONE
 - [2026-02-06 17:19] T-001: Verify token/access-control and Session Controls implementation state in code and tests. (Skills: ralph)
 - [2026-02-06 17:31] T-002: Update E2E assertions for auto-start/early-submit behavior and re-run token-gated mock flow. (Skills: ralph)
-- [2026-02-06 17:39] T-003: Deploy current code to `preptalk-west-test` and set shared token `APP_ACCESS_TOKENS=preptalk-test`. (Skills: ralph)
+- [2026-02-06 17:39] T-003: Deploy current code to `preptalk-west-test` and set shared token `APP_ACCESS_TOKENS=test-token-example`. (Skills: ralph)
 - [2026-02-06 17:46] T-004: Verify localhost + Cloud Run auth flows and browser smoke behavior with token. (Skills: ralph, verification-before-completion)
 - [2026-02-06 17:46] T-005: Reconcile RALPH artifacts (`requests`, `decisions`, `PRD`, `spec/tasks`, `progress`, deployment doc). (Skills: ralph)
 
@@ -2876,7 +2876,7 @@ NOTES
 - Commands run: `APP_ACCESS_TOKENS=local-pass E2E_ACCESS_TOKEN=local-pass E2E_LIVE=0 npx playwright test tests/e2e/interview-flow.spec.js --reporter=line` -> 1 passed.
 - Localhost verification (`127.0.0.1:8010`): `/` without token -> 401 gate page, `/?access_token=local-pass` -> 200 + access cookie, `/api/logs/summary` -> 401 without token and 200 with `X-Access-Token`.
 - Cloud deploy: `gcloud run deploy preptalk-west-test --source . ...` -> revision `preptalk-west-test-00015-7h2`.
-- Cloud env update: `gcloud run services update preptalk-west-test --update-env-vars APP_ACCESS_TOKENS=preptalk-test,APP_REDACT_RESUME_PII=1` -> revision `preptalk-west-test-00016-tqg`.
+- Cloud env update: `gcloud run services update preptalk-west-test --update-env-vars APP_ACCESS_TOKENS=test-token-example,APP_REDACT_RESUME_PII=1` -> revision `preptalk-west-test-00016-tqg`.
 - Cloud verification (`https://preptalk-west-test-cz47ti6tbq-uw.a.run.app`): same 401/200 auth behavior confirmed for root + API.
 - Browser smoke (Playwright script against Cloud URL): gate title `PrepTalk Access`, token-auth page title `PrepTalk Practice Coach`, generate button visible.
 
@@ -2912,7 +2912,7 @@ NOTES
 - Commands run: `./.venv/bin/python -m pytest tests/test_voice_turn_tts.py tests/test_gemini_tts.py -q` -> 10 passed.
 - Commands run: `APP_ACCESS_TOKENS=local-pass E2E_ACCESS_TOKEN=local-pass E2E_LIVE=0 npx playwright test tests/e2e/interview-flow.spec.js --reporter=line` -> 1 passed.
 - Deploy evidence: `gcloud run deploy preptalk-west-test --source . ...` -> revision `preptalk-west-test-00017-jpb` serving 100%.
-- Cloud verify: `/health` -> 200, `/` -> 401 without token, `/api/logs/summary` -> 200 with `X-Access-Token: preptalk-test`.
+- Cloud verify: `/health` -> 200, `/` -> 401 without token, `/api/logs/summary` -> 200 with `X-Access-Token: test-token-example`.
 - Audio probe on deployed revision: `/api/voice/intro` returned `coach_audio_mime=audio/wav` and non-empty `coach_audio` payload.
 
 ---
@@ -2972,7 +2972,7 @@ NEXT
 
 NOTES
 - Commands run: component + backend test runs, plus non-live and live Playwright suites (see docs/testing/playwright-live-e2e-evidence-20260206.md) -> final status pass across all required suites.
-- Commands run: `curl` smoke checks against `https://preptalk-west-test-cz47ti6tbq-uw.a.run.app` -> root/API return 401 without token and 200 with `preptalk-test`.
+- Commands run: `curl` smoke checks against `https://preptalk-west-test-cz47ti6tbq-uw.a.run.app` -> root/API return 401 without token and 200 with `test-token-example`.
 - Decisions: Relax brittle E2E assertions that depended on transient audio chunk counters or pre-authenticated request fixtures.
 - Risks / open questions: Live fallback model reconnect loops remain frequent in logs; tests pass but scoring often resolves with sparse/empty transcript in these loops.
 
@@ -3070,7 +3070,7 @@ NOTES
 - Commands run: `bq mk --dataset gen-lang-client-0573849892:preptalk_analytics` -> created.
 - Commands run: `gcloud logging sinks create preptalk-journey-kpi-sink ...` -> created.
 - Commands run: `bq update --source ... preptalk_analytics` -> sink writer granted.
-- Commands run: `curl .../api/telemetry` (test) -> 200 with `preptalk-test` token.
+- Commands run: `curl .../api/telemetry` (test) -> 200 with `test-token-example` token.
 - Commands run: `bq query ... COUNT(*) WHERE textPayload LIKE "%event=journey_kpi%"` -> 1 row.
 - Note: `T-008` blocked pending GA4 values (`GA4_MEASUREMENT_ID`, `GA4_API_SECRET`).
 - Update (2026-02-09 09:36): Added T-012 to KPI telemetry NEXT list for GA4 User Data Collection Acknowledgement + privacy disclosure confirmation.

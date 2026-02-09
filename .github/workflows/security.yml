@@ -21,6 +21,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Block live token examples in repo content
+        run: bash scripts/check_no_live_tokens.sh .
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
@@ -55,4 +57,3 @@ jobs:
         uses: github/codeql-action/autobuild@v3
       - name: Analyze
         uses: github/codeql-action/analyze@v3
-
